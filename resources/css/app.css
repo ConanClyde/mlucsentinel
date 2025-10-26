@@ -1,0 +1,354 @@
+@import 'tailwindcss';
+
+/* Enable dark mode */
+@variant dark (.dark &);
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    /* Dark mode configuration */
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    padding: 0;
+    margin: 0;
+}
+
+/* Button Styles - Laravel Welcome Page Style */
+.btn {
+    @apply inline-block px-5 py-1.5 rounded-sm text-sm leading-normal border transition-all;
+    cursor: pointer;
+}
+
+.btn-primary {
+    @apply bg-blue-600 dark:bg-blue-600 border-blue-600 dark:border-blue-600 text-white dark:text-white hover:bg-blue-700 dark:hover:bg-blue-700 hover:border-blue-700 dark:hover:border-blue-700;
+}
+
+.btn-secondary {
+    @apply border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b];
+}
+
+.btn-danger {
+    @apply bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700;
+}
+
+.btn-warning {
+    @apply bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700;
+}
+
+.btn-info {
+    @apply border-transparent text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#19140035] dark:hover:border-[#3E3E3A];
+}
+
+.btn-success {
+    @apply bg-green-600 border-green-600 text-white hover:bg-green-700 hover:border-green-700;
+}
+
+.btn-csv {
+    @apply bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 hover:border-emerald-700;
+}
+
+.btn-camera {
+    @apply bg-[#1b1b18] dark:bg-[#eeeeec] border-black dark:border-[#eeeeec] text-white dark:text-[#1C1C1A] hover:bg-black hover:border-black dark:hover:bg-white dark:hover:border-white;
+    @apply inline-flex items-center justify-center w-12 h-12 rounded-full mx-auto;
+}
+
+/* Action Button Styles - Icon Only */
+.btn-view {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-sm bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 border border-blue-600 dark:border-blue-600 hover:border-blue-700 dark:hover:border-blue-700 transition-all;
+    cursor: pointer;
+}
+
+.btn-edit {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-sm bg-orange-500 text-white hover:bg-orange-600 border border-orange-500 hover:border-orange-600 transition-all;
+    cursor: pointer;
+}
+
+.btn-delete {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-sm bg-red-500 text-white hover:bg-red-600 border border-red-500 hover:border-red-600 transition-all;
+    cursor: pointer;
+}
+
+.btn-disable {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-sm bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-500 dark:hover:bg-gray-700 border border-gray-400 dark:border-gray-600 transition-all;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Modal Styles - Laravel Design System */
+.modal-backdrop {
+    @apply fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity;
+}
+
+.modal-backdrop.hidden {
+    @apply opacity-0 pointer-events-none;
+}
+
+.modal-container {
+    @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all;
+}
+
+.camera-container {
+    @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-4xl w-full mx-4 transform transition-all;
+}
+
+/* Mobile responsive modals */
+@media (max-width: 768px) {
+    .camera-container {
+        @apply mx-2 max-w-full;
+    }
+    
+    .modal-container {
+        @apply mx-2 max-w-full;
+    }
+    
+    .modal-backdrop {
+        @apply p-2;
+    }
+    
+    .modal-header {
+        @apply p-4 pb-3;
+    }
+    
+    .modal-title {
+        @apply text-base;
+    }
+    
+    .modal-footer {
+        @apply p-4 pt-3;
+    }
+    
+    .btn-camera {
+        @apply w-14 h-14;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .modal-backdrop {
+        @apply p-1;
+    }
+    
+    .camera-container,
+    .modal-container {
+        @apply mx-1;
+    }
+    
+    .modal-header {
+        @apply p-3 pb-2;
+    }
+    
+    .modal-footer {
+        @apply p-3 pt-2;
+    }
+    
+    .btn-camera {
+        @apply w-12 h-12;
+    }
+}
+
+.modal-header {
+    @apply p-6 pb-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A];
+}
+
+.modal-title {
+    @apply text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC];
+}
+
+.modal-body {
+    @apply p-6 text-sm text-[#706f6c] dark:text-[#A1A09A] leading-normal;
+}
+
+.modal-footer {
+    @apply p-6 pt-4 border-t border-[#e3e3e0] dark:border-[#3E3E3A] flex gap-3 justify-end;
+}
+
+.camera-footer {
+    @apply p-6 pt-4 border-t border-[#e3e3e0] dark:border-[#3E3E3A] flex gap-3 justify-end;
+}
+
+/* Table Styles - Laravel Design System */
+.table-container {
+    @apply bg-white dark:bg-[#161615] rounded-lg shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.3),0_1px_2px_-1px_rgba(0,0,0,0.3)] border border-[#e3e3e0] dark:border-[#3E3E3A] overflow-hidden;
+}
+
+.table {
+    @apply w-full text-sm border-collapse;
+}
+
+.table thead {
+    @apply bg-gradient-to-b from-[#FAFAFA] to-[#F5F5F5] dark:from-[#1f1f1d] dark:to-[#1b1b18] border-b-2 border-[#e3e3e0] dark:border-[#3E3E3A];
+}
+
+.table th {
+    @apply px-6 py-4 text-left font-semibold text-xs uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] whitespace-nowrap;
+}
+
+.table tbody tr {
+    @apply border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-[#FAFAFA] dark:hover:bg-[#1f1f1d] transition-all duration-150 cursor-pointer;
+}
+
+.table tbody tr:last-child {
+    @apply border-b-0;
+}
+
+.table td {
+    @apply px-6 py-4 text-[#1b1b18] dark:text-[#EDEDEC] align-middle;
+}
+
+.table td:first-child {
+    @apply font-medium text-[#706f6c] dark:text-[#A1A09A];
+}
+
+/* Badge Styles */
+.badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-active {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+}
+
+.badge-inactive {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300;
+}
+
+/* Form Styles */
+.form-group {
+    @apply mb-4;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2;
+}
+
+.form-input {
+    @apply w-full px-4 py-2 rounded-sm border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] text-sm focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#eeeeec] transition-all;
+}
+
+/* Pagination Button Styles */
+.btn-pagination {
+    @apply inline-block px-3 py-1 rounded-sm text-sm leading-normal border transition-all cursor-pointer;
+}
+
+.btn-paginationDisable {
+    @apply bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed;
+}
+
+.btn-paginationActive {
+    @apply bg-blue-600 hover:bg-blue-700 text-white border-blue-600;
+}
+
+.btn-paginationNumber {
+    @apply bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600;
+}
+
+.btn-paginationArrow {
+    @apply bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600;
+}
+
+/* Disabled Button Styles - Dark Mode Compatible */
+.btn:disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400;
+}
+
+.btn:disabled:hover {
+    @apply bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400 transform-none;
+}
+
+.btn-primary:disabled {
+    @apply bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400;
+}
+
+.btn-primary:disabled:hover {
+    @apply bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400;
+}
+
+.btn-secondary:disabled {
+    @apply bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400;
+}
+
+.btn-secondary:disabled:hover {
+    @apply bg-gray-400 dark:bg-gray-600 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-400;
+}
+
+/* Modal Icon Styles - Dark Mode Compatible */
+.modal-icon-success {
+    @apply w-8 h-8 p-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400;
+}
+
+.modal-icon-error {
+    @apply w-8 h-8 p-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400;
+}
+
+.modal-icon-warning {
+    @apply w-8 h-8 p-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400;
+}
+
+.modal-icon-info {
+    @apply w-8 h-8 p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400;
+}
+
+/* Password Fields Animation - Using Tailwind classes in HTML instead */
+
+/* Animation Classes for Real-time Updates */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes highlight {
+    0% {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    50% {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.animate-fade-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+.animate-highlight {
+    animation: highlight 0.3s ease-out;
+}
+

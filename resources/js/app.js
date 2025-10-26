@@ -1,0 +1,11 @@
+import './bootstrap';
+import './charts.js';
+import './echo.js';
+import './admin/administrators-realtime.js';
+import './admin/reporters-realtime.js';
+// import './template/tables.js';
+// import './template/modals.js';
+// import './template/media.js';
+// import './template/qr-scanner.js';
+// import './template/registration.js';
+import './auth/password-toggle.js';

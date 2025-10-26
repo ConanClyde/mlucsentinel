@@ -1,0 +1,862 @@
+@extends('layouts.app')
+
+@section('page-title', 'Reporters Management')
+
+@section('content')
+<div class="space-y-6">
+    <!-- Filter Card -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <div class="flex flex-col md:flex-row gap-4 items-end">
+            <!-- Search -->
+            <div class="flex-1 md:flex-[2]">
+                <label class="form-label">Search</label>
+                <input type="text" id="search-input" class="form-input w-full" placeholder="Search by name or email...">
+            </div>
+
+            <!-- Status Filter -->
+            <div class="flex-1">
+                <label class="form-label">Status</label>
+                <select id="status-filter" class="form-input w-full">
+                    <option value="">All Status</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="flex-1">
+                <label class="form-label">Type</label>
+                <select id="type-filter" class="form-input w-full">
+                    <option value="">All Types</option>
+                    @foreach($reporterTypes as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="flex-shrink-0">
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporters Table -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Reporters List</h3>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
+                </div>
+                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Name</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Email</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Type</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Status</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Created</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reportersTableBody">
+                    @forelse($reporters as $reporter)
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $reporter->id }}">
+                        <td class="py-2 px-3">
+                            <div class="flex items-center">
+                                @php
+                                    $colors = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4'];
+                                    $name = $reporter->user->first_name . $reporter->user->last_name;
+                                    $hash = 0;
+                                    for ($i = 0; $i < strlen($name); $i++) {
+                                        $hash = ord($name[$i]) + (($hash << 5) - $hash);
+                                    }
+                                    $avatarColor = $colors[abs($hash) % count($colors)];
+                                @endphp
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 text-white font-semibold text-xs" style="background-color: {{ $avatarColor }}">
+                                    {{ strtoupper(substr($reporter->user->first_name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $reporter->user->first_name }} {{ $reporter->user->last_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $reporter->user->email }}</td>
+                        <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $reporter->reporterType->name ?? 'No Type' }}</td>
+                        <td class="py-2 px-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $reporter->user->is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' }}">
+                                {{ $reporter->user->is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $reporter->created_at->format('M d, Y') }}</td>
+                        <td class="py-2 px-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="viewReporter({{ $reporter->id }})" class="btn-view" title="View">
+                                    <x-heroicon-s-eye class="w-4 h-4" />
+                                </button>
+                                <button onclick="openEditModal({{ $reporter->id }})" class="btn-edit" title="Edit">
+                                    <x-heroicon-s-pencil class="w-4 h-4" />
+                                </button>
+                                <button onclick="deleteReporter({{ $reporter->id }})" class="btn-delete" title="Delete">
+                                    <x-heroicon-s-trash class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                            No reporters found.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div id="pagination-controls" class="flex items-center justify-between mt-6">
+            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                Showing <span id="showing-start">1</span>-<span id="showing-end">10</span> of <span id="total-count">0</span> reporters
+            </p>
+            <div class="flex space-x-2">
+                <button id="prev-page" class="btn-pagination btn-paginationDisable" onclick="changePage(-1)">
+                    <x-heroicon-o-chevron-left class="w-4 h-4" />
+                </button>
+                <div id="page-numbers" class="flex space-x-2"></div>
+                <button id="next-page" class="btn-pagination btn-paginationArrow" onclick="changePage(1)">
+                    <x-heroicon-o-chevron-right class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div id="viewModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeViewModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Reporter Details</h2>
+        </div>
+        <div class="modal-body" id="viewModalContent">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeEditModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Reporter</h2>
+        </div>
+        <form id="editForm">
+            <div class="modal-body">
+                <input type="hidden" id="edit_reporter_id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" id="edit_first_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" id="edit_last_name" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="edit_email" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="edit_type_id" class="form-input" required>
+                        @foreach($reporterTypes as $type)
+                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="edit_is_active" class="form-input" required>
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeDeleteModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-red-500 flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                Delete Reporter
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="deleteModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="confirmDelete()" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+@push('scripts')
+<script>
+// Initialize real-time updates using the ReportersRealtime module
+let realtimeManager;
+let reporters = @json($reporters);
+
+// Reverb configuration from environment
+const reverbConfig = {
+    key: '{{ config('reverb.apps.apps.0.key') }}',
+    host: '{{ config('reverb.apps.apps.0.options.host') }}',
+    port: '{{ config('reverb.apps.apps.0.options.port') }}',
+    scheme: '{{ config('reverb.apps.apps.0.options.scheme') }}'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the real-time manager
+    if (window.ReportersRealtime) {
+        realtimeManager = new window.ReportersRealtime();
+        realtimeManager.init(reporters);
+        
+        // Update local reporters array when real-time updates occur
+        window.Echo.channel('reporters').listen('.reporter.updated', (event) => {
+            const index = reporters.findIndex(a => a.id === event.reporter.id);
+            if (index !== -1) {
+                reporters[index] = event.reporter;
+            } else if (event.action === 'created') {
+                reporters.unshift(event.reporter);
+            }
+        });
+    } else {
+        console.error('ReportersRealtime module not loaded');
+    }
+
+    // Check if we need to open view modal from notification
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewId = urlParams.get('view');
+    if (viewId) {
+        setTimeout(() => {
+            viewReporter(parseInt(viewId));
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
+    }
+
+    // Filter functionality
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const typeFilter = document.getElementById('type-filter');
+    const resetButton = document.getElementById('reset-filters');
+
+    // Add event listeners - directly call applyPagination
+    searchInput.addEventListener('input', function() {
+        currentPage = 1;
+        applyPagination();
+    });
+    
+    statusFilter.addEventListener('change', function() {
+        currentPage = 1;
+        applyPagination();
+    });
+    
+    typeFilter.addEventListener('change', function() {
+        currentPage = 1;
+        applyPagination();
+    });
+
+    resetButton.addEventListener('click', function() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        typeFilter.value = '';
+        currentPage = 1;
+        applyPagination();
+    });
+
+    // Pagination functionality
+    const paginationLimit = document.getElementById('pagination-limit');
+    let currentPage = 1;
+    let itemsPerPage = 10;
+
+    paginationLimit.addEventListener('change', function() {
+        itemsPerPage = parseInt(this.value);
+        currentPage = 1;
+        applyPagination();
+    });
+
+    function applyPagination() {
+        const rows = document.querySelectorAll('#reportersTableBody tr');
+        let visibleCount = 0;
+        let totalFiltered = 0;
+        
+        // First pass: count total filtered rows
+        rows.forEach((row) => {
+            const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const statusBadge = row.querySelector('td:nth-child(4) span');
+            const isActive = statusBadge?.textContent.trim() === 'Active';
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const typeValue = typeFilter.value;
+            
+            const reporterId = row.getAttribute('data-id');
+            const reporter = reporters.find(a => a.id == reporterId);
+            
+            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+            const matchesStatus = statusValue === '' || 
+                                (statusValue === '1' && isActive) || 
+                                (statusValue === '0' && !isActive);
+            const matchesType = typeValue === '' || (reporter && reporter.type_id == typeValue);
+            
+            if (matchesSearch && matchesStatus && matchesType) {
+                totalFiltered++;
+            }
+        });
+        
+        // Second pass: apply pagination
+        rows.forEach((row) => {
+            const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const statusBadge = row.querySelector('td:nth-child(4) span');
+            const isActive = statusBadge?.textContent.trim() === 'Active';
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const typeValue = typeFilter.value;
+            
+            const reporterId = row.getAttribute('data-id');
+            const reporter = reporters.find(a => a.id == reporterId);
+            
+            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+            const matchesStatus = statusValue === '' || 
+                                (statusValue === '1' && isActive) || 
+                                (statusValue === '0' && !isActive);
+            const matchesType = typeValue === '' || (reporter && reporter.type_id == typeValue);
+            
+            if (!matchesSearch || !matchesStatus || !matchesType) {
+                row.style.display = 'none';
+                return;
+            }
+            
+            visibleCount++;
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = currentPage * itemsPerPage;
+            
+            if (visibleCount >= startIndex && visibleCount <= endIndex) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        updatePaginationControls(totalFiltered);
+    }
+    
+    function updatePaginationControls(totalFiltered) {
+        const totalPages = Math.ceil(totalFiltered / itemsPerPage);
+        const start = totalFiltered === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+        const end = Math.min(currentPage * itemsPerPage, totalFiltered);
+        
+        // Update showing text
+        document.getElementById('showing-start').textContent = start;
+        document.getElementById('showing-end').textContent = end;
+        document.getElementById('total-count').textContent = totalFiltered;
+        
+        // Update prev/next buttons
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        
+        prevBtn.className = currentPage === 1 ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+        nextBtn.className = (currentPage === totalPages || totalPages === 0) ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+        
+        // Generate page numbers (show only 3 pages at a time)
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        // Calculate which 3 pages to show
+        let startPage = Math.max(1, currentPage - 1);
+        let endPage = Math.min(totalPages, startPage + 2);
+        
+        // Adjust if we're near the end
+        if (endPage - startPage < 2) {
+            startPage = Math.max(1, endPage - 2);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className = i === currentPage ? 'btn-pagination btn-paginationActive' : 'btn-pagination btn-paginationNumber';
+            btn.onclick = () => goToPage(i);
+            pageNumbers.appendChild(btn);
+        }
+    }
+
+    // Apply initial pagination on page load
+    applyPagination();
+    
+    // Pagination navigation functions (global scope)
+    window.changePage = function(direction) {
+        const rows = document.querySelectorAll('#reportersTableBody tr');
+        let totalFiltered = 0;
+        
+        rows.forEach((row) => {
+            const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const statusBadge = row.querySelector('td:nth-child(4) span');
+            const isActive = statusBadge?.textContent.trim() === 'Active';
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const typeValue = typeFilter.value;
+            
+            const reporterId = row.getAttribute('data-id');
+            const reporter = reporters.find(a => a.id == reporterId);
+            
+            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+            const matchesStatus = statusValue === '' || 
+                                (statusValue === '1' && isActive) || 
+                                (statusValue === '0' && !isActive);
+            const matchesType = typeValue === '' || (reporter && reporter.type_id == typeValue);
+            
+            if (matchesSearch && matchesStatus && matchesType) {
+                totalFiltered++;
+            }
+        });
+        
+        const totalPages = Math.ceil(totalFiltered / itemsPerPage);
+        currentPage = Math.max(1, Math.min(currentPage + direction, totalPages));
+        applyPagination();
+    };
+    
+    window.goToPage = function(page) {
+        currentPage = page;
+        applyPagination();
+    };
+});
+
+// Test function to verify Echo connection
+function manualTest() {
+    console.log('=== Echo Connection Test ===');
+    console.log('Echo available:', !!window.Echo);
+    console.log('Pusher available:', !!window.Pusher);
+    console.log('Real-time manager:', !!realtimeManager);
+    
+    if (window.Echo) {
+        console.log('Echo config:', reverbConfig);
+        console.log('Echo connector:', window.Echo.connector);
+        
+        // Check connection state
+        if (window.Echo.connector && window.Echo.connector.pusher) {
+            const state = window.Echo.connector.pusher.connection.state;
+            console.log('Connection state:', state);
+        }
+        
+        alert('✅ Echo is working! Check console for details.');
+    } else {
+        alert('❌ Echo is NOT working! Check console for errors.');
+    }
+}
+
+// View Reporter
+function viewReporter(id) {
+    const reporter = reporters.find(r => r.id === id);
+    if (!reporter) {
+        console.error('Reporter not found:', id);
+        return;
+    }
+    
+    const modal = document.getElementById('viewModal');
+    const content = document.getElementById('viewModalContent');
+    
+    // Use the same avatar color logic as the table (no space between names)
+    const name = reporter.user.first_name + reporter.user.last_name;
+    
+    // Generate color using same logic as PHP
+    const colors = [
+        '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', 
+        '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const avatarColor = colors[Math.abs(hash) % colors.length];
+    const initials = `${reporter.user.first_name.charAt(0)}`.toUpperCase();
+    
+    content.innerHTML = `
+        <div class="flex items-center space-x-4 mb-6">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl" style="background-color: ${avatarColor}">
+                ${initials}
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">${reporter.user.first_name} ${reporter.user.last_name}</h4>
+                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">${reporter.reporter_type?.name || 'No Type'}</p>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Email</label>
+                <p class="text-[#1b1b18] dark:text-[#EDEDEC]">${reporter.user.email}</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Status</label>
+                <p><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${reporter.user.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                    ${reporter.user.is_active ? 'Active' : 'Inactive'}
+                </span></p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Created</label>
+                <p class="text-[#1b1b18] dark:text-[#EDEDEC]">${new Date(reporter.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeViewModal() {
+    const modal = document.getElementById('viewModal');
+    modal.classList.add('hidden');
+}
+
+// Edit Reporter Modal
+function openEditModal(id) {
+    const reporter = reporters.find(r => r.id === id);
+    if (!reporter) {
+        console.error('Reporter not found:', id);
+        return;
+    }
+    
+    document.getElementById('edit_reporter_id').value = reporter.id;
+    document.getElementById('edit_first_name').value = reporter.user.first_name;
+    document.getElementById('edit_last_name').value = reporter.user.last_name;
+    document.getElementById('edit_email').value = reporter.user.email;
+    document.getElementById('edit_type_id').value = reporter.type_id;
+    document.getElementById('edit_is_active').value = reporter.user.is_active ? '1' : '0';
+    
+    const modal = document.getElementById('editModal');
+    modal.classList.remove('hidden');
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    modal.classList.add('hidden');
+}
+
+// Handle edit form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit_reporter_id').value;
+            const isActiveValue = document.getElementById('edit_is_active').value;
+            const data = {
+                first_name: document.getElementById('edit_first_name').value,
+                last_name: document.getElementById('edit_last_name').value,
+                email: document.getElementById('edit_email').value,
+                type_id: parseInt(document.getElementById('edit_type_id').value),
+                is_active: isActiveValue === '1'
+            };
+            
+            console.log('Sending update data:', data);
+            console.log('is_active dropdown value:', isActiveValue);
+            console.log('is_active boolean:', data.is_active);
+            
+            // Mark this action BEFORE sending to prevent notification
+            if (realtimeManager) {
+                realtimeManager.markUserAction(parseInt(id));
+            }
+            
+            fetch(`/users/reporters/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeEditModal();
+                } else {
+                    alert(data.message || 'Failed to update reporter');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating');
+            });
+        });
+    }
+});
+
+// Delete Reporter
+let deleteReporterId = null;
+
+function deleteReporter(id) {
+    const reporter = reporters.find(r => r.id === id);
+    if (!reporter) {
+        console.error('Reporter not found:', id);
+        return;
+    }
+    
+    deleteReporterId = id;
+    document.getElementById('deleteModalMessage').textContent = 
+        `Are you sure you want to delete ${reporter.user.first_name} ${reporter.user.last_name}? This action cannot be undone.`;
+    
+    // Mark this action BEFORE showing modal
+    if (realtimeManager) {
+        realtimeManager.markUserAction(id);
+    }
+    
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.add('hidden');
+    deleteReporterId = null;
+}
+
+function confirmDelete() {
+    if (!deleteReporterId) return;
+    
+    fetch(`/users/reporters/${deleteReporterId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeDeleteModal();
+        } else {
+            alert(data.message || 'Failed to delete reporter');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting');
+    });
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (realtimeManager) {
+        realtimeManager.disconnect();
+    }
+});
+</script>
+
+<style>
+/* Animation styles for real-time updates */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes highlight {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.animate-fade-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+.animate-highlight {
+    animation: highlight 1s ease-out;
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+</style>
+
+<script>
+// Export to CSV function
+function exportToCSV() {
+    // Get current visible reporters (respecting filters)
+    const visibleReporters = reporters.filter(reporter => {
+        const row = document.querySelector(`tr[data-id="${reporter.id}"]`);
+        return row && row.style.display !== 'none';
+    });
+
+    if (visibleReporters.length === 0) {
+        alert('No reporters to export');
+        return;
+    }
+
+    // CSV Headers
+    const headers = ['Name', 'Email', 'Type', 'Status', 'Created Date'];
+    
+    // CSV Rows
+    const rows = visibleReporters.map(reporter => {
+        const name = `${reporter.user.first_name} ${reporter.user.last_name}`;
+        const email = reporter.user.email;
+        const type = reporter.reporter_type?.name || 'No Type';
+        const status = reporter.user.is_active ? 'Active' : 'Inactive';
+        const createdDate = new Date(reporter.created_at).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        // Escape quotes and wrap in quotes if contains comma
+        return [name, email, type, status, createdDate].map(field => {
+            const escaped = String(field).replace(/"/g, '""');
+            return `"${escaped}"`;
+        }).join(',');
+    });
+
+    // Combine headers and rows
+    const csv = [headers.join(','), ...rows].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reporters_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Listen for profile updates from profile page
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Echo) {
+        const currentUserId = {{ auth()->id() }};
+        
+        // Listen for user updates (from profile page)
+        window.Echo.channel('reporters')
+            .listen('.reporter.updated', (event) => {
+                if (event.reporter && event.reporter.user_id === currentUserId) {
+                    // Update the current user's row in the table
+                    updateCurrentUserRow(event.reporter);
+                }
+            });
+    }
+});
+
+// Function to update current user's row in the table
+function updateCurrentUserRow(reporterData) {
+    const currentUserRow = document.querySelector(`tr[data-id="${reporterData.id}"]`);
+    if (currentUserRow) {
+        // Update the name in the table
+        const nameElement = currentUserRow.querySelector('.text-sm.font-medium');
+        if (nameElement) {
+            nameElement.textContent = `${reporterData.user.first_name} ${reporterData.user.last_name}`;
+        }
+
+        // Update the email in the table
+        const emailElement = currentUserRow.querySelector('td:nth-child(2)');
+        if (emailElement) {
+            emailElement.textContent = reporterData.user.email;
+        }
+
+        // Update the status if changed
+        const statusElement = currentUserRow.querySelector('span');
+        if (statusElement) {
+            const isActive = reporterData.user.is_active;
+            statusElement.textContent = isActive ? 'Active' : 'Inactive';
+            statusElement.className = isActive 
+                ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+        }
+
+        // Update the local reporters array
+        const index = reporters.findIndex(r => r.id === reporterData.id);
+        if (index !== -1) {
+            reporters[index] = reporterData;
+        }
+    }
+}
+</script>
+@endpush

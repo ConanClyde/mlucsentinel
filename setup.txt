@@ -1,0 +1,129 @@
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:8ToBZOZH8ktbfoURRA8Rk6R5qr9mhjYqCzKby2X2Dl0=
+APP_DEBUG=true
+# APP_URL=http://localhost
+APP_URL=http://127.0.0.1:8000
+
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+
+APP_MAINTENANCE_DRIVER=file
+# APP_MAINTENANCE_STORE=database
+
+PHP_CLI_SERVER_WORKERS=4
+
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_mlucsentinel
+DB_USERNAME=root
+DB_PASSWORD=
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+# BROADCAST_CONNECTION=reverb
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+
+CACHE_STORE=database
+# CACHE_PREFIX=
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=mlucsentinel@gmail.com
+MAIL_PASSWORD=fklkmfoettidswha
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=mlucsentinel@gmail.com
+MAIL_FROM_NAME="MLUC Sentinel"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+VITE_APP_NAME="${APP_NAME}"
+
+
+BROADCAST_CONNECTION=reverb
+
+REVERB_APP_ID=338257
+REVERB_APP_KEY=xjybg4ttpkkoazcqudlb
+REVERB_APP_SECRET=wz3y3d82d2g8s9ygz74z
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+
+VITE_REVERB_APP_KEY=xjybg4ttpkkoazcqudlb
+VITE_REVERB_HOST=127.0.0.1
+VITE_REVERB_PORT=8080
+VITE_REVERB_SCHEME=http
+
+
+
+
+
+
+set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+Get-ExecutionPolicy
+Get-ExecutionPolicy -list
+
+composer install
+npm install
+php artisan storage:link
+
+php artisan migrate
+php artisan serve
+php artisan reverb:start
+php artisan queue:work
+php artisan queue:listen --tries=1
+npm run dev
+
+
+
+
+php artisan test tests/Unit/UserReportingPermissionsTest.php
+
+composer dump-autoload -o
+php artisan package:discover --ansi
+
+php artisan config:clear
+php artisan route:clear
+php artisan cache:clear
+php artisan view:clear
+
+composer dump-autoload
+
+PUSH GITHUB
+
+git init
+git add .
+git commit -am "initial commit"
+git remote add origin https://github.com/codebyalvs/capstone-mluc-sentinel-v2.git
+git push origin master
+
+
+php artisan install:broadcasting
+reverb
+yes
