@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['status', 'type']);
             $table->index('paid_at');
         });

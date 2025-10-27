@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->enum('user_type',
                 ['global_administrator',
-                'administrator',
-                'student',
-                'staff',
-                'security',
-                'reporter',
-                'stakeholder'
-            ]);
+                    'administrator',
+                    'student',
+                    'staff',
+                    'security',
+                    'reporter',
+                    'stakeholder',
+                ]);
             $table->string('first_name');
             $table->string('last_name');
             $table->string('name')->virtualAs("CONCAT(first_name, ' ', last_name)");

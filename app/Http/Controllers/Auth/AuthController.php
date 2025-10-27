@@ -42,16 +42,9 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            
-            // Redirect based on user type
-            if (in_array($user->user_type, ['global_administrator', 'administrator'])) {
-                return redirect()->intended(route('dashboard'));
-            } elseif (in_array($user->user_type, ['reporter', 'security'])) {
-                return redirect()->intended(route('dashboard'));
-            } else {
-                // For other user types (students, staff, stakeholders)
-                return redirect()->intended(route('home'));
-            }
+
+            // Always redirect to home after login (ignore intended URL)
+            return redirect()->route('home');
         }
 
         return back()->withErrors([

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Reporter;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
@@ -13,7 +12,7 @@ class HomeController extends Controller
     public function index()
     {
         return view('reporter.home', [
-            'pageTitle' => 'Reporter Home'
+            'pageTitle' => 'Reporter Home',
         ]);
     }
 }

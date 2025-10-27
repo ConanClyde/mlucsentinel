@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -28,6 +28,7 @@ return new class extends Migration
             ['name' => 'Disrespecting Personnel in Authority', 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'No ID Presented / Use of Other Student\'s ID', 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Improper School Attire', 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Noisy Muffler (Tambutso)', 'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 

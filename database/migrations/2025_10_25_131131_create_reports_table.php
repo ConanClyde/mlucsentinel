@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
             $table->string('assigned_to_user_type')->nullable(); // For reference: 'Administrator', 'Security', etc.
 
-            $table->enum('status', ['pending', 'under_review', 'approved', 'rejected', 'resolved', 'dismissed'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
 
             $table->timestamp('reported_at')->useCurrent();
             $table->string('evidence_image')->nullable();

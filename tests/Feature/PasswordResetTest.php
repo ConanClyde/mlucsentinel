@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\PasswordResetCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -17,12 +16,12 @@ class PasswordResetTest extends TestCase
         // Create a user
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'password' => bcrypt('oldpassword')
+            'password' => bcrypt('oldpassword'),
         ]);
 
         // Request password reset
         $response = $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Should redirect to reset password form
@@ -32,7 +31,7 @@ class PasswordResetTest extends TestCase
         // Should create a reset code in database
         $this->assertDatabaseHas('password_reset_codes', [
             'email' => 'test@example.com',
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Reset code should expire in 5 minutes
@@ -44,12 +43,12 @@ class PasswordResetTest extends TestCase
     public function test_user_cannot_request_reset_with_invalid_email()
     {
         $response = $this->post('/forgot-password', [
-            'email' => 'nonexistent@example.com'
+            'email' => 'nonexistent@example.com',
         ]);
 
         $response->assertSessionHasErrors(['email']);
         $this->assertDatabaseMissing('password_reset_codes', [
-            'email' => 'nonexistent@example.com'
+            'email' => 'nonexistent@example.com',
         ]);
     }
 
@@ -63,19 +62,19 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Test valid code validation
         $response = $this->post('/validate-reset-code', [
             'email' => 'test@example.com',
-            'code' => '123456'
+            'code' => '123456',
         ]);
 
         $response->assertStatus(200);
         $response->assertJson([
             'valid' => true,
-            'message' => 'Code is valid!'
+            'message' => 'Code is valid!',
         ]);
     }
 
@@ -89,19 +88,19 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Test invalid code validation
         $response = $this->post('/validate-reset-code', [
             'email' => 'test@example.com',
-            'code' => '999999'
+            'code' => '999999',
         ]);
 
         $response->assertStatus(200);
         $response->assertJson([
             'valid' => false,
-            'message' => 'Invalid or expired reset code.'
+            'message' => 'Invalid or expired reset code.',
         ]);
     }
 
@@ -115,19 +114,19 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->subMinutes(1), // Expired 1 minute ago
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Test expired code validation
         $response = $this->post('/validate-reset-code', [
             'email' => 'test@example.com',
-            'code' => '123456'
+            'code' => '123456',
         ]);
 
         $response->assertStatus(200);
         $response->assertJson([
             'valid' => false,
-            'message' => 'Invalid or expired reset code.'
+            'message' => 'Invalid or expired reset code.',
         ]);
     }
 
@@ -141,19 +140,19 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => true // Already used
+            'is_used' => true, // Already used
         ]);
 
         // Test used code validation
         $response = $this->post('/validate-reset-code', [
             'email' => 'test@example.com',
-            'code' => '123456'
+            'code' => '123456',
         ]);
 
         $response->assertStatus(200);
         $response->assertJson([
             'valid' => false,
-            'message' => 'Invalid or expired reset code.'
+            'message' => 'Invalid or expired reset code.',
         ]);
     }
 
@@ -162,7 +161,7 @@ class PasswordResetTest extends TestCase
         // Create a user
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'password' => bcrypt('oldpassword')
+            'password' => bcrypt('oldpassword'),
         ]);
 
         // Create a valid reset code
@@ -170,7 +169,7 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Reset password
@@ -178,7 +177,7 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'password' => 'newpassword123',
-            'password_confirmation' => 'newpassword123'
+            'password_confirmation' => 'newpassword123',
         ]);
 
         // Should redirect to login
@@ -190,7 +189,7 @@ class PasswordResetTest extends TestCase
 
         // All reset codes for this email should be deleted (they are deleted after successful reset)
         $this->assertDatabaseMissing('password_reset_codes', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 
@@ -204,7 +203,7 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '999999',
             'password' => 'newpassword123',
-            'password_confirmation' => 'newpassword123'
+            'password_confirmation' => 'newpassword123',
         ]);
 
         $response->assertSessionHasErrors(['code']);
@@ -222,24 +221,24 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '111111',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Request new reset code
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Old code should be deleted
         $this->assertDatabaseMissing('password_reset_codes', [
             'email' => 'test@example.com',
-            'code' => '111111'
+            'code' => '111111',
         ]);
 
         // New code should exist
         $this->assertDatabaseHas('password_reset_codes', [
             'email' => 'test@example.com',
-            'is_used' => false
+            'is_used' => false,
         ]);
     }
 
@@ -250,7 +249,7 @@ class PasswordResetTest extends TestCase
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Get the created reset code
@@ -271,7 +270,7 @@ class PasswordResetTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Code should be valid now

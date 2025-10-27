@@ -23,12 +23,12 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $response = $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Assert email was sent
@@ -45,12 +45,12 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Get the created reset code
@@ -66,12 +66,12 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Assert email has correct subject
@@ -84,7 +84,7 @@ class PasswordResetEmailTest extends TestCase
     {
         // Try to request password reset with invalid email
         $response = $this->post('/forgot-password', [
-            'email' => 'nonexistent@example.com'
+            'email' => 'nonexistent@example.com',
         ]);
 
         // Assert no email was sent
@@ -98,7 +98,7 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Mock Mail to throw an exception
@@ -108,7 +108,7 @@ class PasswordResetEmailTest extends TestCase
 
         // Request password reset
         $response = $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Should still redirect successfully even if email fails
@@ -118,7 +118,7 @@ class PasswordResetEmailTest extends TestCase
         // Reset code should still be created
         $this->assertDatabaseHas('password_reset_codes', [
             'email' => 'test@example.com',
-            'is_used' => false
+            'is_used' => false,
         ]);
     }
 
@@ -126,16 +126,16 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset multiple times
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Should have sent 2 emails
@@ -146,18 +146,19 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Assert email was sent
         Mail::assertSent(PasswordResetMail::class, function ($mail) {
             // Check if the email content contains the reset link
             $content = $mail->render();
+
             return str_contains($content, route('password.reset', ['email' => 'test@example.com']));
         });
     }
@@ -166,17 +167,18 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Assert email was sent
         Mail::assertSent(PasswordResetMail::class, function ($mail) {
             $content = $mail->render();
+
             return str_contains($content, '5 minutes') && str_contains($content, 'expire');
         });
     }
@@ -185,18 +187,19 @@ class PasswordResetEmailTest extends TestCase
     {
         // Create a user
         $user = User::factory()->create([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Request password reset
         $this->post('/forgot-password', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         // Assert email was sent
         Mail::assertSent(PasswordResetMail::class, function ($mail) {
             $content = $mail->render();
-            return str_contains($content, 'MLUC Sentinel') && 
+
+            return str_contains($content, 'MLUC Sentinel') &&
                    str_contains($content, 'Digital Parking Management System');
         });
     }

@@ -106,6 +106,11 @@ body {
     @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-4xl w-full mx-4 transform transition-all;
 }
 
+/* Wide Modal for Edit Student */
+.modal-container-wide {
+    @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-4xl w-full mx-4 transform transition-all;
+}
+
 /* Mobile responsive modals */
 @media (max-width: 768px) {
     .camera-container {
@@ -113,6 +118,10 @@ body {
     }
     
     .modal-container {
+        @apply mx-2 max-w-full;
+    }
+    
+    .modal-container-wide {
         @apply mx-2 max-w-full;
     }
     
@@ -144,7 +153,8 @@ body {
     }
     
     .camera-container,
-    .modal-container {
+    .modal-container,
+    .modal-container-wide {
         @apply mx-1;
     }
     
@@ -350,5 +360,136 @@ body {
 
 .animate-highlight {
     animation: highlight 0.3s ease-out;
+}
+
+
+/* Text truncation for long emails */
+.sidebar-user-info {
+    @apply flex-1 min-w-0 overflow-hidden;
+}
+
+.sidebar-user-name {
+    @apply text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] truncate;
+}
+
+.sidebar-user-email {
+    @apply text-xs text-[#706f6c] dark:text-[#A1A09A] truncate leading-tight;
+}
+
+/* Vehicle Display Cards in Edit Modal */
+.vehicle-display-card {
+    @apply bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] transition-all duration-200;
+}
+
+.vehicle-display-card:hover {
+    @apply bg-gray-100 dark:bg-[#1f1f1d] border-[#d1d5db] dark:border-[#4a4a4a];
+}
+
+.vehicle-delete-btn {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-sm bg-red-500 text-white hover:bg-red-600 border border-red-500 hover:border-red-600 transition-all;
+    cursor: pointer;
+}
+
+/* Image sizing for modals */
+.license-image {
+    @apply max-w-sm w-auto h-auto max-h-64 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] object-contain;
+}
+
+.sticker-image {
+    @apply w-full h-auto max-h-32 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] object-contain;
+}
+
+/* Sticker image in vehicle cards - full width */
+.vehicle-sticker-image {
+    @apply w-full h-auto rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] object-contain block;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+}
+
+/* Vehicle card sizing */
+.vehicle-card {
+    @apply bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] transition-all duration-200;
+}
+
+.vehicle-card:hover {
+    @apply bg-gray-100 dark:bg-[#1f1f1d] border-[#d1d5db] dark:border-[#4a4a4a];
+}
+
+/* Compact vehicle card for view modal */
+.vehicle-card-compact {
+    @apply bg-gray-50 dark:bg-[#161615] p-3 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] transition-all duration-200;
+}
+
+.vehicle-card-compact:hover {
+    @apply bg-gray-100 dark:bg-[#1f1f1d] border-[#d1d5db] dark:border-[#4a4a4a];
+}
+
+/* Responsive image containers */
+.image-container {
+    @apply inline-flex justify-center items-center;
+}
+
+/* Image container that centers within parent but doesn't stretch */
+.image-container-centered {
+    @apply flex justify-center items-center;
+}
+
+/* Tab Navigation Styles */
+.sticker-tab {
+    @apply inline-flex items-center gap-2 px-0 py-4 -mb-px border-b-[3px] border-transparent text-gray-400 dark:text-gray-500 font-medium text-sm transition-all;
+}
+
+.sticker-tab:hover {
+    @apply text-[#1b1b18] dark:text-[#EDEDEC] border-gray-300 dark:border-gray-600;
+}
+
+.sticker-tab.active {
+    @apply text-[#1b1b18] dark:text-[#EDEDEC] border-[#1b1b18] dark:border-[#EDEDEC] font-semibold;
+}
+
+.sticker-tab svg {
+    @apply w-5 h-5 flex-shrink-0;
+}
+
+/* Vehicle Sticker Card Selection */
+.vehicle-sticker-card {
+    @apply relative bg-white dark:bg-[#161615] rounded-lg border-2 border-[#e3e3e0] dark:border-[#3E3E3A] overflow-hidden cursor-pointer transition-all duration-200;
+}
+
+.vehicle-sticker-card:hover {
+    @apply border-gray-400 dark:border-gray-500 shadow-md;
+}
+
+.vehicle-sticker-card.selected {
+    @apply border-blue-600 dark:border-blue-500 ring-2 ring-blue-600 dark:ring-blue-500 shadow-lg;
+}
+
+.vehicle-sticker-card .checkbox-indicator {
+    @apply absolute top-3 right-3 w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#161615] flex items-center justify-center transition-all z-10;
+}
+
+.vehicle-sticker-card.selected .checkbox-indicator {
+    @apply bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500;
+}
+
+.vehicle-sticker-card .checkbox-icon {
+    @apply w-4 h-4 text-white hidden;
+}
+
+.vehicle-sticker-card.selected .checkbox-icon {
+    @apply block;
+}
+
+.vehicle-sticker-card .sticker-image-container {
+    @apply w-full bg-gray-50 dark:bg-[#1f1f1d] p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A];
+}
+
+.vehicle-sticker-card .sticker-image-container img {
+    @apply w-full h-auto rounded;
+}
+
+.vehicle-sticker-card .vehicle-info {
+    @apply p-4 space-y-2;
 }
 

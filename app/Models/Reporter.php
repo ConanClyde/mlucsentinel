@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reporter extends Model
 {
@@ -15,14 +16,22 @@ class Reporter extends Model
         'expiration_date',
     ];
 
-    protected $casts = [
-        'expiration_date' => 'date',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'expiration_date' => 'date',
+        ];
+    }
 
     /**
      * Get the user associated with the reporter.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -30,7 +39,7 @@ class Reporter extends Model
     /**
      * Get the reporter type.
      */
-    public function reporterType()
+    public function reporterType(): BelongsTo
     {
         return $this->belongsTo(ReporterType::class, 'type_id');
     }

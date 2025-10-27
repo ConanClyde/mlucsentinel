@@ -8,25 +8,27 @@ use Illuminate\Support\Str;
 class SetupReverb extends Command
 {
     protected $signature = 'reverb:setup';
+
     protected $description = 'Setup Reverb broadcasting configuration';
 
     public function handle()
     {
         $this->info('Setting up Reverb broadcasting...');
-        
+
         $envPath = base_path('.env');
-        
-        if (!file_exists($envPath)) {
+
+        if (! file_exists($envPath)) {
             $this->error('.env file not found!');
+
             return 1;
         }
 
         $envContent = file_get_contents($envPath);
-        
+
         // Check if Reverb is already configured
         if (strpos($envContent, 'REVERB_APP_KEY') !== false) {
             $this->warn('Reverb configuration already exists in .env file.');
-            if (!$this->confirm('Do you want to regenerate the keys?')) {
+            if (! $this->confirm('Do you want to regenerate the keys?')) {
                 return 0;
             }
         }
@@ -59,7 +61,7 @@ class SetupReverb extends Command
         $envContent = preg_replace('/^VITE_REVERB_.*\n/m', '', $envContent);
 
         // Append new config
-        $envContent = rtrim($envContent) . "\n" . $reverbConfig;
+        $envContent = rtrim($envContent)."\n".$reverbConfig;
 
         file_put_contents($envPath, $envContent);
 
@@ -73,7 +75,7 @@ class SetupReverb extends Command
         $this->line('  1. Run: npm run dev');
         $this->line('  2. Run: php artisan reverb:start');
         $this->line('  3. Visit: /users/administrators');
-        
+
         return 0;
     }
 }

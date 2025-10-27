@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('type_id')->nullable()->constrained('vehicle_types')->onDelete('set null');
-            $table->string('plate_no')->unique();
+            $table->string('plate_no')->nullable();
             $table->string('color'); // color of sticker
             $table->string('number'); // number of sticker (not unique, all starts at 0001)
             $table->string('sticker')->nullable(); // sticker image
@@ -23,7 +23,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['color', 'number']); // Unique combination of color and number
+            // Add unique constraint on color and number
+            $table->unique(['color', 'number']);
             $table->index(['user_id', 'type_id']);
             $table->index('is_active');
         });

@@ -15,13 +15,13 @@ class CheckUserType
      */
     public function handle(Request $request, Closure $next, string ...$allowedTypes): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         $userType = auth()->user()->user_type;
-        
-        if (!in_array($userType, $allowedTypes)) {
+
+        if (! in_array($userType, $allowedTypes)) {
             abort(403, 'Access denied. Insufficient permissions.');
         }
 

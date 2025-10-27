@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sticker_counters', function (Blueprint $table) {
             $table->id();
-            $table->string('color', 20)->unique(); 
+            $table->string('color', 20)->unique();
             $table->unsignedInteger('count')->default(1); // counter for each color, starts at 1
             $table->timestamps();
         });

@@ -82,14 +82,11 @@
                             <div class="flex items-center">
                                 @php
                                     $colors = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4'];
-                                    $name = $administrator->user->first_name . $administrator->user->last_name;
-                                    $hash = 0;
-                                    for ($i = 0; $i < strlen($name); $i++) {
-                                        $hash = ord($name[$i]) + (($hash << 5) - $hash);
-                                    }
-                                    $avatarColor = $colors[abs($hash) % count($colors)];
+                                    $firstLetter = strtoupper(substr($administrator->user->first_name ?? 'U', 0, 1));
+                                    $hash = ord($firstLetter);
+                                    $avatarColor = $colors[$hash % count($colors)];
                                 @endphp
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 text-white font-semibold text-xs" style="background-color: {{ $avatarColor }}">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 text-white font-semibold text-xs flex-shrink-0" style="background-color: {{ $avatarColor }}">
                                     {{ strtoupper(substr($administrator->user->first_name, 0, 1)) }}
                                 </div>
                                 <div>
@@ -196,20 +193,35 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Role</label>
-                    <select id="edit_role_id" class="form-input" required>
-                        @foreach($adminRoles as $role)
-                            <option value="{{ $role->id }}">{{ $role->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="form-group">
                     <label class="form-label">Status</label>
                     <select id="edit_is_active" class="form-input" required>
                         <option value="1">Active</option>
                         <option value="0">Inactive</option>
                     </select>
+                </div>
+                
+                <hr class="my-4 border-[#e3e3e0] dark:border-[#3E3E3A]">
+                
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <div class="relative">
+                        <input type="password" id="edit_password" class="form-input pr-10" placeholder="Leave blank to keep current password">
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center toggle-password" data-target="edit_password">
+                            <x-heroicon-c-eye class="eye-icon w-5 h-5 text-gray-400" />
+                            <x-heroicon-c-eye-slash class="eye-slash-icon w-5 h-5 text-gray-400 hidden" />
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="edit_password_confirmation" class="form-input pr-10" placeholder="Confirm new password">
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center toggle-password" data-target="edit_password_confirmation">
+                            <x-heroicon-c-eye class="eye-icon w-5 h-5 text-gray-400" />
+                            <x-heroicon-c-eye-slash class="eye-slash-icon w-5 h-5 text-gray-400 hidden" />
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -523,11 +535,9 @@ function viewAdministrator(id) {
         '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', 
         '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4'
     ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const avatarColor = colors[Math.abs(hash) % colors.length];
+    const firstLetter = administrator.user.first_name.charAt(0).toUpperCase();
+    const hash = firstLetter.charCodeAt(0);
+    const avatarColor = colors[hash % colors.length];
     const initials = `${administrator.user.first_name.charAt(0)}`.toUpperCase();
     
     content.innerHTML = `
@@ -578,7 +588,6 @@ function openEditModal(id) {
     document.getElementById('edit_first_name').value = administrator.user.first_name;
     document.getElementById('edit_last_name').value = administrator.user.last_name;
     document.getElementById('edit_email').value = administrator.user.email;
-    document.getElementById('edit_role_id').value = administrator.role_id;
     document.getElementById('edit_is_active').value = administrator.user.is_active ? '1' : '0';
     
     const modal = document.getElementById('editModal');
@@ -599,13 +608,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const id = document.getElementById('edit_admin_id').value;
             const isActiveValue = document.getElementById('edit_is_active').value;
+            const password = document.getElementById('edit_password').value;
+            const passwordConfirmation = document.getElementById('edit_password_confirmation').value;
+            
             const data = {
                 first_name: document.getElementById('edit_first_name').value,
                 last_name: document.getElementById('edit_last_name').value,
                 email: document.getElementById('edit_email').value,
-                role_id: parseInt(document.getElementById('edit_role_id').value),
                 is_active: isActiveValue === '1'
             };
+            
+            // Add password fields if provided
+            if (password) {
+                if (password !== passwordConfirmation) {
+                    alert('Passwords do not match');
+                    return;
+                }
+                data.password = password;
+                data.password_confirmation = passwordConfirmation;
+            }
             
             console.log('Sending update data:', data);
             console.log('is_active dropdown value:', isActiveValue);
@@ -694,6 +715,68 @@ function confirmDelete() {
     });
 }
 
+// Export to CSV function
+function exportToCSV() {
+    // Get current visible administrators (respecting filters)
+    const visibleAdmins = administrators.filter(admin => {
+        const row = document.querySelector(`tr[data-id="${admin.id}"]`);
+        return row && row.style.display !== 'none';
+    });
+
+    if (visibleAdmins.length === 0) {
+        alert('No administrators to export');
+        return;
+    }
+
+    // CSV Headers
+    const headers = ['Name', 'Email', 'Role', 'Status', 'Created Date'];
+    
+    // CSV Rows
+    const rows = visibleAdmins.map(admin => {
+        const name = `${admin.user.first_name} ${admin.user.last_name}`;
+        const email = admin.user.email;
+        const role = admin.admin_role?.name || 'No Role';
+        const status = admin.user.is_active ? 'Active' : 'Inactive';
+        const createdDate = new Date(admin.created_at).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        // Escape quotes and wrap in quotes if contains comma
+        return [name, email, role, status, createdDate].map(field => {
+            const escaped = String(field).replace(/"/g, '""');
+            return `"${escaped}"`;
+        }).join(',');
+    });
+
+    // Combine headers and rows
+    const csv = [headers.join(','), ...rows].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `administrators_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Expose functions to global scope for onclick handlers
+window.viewAdministrator = viewAdministrator;
+window.openEditModal = openEditModal;
+window.deleteAdministrator = deleteAdministrator;
+window.closeViewModal = closeViewModal;
+window.closeDeleteModal = closeDeleteModal;
+window.confirmDelete = confirmDelete;
+window.exportToCSV = exportToCSV;
+window.closeEditModal = closeEditModal;
+
 // Cleanup on page unload
 window.addEventListener('beforeunload', function() {
     if (realtimeManager) {
@@ -764,58 +847,6 @@ window.addEventListener('beforeunload', function() {
 </style>
 
 <script>
-// Export to CSV function
-function exportToCSV() {
-    // Get current visible administrators (respecting filters)
-    const visibleAdmins = administrators.filter(admin => {
-        const row = document.querySelector(`tr[data-id="${admin.id}"]`);
-        return row && row.style.display !== 'none';
-    });
-
-    if (visibleAdmins.length === 0) {
-        alert('No administrators to export');
-        return;
-    }
-
-    // CSV Headers
-    const headers = ['Name', 'Email', 'Role', 'Status', 'Created Date'];
-    
-    // CSV Rows
-    const rows = visibleAdmins.map(admin => {
-        const name = `${admin.user.first_name} ${admin.user.last_name}`;
-        const email = admin.user.email;
-        const role = admin.admin_role?.name || 'No Role';
-        const status = admin.user.is_active ? 'Active' : 'Inactive';
-        const createdDate = new Date(admin.created_at).toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-        
-        // Escape quotes and wrap in quotes if contains comma
-        return [name, email, role, status, createdDate].map(field => {
-            const escaped = String(field).replace(/"/g, '""');
-            return `"${escaped}"`;
-        }).join(',');
-    });
-
-    // Combine headers and rows
-    const csv = [headers.join(','), ...rows].join('\n');
-
-    // Create blob and download
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `administrators_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 // Listen for profile updates from profile page
 document.addEventListener('DOMContentLoaded', function() {
     if (window.Echo) {

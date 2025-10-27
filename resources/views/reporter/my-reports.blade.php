@@ -4,153 +4,370 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Page Header -->
+    <!-- Filter Card -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                    My Reports
-                </h2>
-                <p class="text-[#706f6c] dark:text-[#A1A09A]">
-                    View and manage your submitted reports
-                </p>
+        <div class="flex flex-col md:flex-row gap-4 items-end">
+            <!-- Search -->
+            <div class="flex-1 md:flex-[2]">
+                <label class="form-label">Search</label>
+                <input type="text" id="search-input" class="form-input w-full" placeholder="Search by violator, vehicle, or location...">
             </div>
-            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                <x-heroicon-o-document-text class="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            </div>
-        </div>
-    </div>
 
-    <!-- Filter and Search -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4">
+            <!-- Status Filter -->
             <div class="flex-1">
-                <input type="text" placeholder="Search reports..." class="w-full px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg bg-white dark:bg-[#1a1a1a] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            </div>
-            <div>
-                <select class="px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg bg-white dark:bg-[#1a1a1a] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <label class="form-label">Status</label>
+                <select id="status-filter" class="form-input w-full">
                     <option value="">All Status</option>
                     <option value="pending">Pending</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="dismissed">Dismissed</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
                 </select>
             </div>
-            <div>
-                <select class="px-3 py-2 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg bg-white dark:bg-[#1a1a1a] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+            <!-- Violation Type Filter -->
+            <div class="flex-1">
+                <label class="form-label">Violation Type</label>
+                <select id="violation-filter" class="form-input w-full">
                     <option value="">All Types</option>
-                    <option value="illegal_parking">Illegal Parking</option>
-                    <option value="no_parking_zone">No Parking Zone</option>
-                    <option value="blocking_fire_exit">Blocking Fire Exit</option>
-                    <option value="handicap_violation">Handicap Violation</option>
+                    @php
+                        $violationTypes = \App\Models\ViolationType::orderBy('name')->get();
+                    @endphp
+                    @foreach($violationTypes as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
                 </select>
             </div>
-            <div class="flex gap-3">
-                <button class="btn bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">Filter</button>
-                <button class="btn bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">Clear</button>
+
+            <!-- Reset Button -->
+            <div class="flex-shrink-0">
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
             </div>
         </div>
     </div>
 
-    <!-- Reports List -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A]">
-        <div class="p-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Your Reports</h3>
-            
-            <div class="space-y-4">
-                <!-- Report Item 1 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <div>
-                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Parking Violation - ABC-1234</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Building A, Parking Lot 1 • 2 hours ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full">
-                            Pending
-                        </span>
-                        <button class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
-                            View Details
-                        </button>
-                    </div>
+    <!-- Reports Table -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">My Reports</h3>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
                 </div>
+                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+            </div>
+        </div>
 
-                <!-- Report Item 2 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <div>
-                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">No Parking Zone - XYZ-5678</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Main Entrance • 1 day ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full">
-                            Under Review
-                        </span>
-                        <button class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
-                            View Details
-                        </button>
-                    </div>
+        @if($reports->isEmpty())
+                <div class="text-center py-12">
+                    <x-heroicon-o-document-text class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">No reports submitted yet</p>
+                    <a href="{{ route('reporter.report-user') }}" class="btn btn-primary">Submit a Report</a>
                 </div>
-
-                <!-- Report Item 3 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <div>
-                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Blocking Fire Exit - DEF-9012</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Building B • 3 days ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
-                            Resolved
-                        </span>
-                        <button class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
-                            View Details
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Report Item 4 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-2 h-2 bg-gray-500 rounded-full"></div>
-                        <div>
-                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Handicap Violation - GHI-3456</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Parking Lot 2 • 1 week ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-full">
-                            Dismissed
-                        </span>
-                        <button class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
-                            View Details
-                        </button>
-                    </div>
-                </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Violation Type</th>
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Violator</th>
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Vehicle</th>
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Location</th>
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Date</th>
+                            <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Status</th>
+                            <th class="text-center py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($reports as $report)
+                                @php
+                                    $statusColors = [
+                                        'pending' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+                                        'under_review' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                                        'approved' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                        'rejected' => 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                                        'resolved' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                        'dismissed' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+                                    ];
+                                    $statusClass = $statusColors[$report->status] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                    
+                                    $violatorName = $report->violatorVehicle && $report->violatorVehicle->user 
+                                        ? $report->violatorVehicle->user->first_name . ' ' . $report->violatorVehicle->user->last_name
+                                        : 'Unknown';
+                                    
+                                    $vehicleInfo = $report->violatorVehicle 
+                                        ? ($report->violatorVehicle->plate_no ?: $report->violator_sticker_number)
+                                        : 'N/A';
+                            @endphp
+                            
+                            <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors">
+                                <td class="py-2 px-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
+                                    {{ $report->violationType->name ?? 'N/A' }}
+                                </td>
+                                <td class="py-2 px-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
+                                    {{ $violatorName }}
+                                </td>
+                                <td class="py-2 px-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
+                                    {{ $vehicleInfo }}
+                                </td>
+                                <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                    {{ $report->location }}
+                                </td>
+                                <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                    {{ $report->reported_at->format('M d, Y') }}
+                                </td>
+                                <td class="py-2 px-3">
+                                    <span class="px-2.5 py-1 text-xs font-medium {{ $statusClass }} rounded-full whitespace-nowrap">
+                                        {{ ucfirst(str_replace('_', ' ', $report->status)) }}
+                                    </span>
+                                </td>
+                                <td class="py-2 px-3">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="viewReport({{ $report->id }})" class="btn-view" title="View">
+                                            <x-heroicon-s-eye class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="mt-6 flex items-center justify-between">
+            <!-- Pagination Controls -->
+            <div id="pagination-controls" class="flex items-center justify-between mt-6">
                 <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                    Showing 1-4 of 4 reports
+                    Showing <span id="showing-start">1</span>-<span id="showing-end">10</span> of <span id="total-count">0</span> reports
                 </p>
                 <div class="flex space-x-2">
-                    <button class="btn-pagination btn-paginationDisable" disabled>
+                    <button id="prev-page" class="btn-pagination btn-paginationDisable" onclick="changePage(-1)">
                         <x-heroicon-o-chevron-left class="w-4 h-4" />
                     </button>
-                    <button class="btn-pagination btn-paginationActive">1</button>
-                    <button class="btn-pagination btn-paginationArrow" disabled>
+                    <div id="page-numbers" class="flex space-x-2"></div>
+                    <button id="next-page" class="btn-pagination btn-paginationArrow" onclick="changePage(1)">
                         <x-heroicon-o-chevron-right class="w-4 h-4" />
                     </button>
                 </div>
             </div>
+        @endif
+    </div>
+</div>
+
+<!-- View Report Modal -->
+<div id="viewModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeViewModal()">
+    <div class="modal-container-wide">
+        <div class="modal-header flex justify-between items-center">
+            <h2 class="modal-title">Report Details</h2>
+            <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <x-heroicon-o-x-mark class="w-6 h-6" />
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violation Type</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-violation-type"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violator</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-violator"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Vehicle</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-vehicle"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Location</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-location"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Description</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-description"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Reported At</p>
+                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-reported-at"></p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Status</p>
+                        <span id="modal-status-badge"></span>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Evidence Image -->
+                <div id="modal-evidence-container">
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-2">Evidence Image</p>
+                    <img id="modal-evidence" src="" alt="Evidence" class="w-full max-h-96 object-contain rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeViewModal()" class="btn btn-secondary">Close</button>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+const reports = @json($reports);
+
+function viewReport(reportId) {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+    
+    // Status colors
+    const statusColors = {
+        'pending': 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+        'approved': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+        'rejected': 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+    };
+    
+    const statusClass = statusColors[report.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+    
+    // Populate modal
+    document.getElementById('modal-violation-type').textContent = report.violation_type?.name || 'N/A';
+    document.getElementById('modal-status-badge').innerHTML = `<span class="px-2.5 py-1 text-xs font-medium ${statusClass} rounded-full">${report.status.charAt(0).toUpperCase() + report.status.slice(1)}</span>`;
+    
+    const violatorName = report.violator_vehicle?.user 
+        ? `${report.violator_vehicle.user.first_name} ${report.violator_vehicle.user.last_name}`
+        : 'Unknown';
+    document.getElementById('modal-violator').textContent = violatorName;
+    
+    const vehicleInfo = report.violator_vehicle 
+        ? (report.violator_vehicle.plate_no || report.violator_sticker_number)
+        : 'N/A';
+    document.getElementById('modal-vehicle').textContent = vehicleInfo;
+    
+    document.getElementById('modal-location').textContent = report.location;
+    document.getElementById('modal-description').textContent = report.description;
+    document.getElementById('modal-reported-at').textContent = new Date(report.reported_at).toLocaleString();
+    
+    // Evidence image
+    if (report.evidence_image) {
+        document.getElementById('modal-evidence').src = `/storage/${report.evidence_image}`;
+        document.getElementById('modal-evidence-container').classList.remove('hidden');
+    } else {
+        document.getElementById('modal-evidence-container').classList.add('hidden');
+    }
+    
+    // Show modal
+    document.getElementById('viewModal').classList.remove('hidden');
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').classList.add('hidden');
+}
+
+// Expose to global scope
+window.viewReport = viewReport;
+window.closeViewModal = closeViewModal;
+
+// Pagination functionality
+const paginationLimit = document.getElementById('pagination-limit');
+let currentPage = 1;
+let itemsPerPage = 10;
+
+paginationLimit.addEventListener('change', function() {
+    itemsPerPage = parseInt(this.value);
+    currentPage = 1;
+    applyPagination();
+});
+
+function applyPagination() {
+    const tbody = document.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Calculate pagination
+    const totalItems = rows.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    // Show/hide rows based on current page
+    rows.forEach((row, index) => {
+        if (index >= startIndex && index < endIndex) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update pagination info
+    document.getElementById('showing-start').textContent = totalItems > 0 ? startIndex + 1 : 0;
+    document.getElementById('showing-end').textContent = Math.min(endIndex, totalItems);
+    document.getElementById('total-count').textContent = totalItems;
+    
+    // Update pagination buttons
+    updatePaginationButtons(totalPages);
+}
+
+function updatePaginationButtons(totalPages) {
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    
+    prevBtn.className = currentPage === 1 ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+    nextBtn.className = (currentPage === totalPages || totalPages === 0) ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+    
+    // Generate page numbers (show only 3 pages at a time)
+    const pageNumbers = document.getElementById('page-numbers');
+    pageNumbers.innerHTML = '';
+    
+    // Calculate which 3 pages to show
+    let startPage = Math.max(1, currentPage - 1);
+    let endPage = Math.min(totalPages, startPage + 2);
+    
+    // Adjust if we're near the end
+    if (endPage - startPage < 2) {
+        startPage = Math.max(1, endPage - 2);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = i === currentPage ? 'btn-pagination btn-paginationActive' : 'btn-pagination btn-paginationNumber';
+        btn.onclick = () => goToPage(i);
+        pageNumbers.appendChild(btn);
+    }
+}
+
+// Apply initial pagination on page load
+if (document.querySelector('tbody')) {
+    applyPagination();
+}
+
+// Pagination navigation functions (global scope)
+window.changePage = function(direction) {
+    const tbody = document.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const totalPages = Math.ceil(rows.length / itemsPerPage);
+    
+    currentPage += direction;
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    
+    applyPagination();
+};
+
+window.goToPage = function(page) {
+    currentPage = page;
+    applyPagination();
+};
+</script>
+@endpush

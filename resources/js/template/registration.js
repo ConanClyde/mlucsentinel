@@ -2,13 +2,153 @@
 document.addEventListener('DOMContentLoaded', function() {
     const addVehicleBtn = document.getElementById('addVehicleBtn');
     const vehiclesContainer = document.getElementById('vehiclesContainer');
+    const form = document.getElementById('studentRegistrationForm');
+    const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+    const emailInput = document.getElementById('email');
+    const emailFeedback = document.getElementById('email-feedback');
+    const studentIdInput = document.getElementById('student_id');
+    const licenseNoInput = document.getElementById('license_no');
     let vehicleCount = 1; // Start with 1 since we have the default vehicle
+    
+    // Track validation errors
+    const validationErrors = {
+        email: false,
+        studentId: false,
+        licenseNo: false,
+        plateNos: {}
+    };
+    
+    // Function to check if form is valid
+    function checkFormValidity() {
+        const hasErrors = validationErrors.email || 
+                         validationErrors.studentId || 
+                         validationErrors.licenseNo ||
+                         Object.values(validationErrors.plateNos).some(error => error);
+        
+        if (submitBtn) {
+            submitBtn.disabled = hasErrors;
+            if (hasErrors) {
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    // Email validation
+    if (emailInput && emailFeedback) {
+        let emailTimeout;
+        emailInput.addEventListener('input', function() {
+            clearTimeout(emailTimeout);
+            const email = this.value;
+            
+            if (email && email.includes('@')) {
+                emailTimeout = setTimeout(() => {
+                    fetch('/admin/registration/student/check-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ email: email })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            emailFeedback.textContent = 'Email is available';
+                            emailFeedback.className = 'text-xs mt-1 text-green-600';
+                            validationErrors.email = false;
+                        } else {
+                            emailFeedback.textContent = data.message;
+                            emailFeedback.className = 'text-xs mt-1 text-red-600';
+                            validationErrors.email = true;
+                        }
+                        checkFormValidity();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }, 500);
+            } else if (email === '') {
+                emailFeedback.textContent = '';
+                emailFeedback.className = 'text-xs mt-1';
+                validationErrors.email = false;
+                checkFormValidity();
+            }
+        });
+    }
+    
+    // Student ID validation
+    if (studentIdInput) {
+        let studentIdTimeout;
+        studentIdInput.addEventListener('input', function() {
+            clearTimeout(studentIdTimeout);
+            const studentId = this.value;
+            
+            if (studentId) {
+                studentIdTimeout = setTimeout(() => {
+                    fetch('/admin/registration/student/check-student-id', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ student_id: studentId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        validationErrors.studentId = !data.available;
+                        checkFormValidity();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }, 500);
+            } else {
+                validationErrors.studentId = false;
+                checkFormValidity();
+            }
+        });
+    }
+    
+    // License Number validation
+    if (licenseNoInput) {
+        let licenseNoTimeout;
+        licenseNoInput.addEventListener('input', function() {
+            clearTimeout(licenseNoTimeout);
+            const licenseNo = this.value;
+            
+            if (licenseNo) {
+                licenseNoTimeout = setTimeout(() => {
+                    fetch('/admin/registration/student/check-license-no', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ license_no: licenseNo })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        validationErrors.licenseNo = !data.available;
+                        checkFormValidity();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }, 500);
+            } else {
+                validationErrors.licenseNo = false;
+                checkFormValidity();
+            }
+        });
+    }
 
     // Add Vehicle functionality
     if (addVehicleBtn) {
         addVehicleBtn.addEventListener('click', function() {
             if (vehicleCount >= 3) {
-                alert('Maximum of 3 vehicles allowed per user');
+                alert('Maximum of 3 vehicles allowed per student');
                 return;
             }
 
@@ -24,11 +164,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
                     '<div class="form-group">' +
                         '<label class="form-label">Vehicle Type</label>' +
-                        '<select name="vehicles[' + (vehicleCount - 1) + '][type]" class="form-input" required>' +
+                        '<select name="vehicles[' + (vehicleCount - 1) + '][type_id]" class="form-input" required>' +
                             '<option value="">Select Vehicle Type</option>' +
-                            '<option value="1">Motorcycle</option>' +
-                            '<option value="2">Car</option>' +
-                            '<option value="3">Electric Vehicle</option>' +
+                            // Vehicle types will be populated from the server
                         '</select>' +
                     '</div>' +
                     '<div class="form-group">' +
@@ -90,6 +228,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize event listeners for existing vehicles
     addVehicleTypeListeners();
+
+    // Form submission
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Check if form has errors before submitting
+            const hasErrors = validationErrors.email || 
+                             validationErrors.studentId || 
+                             validationErrors.licenseNo ||
+                             Object.values(validationErrors.plateNos).some(error => error);
+            
+            if (hasErrors) {
+                alert('Please fix validation errors before submitting.');
+                return;
+            }
+            
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'Registering...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            fetch('/admin/registration/student', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+                .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    // Reload the page to fully reset everything
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Registration failed. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Registration failed. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                checkFormValidity();
+            });
+        });
+    }
 });
 
 // Update vehicle numbers and form names
@@ -108,7 +297,7 @@ function updateVehicleNumbers() {
         const inputs = item.querySelectorAll('input');
         
         selects.forEach(select => {
-            select.name = 'vehicles[' + index + '][type]';
+            select.name = 'vehicles[' + index + '][type_id]';
         });
         
         inputs.forEach(input => {
@@ -124,16 +313,17 @@ function updateVehicleNumbers() {
 
 // Function to toggle plate number visibility based on vehicle type
 function togglePlateNumberVisibility(vehicleItem) {
-    const vehicleTypeSelect = vehicleItem.querySelector('select[name*="[type]"]');
+    const vehicleTypeSelect = vehicleItem.querySelector('select[name*="[type_id]"]');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
-    const plateNumberGroup = plateNumberInput.closest('.form-group');
     
-    if (vehicleTypeSelect.value === '3') { // Electric Vehicle
-        plateNumberGroup.style.display = 'none';
-        plateNumberInput.removeAttribute('required');
-        plateNumberInput.value = ''; // Clear the value
-    } else {
-        plateNumberGroup.style.display = 'block';
+    if (!vehicleTypeSelect || !plateNumberInput) return;
+    
+    const selectedType = vehicleTypeSelect.value;
+    
+    // For now, all vehicle types require plate numbers
+    // This can be extended based on business logic
+    if (selectedType) {
+        plateNumberInput.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
     }
 }
@@ -145,7 +335,7 @@ function addVehicleTypeListeners() {
     
     const vehicleItems = vehiclesContainer.querySelectorAll('.vehicle-item');
     vehicleItems.forEach(item => {
-        const vehicleTypeSelect = item.querySelector('select[name*="[type]"]');
+        const vehicleTypeSelect = item.querySelector('select[name*="[type_id]"]');
         if (vehicleTypeSelect) {
             // Remove existing listener to avoid duplicates
             vehicleTypeSelect.removeEventListener('change', handleVehicleTypeChange);

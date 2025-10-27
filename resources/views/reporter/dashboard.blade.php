@@ -5,18 +5,18 @@
 @section('content')
 <div class="space-y-6">
     <!-- Welcome Section -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 sm:p-6">
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2 truncate">
                     Welcome, {{ Auth::user()->name }}!
                 </h2>
-                <p class="text-[#706f6c] dark:text-[#A1A09A]">
+                <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">
                     You are logged in as <span class="font-semibold capitalize">{{ str_replace('_', ' ', Auth::user()->user_type) }}</span>
                 </p>
             </div>
-            <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <x-heroicon-o-newspaper class="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div class="hidden sm:flex w-12 h-12 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900 rounded-full items-center justify-center flex-shrink-0">
+                <x-heroicon-o-newspaper class="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
             </div>
         </div>
     </div>

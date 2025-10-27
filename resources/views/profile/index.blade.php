@@ -22,11 +22,11 @@
                                 <div class="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl" id="profile-avatar" style="background-color: {{ $avatarColor }}">
                                     {{ strtoupper(substr($user->first_name ?? 'U', 0, 1)) }}
                                 </div>
-                                <div>
-                                    <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                                <div class="min-w-0 flex-1">
+                                    <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] truncate" title="{{ $user->first_name }} {{ $user->last_name }}">
                                         {{ $user->first_name }} {{ $user->last_name }}
                                     </h3>
-                                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $user->email }}</p>
+                                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] truncate" title="{{ $user->email }}">{{ $user->email }}</p>
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2
                                         {{ $user->is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' }}">
                                         {{ $user->is_active ? 'Active' : 'Inactive' }}
@@ -52,7 +52,7 @@
                                 
                                 <div>
                                     <label class="form-label">Email Address</label>
-                                    <div class="p-3 bg-gray-50 dark:bg-[#1f1f1d] rounded-lg text-[#1b1b18] dark:text-[#EDEDEC]">
+                                    <div class="p-3 bg-gray-50 dark:bg-[#1f1f1d] rounded-lg text-[#1b1b18] dark:text-[#EDEDEC] break-all" title="{{ $user->email }}">
                                         {{ $user->email }}
                                     </div>
                                 </div>
@@ -103,26 +103,6 @@
                     </div>
                 </div>
 
-                <!-- Security Information -->
-                <div class="table-container">
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Security</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Last Login</span>
-                                <span class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
-                                    {{ $user->updated_at->diffForHumans() }}
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Account Age</span>
-                                <span class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
-                                    {{ $user->created_at->diffForHumans() }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -746,6 +726,7 @@ function updateProfileDisplay(userData) {
     const emailElement = document.querySelector('p.text-sm.text-\\[\\#706f6c\\]');
     if (emailElement) {
         emailElement.textContent = userData.email;
+        emailElement.title = userData.email;
     }
 
     // Update the profile avatar

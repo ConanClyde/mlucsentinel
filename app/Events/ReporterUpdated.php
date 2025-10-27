@@ -14,7 +14,9 @@ class ReporterUpdated implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $reporter;
+
     public $action;
+
     public $editor;
 
     /**
@@ -24,7 +26,7 @@ class ReporterUpdated implements ShouldBroadcastNow
     {
         $this->reporter = $reporter;
         $this->action = $action;
-        $this->editor = auth()->user() ? auth()->user()->first_name . ' ' . auth()->user()->last_name : null;
+        $this->editor = auth()->user() ? auth()->user()->first_name.' '.auth()->user()->last_name : null;
     }
 
     /**

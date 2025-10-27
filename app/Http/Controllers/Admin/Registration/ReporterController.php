@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Registration;
 
+use App\Events\ReporterUpdated;
 use App\Http\Controllers\Controller;
+use App\Models\Reporter;
 use App\Models\ReporterType;
 use App\Models\User;
-use App\Models\Reporter;
-use App\Events\ReporterUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -19,7 +19,7 @@ class ReporterController extends Controller
     public function index()
     {
         $reporterTypes = ReporterType::orderBy('name')->get();
-        
+
         return view('admin.registration.reporter', [
             'pageTitle' => 'Reporter Registration',
             'reporterTypes' => $reporterTypes,
@@ -45,7 +45,7 @@ class ReporterController extends Controller
         // Get reporter type to determine expiration date
         $reporterType = ReporterType::find($request->type_id);
         $expirationDate = null;
-        
+
         // If type is SBO, set expiration to 1 year from now
         if ($reporterType && $reporterType->name === 'SBO') {
             $expirationDate = now()->addYear()->toDateString();
@@ -55,7 +55,7 @@ class ReporterController extends Controller
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
+            'name' => $request->first_name.' '.$request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'user_type' => 'reporter',
@@ -75,7 +75,7 @@ class ReporterController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reporter registered successfully!',
-            'user' => $user->load('reporter')
+            'user' => $user->load('reporter'),
         ]);
     }
 
@@ -85,14 +85,14 @@ class ReporterController extends Controller
     public function checkEmail(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email']
+            'email' => ['required', 'email'],
         ]);
 
         $emailExists = User::where('email', $request->email)->exists();
 
         return response()->json([
-            'available' => !$emailExists,
-            'message' => $emailExists ? 'Email is already registered' : 'Email is available'
+            'available' => ! $emailExists,
+            'message' => $emailExists ? 'Email is already registered' : 'Email is available',
         ]);
     }
 }

@@ -9,8 +9,20 @@ window.openQRScannerModal = async function() {
     document.getElementById('qrResult').classList.add('hidden');
     
     try {
+        // Check if camera API is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Camera access is not supported in your browser. Please use a modern browser or enable camera permissions.');
+            closeQRScannerModal();
+            return;
+        }
+
+        // Request camera permission with specific constraints
         qrStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
         });
         const videoElement = document.getElementById('qrVideo');
         videoElement.srcObject = qrStream;
@@ -25,7 +37,25 @@ window.openQRScannerModal = async function() {
             }
         });
     } catch (error) {
-        alert('Error accessing camera: ' + error.message);
+        console.error('Error starting QR scanner:', error);
+        
+        let errorMessage = 'Unable to access camera. ';
+        
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            errorMessage += 'Camera permission was denied. Please enable camera access in your browser settings and try again.';
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            errorMessage += 'No camera found on your device.';
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+            errorMessage += 'Camera is already in use by another application.';
+        } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+            errorMessage += 'Camera does not support the required settings.';
+        } else if (error.name === 'NotSupportedError') {
+            errorMessage += 'Camera access requires HTTPS. Please use a secure connection.';
+        } else {
+            errorMessage += error.message || 'Please check your browser settings and permissions.';
+        }
+        
+        alert(errorMessage);
         closeQRScannerModal();
     }
 };

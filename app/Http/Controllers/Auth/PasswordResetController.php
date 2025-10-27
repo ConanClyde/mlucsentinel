@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
 class PasswordResetController extends Controller
@@ -50,8 +49,8 @@ class PasswordResetController extends Controller
             Mail::to($request->email)->send(new PasswordResetMail($code));
         } catch (\Exception $e) {
             // Log the error but don't fail the request
-            \Log::error("Failed to send password reset email to {$request->email}: " . $e->getMessage());
-            
+            \Log::error("Failed to send password reset email to {$request->email}: ".$e->getMessage());
+
             // For development/testing, you can also log the code
             \Log::info("Password reset code for {$request->email}: {$code}");
         }
@@ -67,7 +66,7 @@ class PasswordResetController extends Controller
     public function showResetPassword(Request $request)
     {
         return view('auth.reset-password', [
-            'email' => $request->email
+            'email' => $request->email,
         ]);
     }
 
@@ -91,12 +90,12 @@ class PasswordResetController extends Controller
         if ($resetCode) {
             return response()->json([
                 'valid' => true,
-                'message' => 'Code is valid!'
+                'message' => 'Code is valid!',
             ]);
         } else {
             return response()->json([
                 'valid' => false,
-                'message' => 'Invalid or expired reset code.'
+                'message' => 'Invalid or expired reset code.',
             ]);
         }
     }
@@ -119,7 +118,7 @@ class PasswordResetController extends Controller
             ->where('expires_at', '>', now())
             ->first();
 
-        if (!$resetCode) {
+        if (! $resetCode) {
             return back()->withErrors([
                 'code' => 'Invalid or expired reset code. Please request a new code.',
             ])->withInput($request->only('email'));

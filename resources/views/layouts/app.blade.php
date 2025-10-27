@@ -41,9 +41,9 @@
     @include('partials.sidebar')
 
     <!-- Main Content Area -->
-    <div class="lg:ml-64">
+    <div class="lg:ml-64 transition-all duration-300 ease-in-out">
         <!-- Top Navigation Bar -->
-        <header class="sticky top-0 z-50 bg-white h-16 dark:bg-[#1a1a1a] border-b border-[#e3e3e0] dark:border-[#3E3E3A] px-4 py-3 lg:px-6">
+        <header class="sticky top-0 z-30 bg-white h-16 dark:bg-[#1a1a1a] border-b border-[#e3e3e0] dark:border-[#3E3E3A] px-4 py-3 lg:px-6">
             <div class="flex items-center justify-between h-full">
                 <!-- Mobile Menu Button -->
                 <button id="mobile-menu-button" class="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]">
@@ -130,15 +130,36 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-            mobileMenuButton.addEventListener('click', function() {
-                sidebar.classList.toggle('-translate-x-full');
-                sidebarOverlay.classList.toggle('hidden');
-            });
+            if (mobileMenuButton && sidebar && sidebarOverlay) {
+                console.log('✅ Mobile menu elements found');
+                
+                mobileMenuButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('🍔 Hamburger clicked');
+                    
+                    // Toggle sidebar visibility
+                    sidebar.classList.toggle('-translate-x-full');
+                    sidebarOverlay.classList.toggle('hidden');
+                    
+                    // Lock body scroll when sidebar is open
+                    if (!sidebar.classList.contains('-translate-x-full')) {
+                        document.body.style.overflow = 'hidden';
+                        console.log('📖 Sidebar opened');
+                    } else {
+                        document.body.style.overflow = 'auto';
+                        console.log('📕 Sidebar closed');
+                    }
+                });
 
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-            });
+                sidebarOverlay.addEventListener('click', function() {
+                    console.log('🔲 Overlay clicked - closing sidebar');
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                });
+            } else {
+                console.error('❌ Mobile menu elements not found');
+            }
 
             // Notifications dropdown toggle
             const notificationsButton = document.getElementById('notifications-button');
@@ -507,6 +528,14 @@
                     .listen('.reporter.updated', (event) => {
                         if (event.reporter && event.reporter.user_id === currentUserId) {
                             updateSidebarUserInfo(event.reporter.user);
+                        }
+                    });
+
+                // Listen for student updates
+                window.Echo.channel('students')
+                    .listen('.student.updated', (event) => {
+                        if (event.student && event.student.user_id === currentUserId) {
+                            updateSidebarUserInfo(event.student.user);
                         }
                     });
             }

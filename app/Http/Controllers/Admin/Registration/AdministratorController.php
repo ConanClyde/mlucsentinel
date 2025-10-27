@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Registration;
 
+use App\Events\AdministratorUpdated;
 use App\Http\Controllers\Controller;
+use App\Models\Administrator;
 use App\Models\AdminRole;
 use App\Models\User;
-use App\Models\Administrator;
-use App\Events\AdministratorUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -19,7 +19,7 @@ class AdministratorController extends Controller
     public function index()
     {
         $adminRoles = AdminRole::orderBy('name')->get();
-        
+
         return view('admin.registration.administrator', [
             'pageTitle' => 'Administrator Registration',
             'adminRoles' => $adminRoles,
@@ -46,7 +46,7 @@ class AdministratorController extends Controller
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
+            'name' => $request->first_name.' '.$request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'user_type' => 'administrator',
@@ -65,7 +65,7 @@ class AdministratorController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Administrator registered successfully!',
-            'user' => $user->load('administrator')
+            'user' => $user->load('administrator'),
         ]);
     }
 
@@ -75,14 +75,14 @@ class AdministratorController extends Controller
     public function checkEmail(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email']
+            'email' => ['required', 'email'],
         ]);
 
         $emailExists = User::where('email', $request->email)->exists();
 
         return response()->json([
-            'available' => !$emailExists,
-            'message' => $emailExists ? 'Email is already registered' : 'Email is available'
+            'available' => ! $emailExists,
+            'message' => $emailExists ? 'Email is already registered' : 'Email is available',
         ]);
     }
 }

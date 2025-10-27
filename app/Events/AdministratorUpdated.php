@@ -5,8 +5,6 @@ namespace App\Events;
 use App\Models\Administrator;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -16,7 +14,9 @@ class AdministratorUpdated implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $administrator;
+
     public $action; // 'created', 'updated', 'deleted'
+
     public $editor;
 
     /**
@@ -26,7 +26,7 @@ class AdministratorUpdated implements ShouldBroadcastNow
     {
         $this->administrator = $administrator->load(['user', 'adminRole']);
         $this->action = $action;
-        $this->editor = $editor ?? (auth()->check() ? auth()->user()->first_name . ' ' . auth()->user()->last_name : 'System');
+        $this->editor = $editor ?? (auth()->check() ? auth()->user()->first_name.' '.auth()->user()->last_name : 'System');
     }
 
     /**

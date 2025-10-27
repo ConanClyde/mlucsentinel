@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-auto min-w-64 max-w-80 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto" id="sidebar">
     <div class="flex flex-col h-full">
         <!-- Logo and Title -->
         <div class="flex items-center h-16 px-6 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
@@ -24,6 +24,10 @@
                 </a>
 
                 @if(in_array(Auth::user()->user_type, ['global_administrator', 'administrator']))
+                    @php
+                        $isMarketingAdmin = Auth::user()->isMarketingAdmin();
+                    @endphp
+                    
                     <!-- Admin Navigation -->
                     <!-- Dashboard -->
                     <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
@@ -102,15 +106,29 @@
                         Vehicles
                     </a>
 
-                    <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.reports') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                        <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
-                        Reports
-                    </a>
+                    @php
+                        $canViewReports = false;
+                        if (Auth::user()->user_type === 'global_administrator') {
+                            $canViewReports = true;
+                        } elseif (Auth::user()->user_type === 'administrator' && Auth::user()->administrator) {
+                            $adminRole = Auth::user()->administrator->adminRole->name ?? '';
+                            $canViewReports = in_array($adminRole, ['Chancellor', 'SAS (Student Affairs & Services)']);
+                        }
+                    @endphp
 
-                    <a href="{{ route('admin.stickers') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.stickers') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                        <x-heroicon-o-tag class="w-5 h-5 mr-3" />
-                        Stickers
-                    </a>
+                    @if($canViewReports)
+                        <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.reports') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
+                            Reports
+                        </a>
+                    @endif
+
+                    @if($isMarketingAdmin)
+                        <a href="{{ route('admin.stickers') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.stickers') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-tag class="w-5 h-5 mr-3" />
+                            Stickers
+                        </a>
+                    @endif
                 @elseif(Auth::user()->user_type === 'reporter')
                     <!-- Reporter Navigation -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
@@ -149,11 +167,11 @@
             <div class="w-8 h-8 ml-2 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 mt-0.5" id="user-avatar" style="background-color: {{ $avatarColor }}">
                 {{ strtoupper(substr(Auth::user()->first_name ?? 'User', 0, 1)) }}
             </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] break-words" title="{{ Auth::user()->first_name ?? 'User' }}">
+                <div class="sidebar-user-info">
+                    <p class="sidebar-user-name" title="{{ Auth::user()->first_name ?? 'User' }}">
                         {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                     </p>
-                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] break-words leading-tight" title="{{ Auth::user()->email ?? 'user@example.com' }}">
+                    <p class="sidebar-user-email" title="{{ Auth::user()->email ?? 'user@example.com' }}">
                         {{ Auth::user()->email ?? 'user@example.com' }}
                     </p>
                 </div>
@@ -175,4 +193,4 @@
 </aside>
 
 <!-- Mobile Sidebar Overlay -->
-<div class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" id="sidebar-overlay"></div>
+<div class="fixed inset-0 bg-black/50 z-40 hidden lg:!hidden transition-opacity duration-300" id="sidebar-overlay"></div>

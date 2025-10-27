@@ -16,7 +16,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         $this->assertInstanceOf(PasswordResetCode::class, $resetCode);
@@ -31,7 +31,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         $this->assertInstanceOf(\Carbon\Carbon::class, $resetCode->expires_at);
@@ -43,7 +43,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => true
+            'is_used' => true,
         ]);
 
         $this->assertTrue($resetCode->is_used);
@@ -57,7 +57,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Find the valid code
@@ -78,7 +78,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->subMinutes(1), // Expired
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Try to find the expired code
@@ -98,7 +98,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => true // Already used
+            'is_used' => true, // Already used
         ]);
 
         // Try to find the used code
@@ -117,7 +117,7 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         // Mark as used
@@ -134,14 +134,14 @@ class PasswordResetCodeTest extends TestCase
             'email' => 'test@example.com',
             'code' => '111111',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => false
+            'is_used' => false,
         ]);
 
         PasswordResetCode::create([
             'email' => 'test@example.com',
             'code' => '222222',
             'expires_at' => now()->addMinutes(5),
-            'is_used' => true
+            'is_used' => true,
         ]);
 
         // Delete all codes for this email
@@ -149,17 +149,17 @@ class PasswordResetCodeTest extends TestCase
 
         // No codes should exist for this email
         $this->assertDatabaseMissing('password_reset_codes', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 
     public function test_reset_code_has_correct_fillable_attributes()
     {
-        $resetCode = new PasswordResetCode();
+        $resetCode = new PasswordResetCode;
         $fillable = $resetCode->getFillable();
 
         $expectedFillable = ['email', 'code', 'expires_at', 'is_used'];
-        
+
         foreach ($expectedFillable as $attribute) {
             $this->assertContains($attribute, $fillable);
         }

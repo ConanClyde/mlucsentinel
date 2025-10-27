@@ -5,8 +5,6 @@ namespace App\Events;
 use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -16,7 +14,9 @@ class UserUpdated implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $user;
+
     public $action; // 'updated', 'password_changed', 'deleted'
+
     public $editor;
 
     /**
@@ -26,7 +26,7 @@ class UserUpdated implements ShouldBroadcastNow
     {
         $this->user = $user;
         $this->action = $action;
-        $this->editor = $editor ?? (auth()->check() ? auth()->user()->first_name . ' ' . auth()->user()->last_name : 'System');
+        $this->editor = $editor ?? (auth()->check() ? auth()->user()->first_name.' '.auth()->user()->last_name : 'System');
     }
 
     /**
@@ -37,17 +37,22 @@ class UserUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $channels = [];
-        
+
         // Broadcast to administrators channel if user is an administrator
         if (in_array($this->user->user_type, ['global_administrator', 'administrator'])) {
             $channels[] = new Channel('administrators');
         }
-        
+
         // Broadcast to reporters channel if user is a reporter
         if (in_array($this->user->user_type, ['reporter', 'security'])) {
             $channels[] = new Channel('reporters');
         }
-        
+
+        // Broadcast to students channel if user is a student
+        if ($this->user->user_type === 'student') {
+            $channels[] = new Channel('students');
+        }
+
         return $channels;
     }
 
@@ -60,8 +65,10 @@ class UserUpdated implements ShouldBroadcastNow
             return 'administrator.updated';
         } elseif (in_array($this->user->user_type, ['reporter', 'security'])) {
             return 'reporter.updated';
+        } elseif ($this->user->user_type === 'student') {
+            return 'student.updated';
         }
-        
+
         return 'user.updated';
     }
 
@@ -117,6 +124,26 @@ class UserUpdated implements ShouldBroadcastNow
                     ] : null,
                     'created_at' => $reporter->created_at,
                     'updated_at' => $reporter->updated_at,
+                ];
+            }
+        } elseif ($this->user->user_type === 'student') {
+            $student = $this->user->student;
+            if ($student) {
+                $data['student'] = [
+                    'id' => $student->id,
+                    'user_id' => $student->user_id,
+                    'college_id' => $student->college_id,
+                    'student_id' => $student->student_id,
+                    'license_no' => $student->license_no,
+                    'license_image' => $student->license_image,
+                    'expiration_date' => $student->expiration_date,
+                    'user' => $data['user'],
+                    'college' => $student->college ? [
+                        'id' => $student->college->id,
+                        'name' => $student->college->name,
+                    ] : null,
+                    'created_at' => $student->created_at,
+                    'updated_at' => $student->updated_at,
                 ];
             }
         }

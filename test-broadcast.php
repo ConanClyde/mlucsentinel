@@ -11,15 +11,15 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make('Illuminate\Contracts\Console\Kernel');
 $kernel->bootstrap();
 
-use App\Models\Administrator;
 use App\Events\AdministratorUpdated;
+use App\Models\Administrator;
 
 echo "=== Broadcasting Test ===\n\n";
 
 // Get a random administrator
 $administrator = Administrator::with(['user', 'adminRole'])->first();
 
-if (!$administrator) {
+if (! $administrator) {
     echo "❌ No administrators found in database.\n";
     echo "Please create an administrator first.\n";
     exit(1);
