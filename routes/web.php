@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\CampusMapController;
+use App\Http\Controllers\Admin\CollegeController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\Registration\AdministratorController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Admin\Users\StakeholdersController;
 use App\Http\Controllers\Admin\Users\StudentsController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\VehiclesController;
+use App\Http\Controllers\Admin\VehicleTypeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\NotificationController;
@@ -26,6 +29,7 @@ use App\Http\Controllers\Reporter\HomeController as ReporterHomeController;
 use App\Http\Controllers\Reporter\MyReportController;
 use App\Http\Controllers\Reporter\MyVehiclesController;
 use App\Http\Controllers\Reporter\ReportUserController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 // Landing Page
@@ -87,8 +91,25 @@ Route::post('/profile/change-password', [ProfileController::class, 'changePasswo
 Route::post('/profile/verify-password', [ProfileController::class, 'verifyPassword'])->middleware('auth')->name('profile.verify-password');
 Route::delete('/profile/delete', [ProfileController::class, 'delete'])->middleware('auth')->name('profile.delete');
 
+// Settings Route (Protected Route) - available to all authenticated users
+Route::get('/settings', [SettingsController::class, 'index'])->middleware('auth')->name('settings');
+
 // Admin Routes
 Route::middleware(['auth', 'user.type:global_administrator,administrator'])->group(function () {
+    Route::get('/campus-map', [CampusMapController::class, 'index'])->name('admin.campus-map');
+
+    // College Routes
+    Route::get('/api/colleges', [CollegeController::class, 'index'])->name('api.colleges.index');
+    Route::post('/api/colleges', [CollegeController::class, 'store'])->name('api.colleges.store');
+    Route::put('/api/colleges/{college}', [CollegeController::class, 'update'])->name('api.colleges.update');
+    Route::delete('/api/colleges/{college}', [CollegeController::class, 'destroy'])->name('api.colleges.destroy');
+
+    // Vehicle Type Routes
+    Route::get('/api/vehicle-types', [VehicleTypeController::class, 'index'])->name('api.vehicle-types.index');
+    Route::post('/api/vehicle-types', [VehicleTypeController::class, 'store'])->name('api.vehicle-types.store');
+    Route::put('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'update'])->name('api.vehicle-types.update');
+    Route::delete('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'destroy'])->name('api.vehicle-types.destroy');
+
     Route::get('/users', [UsersController::class, 'index'])->name('admin.users');
     Route::get('/vehicles', [VehiclesController::class, 'index'])->name('admin.vehicles');
     Route::get('/vehicles/data', [VehiclesController::class, 'data'])->name('admin.vehicles.data');

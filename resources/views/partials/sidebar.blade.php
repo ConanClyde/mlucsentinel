@@ -129,6 +129,12 @@
                             Stickers
                         </a>
                     @endif
+
+                    <!-- Map -->
+                    <a href="{{ route('admin.campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-map class="w-5 h-5 mr-3" />
+                        Map
+                    </a>
                 @elseif(Auth::user()->user_type === 'reporter')
                     <!-- Reporter Navigation -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
@@ -178,7 +184,7 @@
             </a>
             
             <!-- Settings Link -->
-            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">
+            <a href="{{ route('settings') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('settings') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                 <x-heroicon-o-cog-6-tooth class="w-5 h-5 mr-3" />
                 Settings
             </a>

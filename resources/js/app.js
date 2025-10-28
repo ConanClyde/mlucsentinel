@@ -10,6 +10,8 @@ import './admin/stakeholders-realtime.js';
 import './admin/vehicles.js';
 import './admin/vehicles-realtime.js';
 import './admin/stickers-realtime.js';
+import './admin/colleges-realtime.js';
+import './admin/vehicle-types-realtime.js';
 import './reporter/my-vehicles-realtime.js';
 // import './template/tables.js';
 // import './template/modals.js';

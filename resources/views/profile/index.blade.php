@@ -2,14 +2,14 @@
 
 @section('content')
 <div class="min-h-screen">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $pageTitle }}</h1>
             <p class="mt-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage your account settings and personal information.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Profile Information Card -->
             <div class="lg:col-span-2">
                 <div class="table-container">
