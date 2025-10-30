@@ -27,6 +27,12 @@ return new class extends Migration
             $table->unique(['color', 'number']);
             $table->index(['user_id', 'type_id']);
             $table->index('is_active');
+
+            // Performance indexes
+            $table->index('sticker', 'vehicles_sticker_index');
+            $table->index(['user_id', 'is_active'], 'vehicles_user_id_is_active_index');
+            $table->index(['plate_no', 'is_active'], 'vehicles_plate_no_is_active_index');
+            $table->index(['color', 'number'], 'vehicles_color_number_index');
         });
     }
 

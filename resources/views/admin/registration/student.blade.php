@@ -113,15 +113,15 @@
                     <div class="space-y-6">
                         <div>
                             <label for="license_no" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                                License Number <span class="text-red-500">*</span>
+                                License Number <span class="text-gray-400 text-xs">(Optional)</span>
                             </label>
-                            <input type="text" id="license_no" name="license_no" class="form-input" placeholder="A12-34-567890" required>
+                            <input type="text" id="license_no" name="license_no" class="form-input" placeholder="A12-34-567890">
                             <div id="license_no_error" class="text-red-500 text-sm mt-1 hidden"></div>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                                License Image <span class="text-red-500">*</span>
+                                License Image <span class="text-gray-400 text-xs">(Optional)</span>
                             </label>
                     <div class="bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
                         <!-- Upload Options -->
@@ -137,7 +137,7 @@
                         </div>
 
                         <!-- Hidden File Input -->
-                                <input type="file" id="license_image" name="license_image" accept="image/*" class="hidden" onchange="handleLicenseFileUpload(event)">
+                                <input type="file" id="license_image" name="license_image" accept="image/jpeg,image/jpg,image/png,image/heic,image/heif" class="hidden" onchange="handleLicenseFileUpload(event)">
 
                         <!-- Image Preview -->
                                 <div id="licenseImagePreview" class="hidden">
@@ -359,12 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const formData = new FormData(this);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
             
             fetch('{{ route("admin.registration.student.store") }}', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json'
                 }
             })
             .then(response => {
@@ -622,14 +623,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateLicenseNo() {
         const licenseNo = licenseNoInput.value.trim();
         
-        if (!licenseNo) {
-            showFieldError('license_no', 'License number is required');
-            return false;
-        } else {
-            // Check license number availability
+        // License is now optional
+        if (licenseNo) {
+            // Check license number availability only if provided
             checkLicenseNoAvailability(licenseNo);
-            return true;
         }
+        return true;
     }
 
     function showFieldError(fieldName, message) {
@@ -743,13 +742,9 @@ function isStep1Valid() {
 
 // Function to check if all step 2 fields are valid
 function isStep2Valid() {
-    const licenseNo = document.getElementById('license_no').value.trim();
-    const licenseImagePreview = document.getElementById('licenseImagePreview');
-    const licenseImage = document.getElementById('license_image').files.length > 0 || !licenseImagePreview.classList.contains('hidden');
-    
-    const hasNoErrors = !availabilityErrors.licenseNo;
-    
-    return licenseNo && licenseImage && hasNoErrors;
+    // License information is now optional (for users with only electric vehicles)
+    // Always return true to enable the Next button
+    return true;
 }
 
 // Function to check if all step 3 fields are valid
@@ -879,20 +874,7 @@ function validateCurrentStep() {
         
         return true;
     } else if (currentStep === 2) {
-        const licenseNo = document.getElementById('license_no').value.trim();
-        const licenseImagePreview = document.getElementById('licenseImagePreview');
-        const licenseImage = document.getElementById('license_image').files.length > 0 || !licenseImagePreview.classList.contains('hidden');
-        
-        if (!licenseNo) {
-            showErrorModal('Please enter the license number');
-            return false;
-        }
-        
-        if (!licenseImage) {
-            showErrorModal('Please upload a license image');
-            return false;
-        }
-        
+        // License information is optional (for users with only electric vehicles)
         return true;
     } else if (currentStep === 3) {
         const vehicles = document.querySelectorAll('.vehicle-item');

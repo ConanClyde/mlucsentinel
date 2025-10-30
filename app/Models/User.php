@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -49,6 +50,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'user_type' => UserType::class,
         ];
     }
 
@@ -130,12 +132,12 @@ class User extends Authenticatable
     public function isMarketingAdmin(): bool
     {
         // Global administrators can access everything
-        if ($this->user_type === 'global_administrator') {
+        if ($this->user_type === UserType::GlobalAdministrator) {
             return true;
         }
 
         // Check if user is an administrator with Marketing role
-        if ($this->user_type === 'administrator' && $this->administrator) {
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
             return $this->administrator->adminRole &&
                    $this->administrator->adminRole->name === 'Marketing';
         }

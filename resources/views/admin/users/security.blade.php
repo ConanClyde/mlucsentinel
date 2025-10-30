@@ -163,7 +163,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title text-red-500 flex items-center gap-2">
-                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
                 Delete Security
             </h2>
         </div>
@@ -172,7 +172,7 @@
         </div>
         <div class="modal-footer">
             <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
-            <button onclick="confirmDelete()" class="btn btn-danger">Delete</button>
+            <button onclick="confirmDeleteSecurity()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -737,7 +737,7 @@ function closeDeleteModal() {
     deleteSecurityId = null;
 }
 
-function confirmDelete() {
+function confirmDeleteSecurity() {
     if (!deleteSecurityId) return;
     
     fetch(`/users/security/${deleteSecurityId}`, {
@@ -1321,7 +1321,7 @@ window.openEditModal = openEditModal;
 window.deleteSecurity = deleteSecurity;
 window.closeViewModal = closeViewModal;
 window.closeDeleteModal = closeDeleteModal;
-window.confirmDelete = confirmDelete;
+window.confirmDeleteSecurity = confirmDeleteSecurity;
 window.exportToCSV = exportToCSV;
 window.closeEditModal = closeEditModal;
 window.addEditVehicle = addEditVehicle;

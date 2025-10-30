@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
+use App\Models\ViolationType;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -20,16 +23,20 @@ class DashboardController extends Controller
     }
 
     /**
-     * Show the admin dashboard.
+     * Show the admin dashboard with comprehensive analytics.
      */
     public function index()
     {
-        // Get dashboard statistics
+        // Get dashboard statistics (including revenue)
         $stats = [
             'total_users' => User::where('is_active', true)->count(),
             'total_vehicles' => Vehicle::where('is_active', true)->count(),
             'pending_reports' => Report::where('status', 'pending')->count(),
             'total_reports' => Report::count(),
+            'total_revenue' => Payment::where('status', 'paid')->sum('amount'),
+            'total_payments' => Payment::whereIn('status', ['pending', 'paid'])->count(),
+            'paid_payments' => Payment::where('status', 'paid')->count(),
+            'pending_payments' => Payment::where('status', 'pending')->count(),
         ];
 
         // Get report status distribution (for pie chart using new Enum)
@@ -44,7 +51,9 @@ class DashboardController extends Controller
             ->select('user_type', DB::raw('count(*) as count'))
             ->groupBy('user_type')
             ->get()
-            ->pluck('count', 'user_type')
+            ->mapWithKeys(function ($item) {
+                return [$item->user_type->value => $item->count];
+            })
             ->toArray();
 
         // Get vehicle type distribution
@@ -108,8 +117,31 @@ class DashboardController extends Controller
             'assignedTo:id,first_name,last_name',
         ])->orderBy('reported_at', 'desc')->limit(50)->get();
 
+        // Get payment statistics
+        $paymentsByStatus = Payment::select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Get monthly revenue for the last 12 months
+        $monthlyRevenue = Payment::where('created_at', '>=', now()->subMonths(12))
+            ->where('status', 'paid')
+            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('sum(amount) as total'))
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get()
+            ->pluck('total', 'month')
+            ->toArray();
+
+        // Get violations by type
+        $violationsByType = ViolationType::withCount('reports')
+            ->get()
+            ->pluck('reports_count', 'name')
+            ->toArray();
+
         return view('admin.dashboard', [
-            'pageTitle' => 'Admin Dashboard',
+            'pageTitle' => 'Dashboard & Analytics',
             'stats' => $stats,
             'userTypes' => $userTypes,
             'vehicleTypes' => $vehicleTypes,
@@ -121,8 +153,12 @@ class DashboardController extends Controller
             'topLocations' => $topLocations,
             'recentActivity' => $recentActivity,
             'reports' => $reports,
+            'paymentsByStatus' => $paymentsByStatus,
+            'monthlyRevenue' => $monthlyRevenue,
+            'violationsByType' => $violationsByType,
         ]);
     }
+
 
     /**
      * Get recent system activity
@@ -140,7 +176,7 @@ class DashboardController extends Controller
         foreach ($recentUsers as $user) {
             $activities->push([
                 'type' => 'user_registration',
-                'message' => "New {$user->user_type} registered: {$user->first_name} {$user->last_name}",
+                'message' => "New {$user->user_type->label()} registered: {$user->first_name} {$user->last_name}",
                 'time' => $user->created_at,
                 'color' => 'green',
             ]);

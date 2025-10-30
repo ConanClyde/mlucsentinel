@@ -2,6 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\AdminRole;
+use App\Models\College;
+use App\Models\StakeholderType;
+use App\Models\VehicleType;
+use App\Models\ViolationType;
+use App\Observers\AdminRoleObserver;
+use App\Observers\CollegeObserver;
+use App\Observers\StakeholderTypeObserver;
+use App\Observers\VehicleTypeObserver;
+use App\Observers\ViolationTypeObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register model observers for cache invalidation
+        VehicleType::observe(VehicleTypeObserver::class);
+        College::observe(CollegeObserver::class);
+        ViolationType::observe(ViolationTypeObserver::class);
+        AdminRole::observe(AdminRoleObserver::class);
+        StakeholderType::observe(StakeholderTypeObserver::class);
     }
 }

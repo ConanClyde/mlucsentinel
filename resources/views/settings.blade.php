@@ -106,7 +106,6 @@
                     <table class="w-full">
                         <thead class="bg-gray-50 dark:bg-[#161615] border-y border-[#e3e3e0] dark:border-[#3E3E3A]">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">ID</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">College Name</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Created At</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
@@ -115,7 +114,7 @@
                         <tbody id="college-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                             <!-- Colleges will be loaded here -->
                             <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                                     Loading colleges...
                                 </td>
                             </tr>
@@ -145,7 +144,6 @@
                     <table class="w-full">
                         <thead class="bg-gray-50 dark:bg-[#161615] border-y border-[#e3e3e0] dark:border-[#3E3E3A]">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">ID</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Vehicle Type Name</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Created At</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
@@ -154,7 +152,7 @@
                         <tbody id="vehicle-type-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                             <!-- Vehicle types will be loaded here -->
                             <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                                     Loading vehicle types...
                                 </td>
                             </tr>
@@ -363,13 +361,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentTheme = localStorage.getItem('theme') || 'light';
     updateThemeSelection(currentTheme);
     
-    // Initialize browser notifications
-    checkNotificationPermission();
+    // Initialize browser notifications and request permission if not set
+    initializeNotifications();
     
     // Load colleges and vehicle types
     loadColleges();
     loadVehicleTypes();
 });
+
+// Initialize notifications - request permission on first visit
+function initializeNotifications() {
+    if (!('Notification' in window)) {
+        checkNotificationPermission();
+        return;
+    }
+    
+    const preference = localStorage.getItem('browserNotifications');
+    
+    // If user hasn't made a choice yet, automatically request permission
+    if (!preference && Notification.permission === 'default') {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                localStorage.setItem('browserNotifications', 'enabled');
+                showNotification('Browser notifications enabled! You can disable them anytime in settings.', 'success');
+                checkNotificationPermission();
+            } else {
+                // User denied, don't ask again
+                localStorage.setItem('browserNotifications', 'disabled');
+                checkNotificationPermission();
+            }
+        });
+    } else {
+        // User has already made a choice, just update the UI
+        checkNotificationPermission();
+    }
+}
 
 // Check and update notification permission status
 function checkNotificationPermission() {
@@ -404,6 +430,26 @@ function checkNotificationPermission() {
             : 'Click the toggle to enable notifications';
         statusText.classList.add('text-gray-600', 'dark:text-gray-400');
     }
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    const bgColor = type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-green-500';
+    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300`;
+    notification.textContent = message;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
 }
 
 // Toggle browser notifications
@@ -496,11 +542,10 @@ function loadColleges() {
             
             // Display colleges in table
             if (colleges.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No colleges found. Click Add button to create one.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No colleges found. Click Add button to create one.</td></tr>';
             } else {
                 tableBody.innerHTML = colleges.map(college => `
                     <tr class="hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="${college.id}">
-                        <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${college.id}</td>
                         <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${college.name}</td>
                         <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${new Date(college.created_at).toLocaleDateString()}</td>
                         <td class="px-4 py-3">
@@ -530,7 +575,7 @@ function loadColleges() {
     })
     .catch(error => {
         console.error('Error loading colleges:', error);
-        tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading colleges. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading colleges. Please try again.</td></tr>';
     });
 }
 
@@ -557,7 +602,10 @@ function addCollege() {
         if (data.success) {
             showSuccessModal('Success!', 'College added successfully!');
             closeAddCollegeModal();
-            // Table will update via realtime broadcast
+            // Manually add to table (since broadcast uses toOthers())
+            if (collegesRealtimeManager && data.data) {
+                collegesRealtimeManager.addCollege(data.data);
+            }
         } else {
             showErrorModal(data.message || 'Failed to add college');
         }
@@ -604,7 +652,10 @@ function updateCollege() {
         if (data.success) {
             showSuccessModal('Success!', 'College updated successfully!');
             closeEditCollegeModal();
-            // Table will update via realtime broadcast
+            // Manually update table (since broadcast uses toOthers())
+            if (collegesRealtimeManager && data.data) {
+                collegesRealtimeManager.updateCollege(data.data);
+            }
         } else {
             showErrorModal(data.message || 'Failed to update college');
         }
@@ -631,7 +682,9 @@ function closeDeleteCollegeModal() {
 function confirmDeleteCollege() {
     if (!collegeToDelete) return;
     
-    fetch(`/api/colleges/${collegeToDelete}`, {
+    const collegeId = collegeToDelete;
+    
+    fetch(`/api/colleges/${collegeId}`, {
         method: 'DELETE',
         headers: {
             'Accept': 'application/json',
@@ -643,7 +696,10 @@ function confirmDeleteCollege() {
         if (data.success) {
             showSuccessModal('Success!', 'College deleted successfully!');
             closeDeleteCollegeModal();
-            // Table will update via realtime broadcast
+            // Manually remove from table (since broadcast uses toOthers())
+            if (collegesRealtimeManager) {
+                collegesRealtimeManager.removeCollege({ id: collegeId });
+            }
         } else {
             showErrorModal(data.message || 'Failed to delete college');
         }
@@ -674,11 +730,10 @@ function loadVehicleTypes() {
             
             // Display vehicle types in table
             if (vehicleTypes.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No vehicle types found. Click Add button to create one.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No vehicle types found. Click Add button to create one.</td></tr>';
             } else {
                 tableBody.innerHTML = vehicleTypes.map(type => `
                     <tr class="hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="${type.id}">
-                        <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${type.id}</td>
                         <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${type.name}</td>
                         <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${new Date(type.created_at).toLocaleDateString()}</td>
                         <td class="px-4 py-3">
@@ -708,7 +763,7 @@ function loadVehicleTypes() {
     })
     .catch(error => {
         console.error('Error loading vehicle types:', error);
-        tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading vehicle types. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading vehicle types. Please try again.</td></tr>';
     });
 }
 
@@ -735,7 +790,10 @@ function addVehicleType() {
         if (data.success) {
             showSuccessModal('Success!', 'Vehicle type added successfully!');
             closeAddVehicleTypeModal();
-            // Table will update via realtime broadcast
+            // Manually add to table (since broadcast uses toOthers())
+            if (vehicleTypesRealtimeManager && data.data) {
+                vehicleTypesRealtimeManager.addVehicleType(data.data);
+            }
         } else {
             showErrorModal(data.message || 'Failed to add vehicle type');
         }
@@ -782,7 +840,10 @@ function updateVehicleType() {
         if (data.success) {
             showSuccessModal('Success!', 'Vehicle type updated successfully!');
             closeEditVehicleTypeModal();
-            // Table will update via realtime broadcast
+            // Manually update table (since broadcast uses toOthers())
+            if (vehicleTypesRealtimeManager && data.data) {
+                vehicleTypesRealtimeManager.updateVehicleType(data.data);
+            }
         } else {
             showErrorModal(data.message || 'Failed to update vehicle type');
         }
@@ -809,7 +870,9 @@ function closeDeleteVehicleTypeModal() {
 function confirmDeleteVehicleType() {
     if (!vehicleTypeToDelete) return;
     
-    fetch(`/api/vehicle-types/${vehicleTypeToDelete}`, {
+    const vehicleTypeId = vehicleTypeToDelete;
+    
+    fetch(`/api/vehicle-types/${vehicleTypeId}`, {
         method: 'DELETE',
         headers: {
             'Accept': 'application/json',
@@ -821,7 +884,10 @@ function confirmDeleteVehicleType() {
         if (data.success) {
             showSuccessModal('Success!', 'Vehicle type deleted successfully!');
             closeDeleteVehicleTypeModal();
-            // Table will update via realtime broadcast
+            // Manually remove from table (since broadcast uses toOthers())
+            if (vehicleTypesRealtimeManager) {
+                vehicleTypesRealtimeManager.removeVehicleType({ id: vehicleTypeId });
+            }
         } else {
             showErrorModal(data.message || 'Failed to delete vehicle type');
         }

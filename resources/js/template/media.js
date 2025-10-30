@@ -13,6 +13,14 @@ window.handleFileUpload = function(event) {
             return;
         }
         
+        // Check file type (support iOS formats)
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('File must be a JPEG, PNG, HEIC, or HEIF image.');
+            event.target.value = ''; // Clear the input
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             const previewImage = document.getElementById('previewImage');

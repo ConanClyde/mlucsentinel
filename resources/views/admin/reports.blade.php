@@ -4,7 +4,7 @@
 
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" data-admin-role="{{ $adminRole ?? '' }}">
     <!-- Filter Card -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
         <div class="flex flex-col md:flex-row gap-4 items-end">
@@ -121,10 +121,10 @@
                         <td class="py-2 px-3">
                             <div>
                                 <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $report->reportedBy->first_name ?? '' }} {{ $report->reportedBy->last_name ?? '' }}</p>
-                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ ucfirst(str_replace('_', ' ', $report->reportedBy->user_type ?? 'N/A')) }}</p>
+                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $report->reportedBy?->user_type?->label() ?? 'N/A' }}</p>
                             </div>
                         </td>
-                        <td class="py-2 px-3" data-user-type="{{ $report->violatorVehicle->user->user_type ?? '' }}" data-college-id="{{ $report->violatorVehicle->user->student->college_id ?? '' }}">
+                        <td class="py-2 px-3" data-user-type="{{ $report->violatorVehicle->user->user_type?->value ?? '' }}" data-college-id="{{ $report->violatorVehicle->user->student->college_id ?? '' }}">
                             @if($report->violatorVehicle)
                                 <div>
                                     <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $report->violatorVehicle->user->first_name ?? '' }} {{ $report->violatorVehicle->user->last_name ?? '' }}</p>
@@ -229,21 +229,21 @@
 </div>
 
 <!-- Success Modal -->
-<div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-2xl max-w-md w-full mx-4 transform transition-all">
-        <div class="p-6">
-            <div class="flex items-center justify-center mb-4">
-                <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+<div id="successModal" class="modal-backdrop hidden">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title flex items-center gap-3">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-heroicon-o-check-circle class="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
-            </div>
-            <h3 class="text-xl font-bold text-center text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Status Updated!</h3>
-            <p id="successMessage" class="text-center text-[#706f6c] dark:text-[#A1A09A] mb-6"></p>
-            <button onclick="closeSuccessModal()" class="btn btn-primary w-full">
-                OK
-            </button>
+                <span class="text-[#1b1b18] dark:text-[#EDEDEC]">Status Updated!</span>
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="successMessage" class="text-[#706f6c] dark:text-[#A1A09A]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeSuccessModal()" class="btn btn-primary">OK</button>
         </div>
     </div>
 </div>

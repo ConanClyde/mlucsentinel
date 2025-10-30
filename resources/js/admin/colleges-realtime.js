@@ -256,7 +256,6 @@ class CollegesRealtime {
         const createdDate = new Date(college.created_at).toLocaleDateString();
 
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${college.id}</td>
             <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(college.name)}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
@@ -284,7 +283,7 @@ class CollegesRealtime {
     showEmptyState() {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 No colleges found. Click Add button to create one.
             </td>
         `;

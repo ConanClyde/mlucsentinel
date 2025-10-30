@@ -6,9 +6,9 @@ use App\Events\AdministratorUpdated;
 use App\Events\NotificationCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Administrator;
-use App\Models\AdminRole;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\StaticDataCacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -24,7 +24,7 @@ class AdministratorsController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $adminRoles = AdminRole::orderBy('name')->get();
+        $adminRoles = StaticDataCacheService::getAdminRoles();
 
         return view('admin.users.administrators', [
             'pageTitle' => 'Administrators Management',

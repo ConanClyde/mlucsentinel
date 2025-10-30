@@ -240,7 +240,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title text-red-500 flex items-center gap-2">
-                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
                 Delete Reporter
             </h2>
         </div>
@@ -249,7 +249,7 @@
         </div>
         <div class="modal-footer">
             <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
-            <button onclick="confirmDelete()" class="btn btn-danger">Delete</button>
+            <button onclick="confirmDeleteReporter()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -695,7 +695,7 @@ function closeDeleteModal() {
     deleteReporterId = null;
 }
 
-function confirmDelete() {
+function confirmDeleteReporter() {
     if (!deleteReporterId) return;
     
     fetch(`/users/reporters/${deleteReporterId}`, {
@@ -777,7 +777,7 @@ window.openEditModal = openEditModal;
 window.deleteReporter = deleteReporter;
 window.closeViewModal = closeViewModal;
 window.closeDeleteModal = closeDeleteModal;
-window.confirmDelete = confirmDelete;
+window.confirmDeleteReporter = confirmDeleteReporter;
 window.exportToCSV = exportToCSV;
 window.closeEditModal = closeEditModal;
 

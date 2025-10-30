@@ -15,10 +15,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
             $table->string('staff_id')->unique();
-            $table->string('license_no')->unique();
+            $table->string('license_no')->nullable();
             $table->string('license_image')->nullable();
             $table->date('expiration_date')->nullable(); // expiration date of this user account, not the license (4 years)
             $table->timestamps();
+
+            // Performance indexes
+            $table->index('staff_id', 'staff_staff_id_index');
+            $table->index('license_no', 'staff_license_no_index');
         });
     }
 

@@ -12,7 +12,7 @@
                     Welcome, {{ Auth::user()->name }}!
                 </h2>
                 <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">
-                    You are logged in as <span class="font-semibold capitalize">{{ str_replace('_', ' ', Auth::user()->user_type) }}</span>
+                    You are logged in as <span class="font-semibold capitalize">{{ Auth::user()->user_type->label() }}</span>
                 </p>
             </div>
             <div class="hidden sm:flex w-12 h-12 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900 rounded-full items-center justify-center flex-shrink-0">

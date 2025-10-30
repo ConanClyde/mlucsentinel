@@ -7,12 +7,11 @@ use App\Events\UserUpdated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStudentRequest;
-use App\Models\College;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\VehicleType;
+use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,8 +31,8 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $colleges = College::orderBy('name')->get();
-        $vehicleTypes = VehicleType::orderBy('name')->get();
+        $colleges = StaticDataCacheService::getColleges();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return view('admin.registration.student', [
             'pageTitle' => 'Student Registration',
@@ -62,10 +61,12 @@ class StudentController extends Controller
                 'is_active' => true,
             ]);
 
-            // Handle license image upload
+            // Handle license image upload (store without optimization to avoid GD dependency)
             $licenseImagePath = null;
             if ($request->hasFile('license_image')) {
-                $licenseImagePath = $request->file('license_image')->store('licenses', 'public');
+                $file = $request->file('license_image');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $licenseImagePath = $file->storeAs('licenses', $filename, 'public');
             }
 
             // Create student record

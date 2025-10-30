@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\CollegeUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\College;
+use App\Services\StaticDataCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,7 @@ class CollegeController extends Controller
      */
     public function index(): JsonResponse
     {
-        $colleges = College::orderBy('name')->get();
+        $colleges = StaticDataCacheService::getColleges();
 
         return response()->json([
             'success' => true,

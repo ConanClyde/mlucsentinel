@@ -61,19 +61,19 @@ class Vehicle extends Model
         }
 
         // Security & Staff
-        if (in_array($user->user_type, ['security', 'staff'])) {
+        if (in_array($user->user_type, [UserType::Security, UserType::Staff])) {
             return 'maroon';
         }
 
         // Stakeholders
-        if ($user->user_type === 'stakeholder') {
+        if ($user->user_type === UserType::Stakeholder) {
             // This would need to be implemented based on stakeholder type
             // For now, return white as default
             return 'white';
         }
 
         // Students - based on plate number
-        if ($user->user_type === 'student') {
+        if ($user->user_type === UserType::Student) {
             // If no plate number (electric vehicle), return white
             if (! $this->plate_no) {
                 return 'white';

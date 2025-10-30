@@ -5,6 +5,12 @@
 @section('content')
 <div class="space-y-6">
 
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Dashboard & Analytics</h1>
+        <p class="text-[#706f6c] dark:text-[#A1A09A]">Comprehensive insights and system overview</p>
+    </div>
+
     <!-- Dashboard Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Users Card -->
@@ -60,6 +66,64 @@
         </div>
     </div>
 
+    <!-- Additional Stats Row (Revenue, Payments, etc.) - Only for Global Admin & Marketing Admin -->
+    @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator || 
+        (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->isMarketingAdmin()))
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Revenue Card -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-currency-dollar class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Total Revenue</p>
+                    <p class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">₱{{ number_format($stats['total_revenue'], 2) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Payments Card -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-credit-card class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Total Payments</p>
+                    <p class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ number_format($stats['total_payments']) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paid Payments Card -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-check-circle class="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Paid Payments</p>
+                    <p class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ number_format($stats['paid_payments']) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Payments Card -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-clock class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Pending Payments</p>
+                    <p class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ number_format($stats['pending_payments']) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Violations Per Day Chart -->
@@ -101,7 +165,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $reporter->first_name }} {{ $reporter->last_name }}</p>
-                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ ucfirst(str_replace('_', ' ', $reporter->user_type)) }}</p>
+                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $reporter->user_type->label() }}</p>
                             </div>
                         </div>
                         <span class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $reporter->reports_count }}</span>
@@ -124,7 +188,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $violator->first_name }} {{ $violator->last_name }}</p>
-                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ ucfirst(str_replace('_', ' ', $violator->user_type)) }}</p>
+                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $violator->user_type->label() }}</p>
                             </div>
                         </div>
                         <span class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $violator->vehicles_count }}</span>
@@ -401,5 +465,6 @@ function showReportNotification(report) {
         }
     }, 5000);
 }
+
 </script>
 @endsection

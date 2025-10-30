@@ -14,12 +14,16 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
-            $table->foreignId('college_id')->nullable()->constrained('colleges')->onDelete('set null');
+            $table->foreignId('college_id')->constrained('colleges')->onDelete('cascade');
             $table->string('student_id')->unique();
-            $table->string('license_no')->unique();
+            $table->string('license_no')->nullable();
             $table->string('license_image')->nullable();
             $table->date('expiration_date')->nullable(); // expiration date of this user account, not the license (4 years)
             $table->timestamps();
+
+            // Performance indexes
+            $table->index(['student_id', 'college_id'], 'students_student_id_college_id_index');
+            $table->index('license_no', 'students_license_no_index');
         });
     }
 

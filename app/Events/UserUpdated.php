@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Enums\UserType;
 use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -39,17 +40,17 @@ class UserUpdated implements ShouldBroadcastNow
         $channels = [];
 
         // Broadcast to administrators channel if user is an administrator
-        if (in_array($this->user->user_type, ['global_administrator', 'administrator'])) {
+        if (in_array($this->user->user_type, [UserType::GlobalAdministrator, UserType::Administrator])) {
             $channels[] = new Channel('administrators');
         }
 
         // Broadcast to reporters channel if user is a reporter
-        if (in_array($this->user->user_type, ['reporter', 'security'])) {
+        if (in_array($this->user->user_type, [UserType::Reporter, UserType::Security])) {
             $channels[] = new Channel('reporters');
         }
 
         // Broadcast to students channel if user is a student
-        if ($this->user->user_type === 'student') {
+        if ($this->user->user_type === UserType::Student) {
             $channels[] = new Channel('students');
         }
 
@@ -61,11 +62,11 @@ class UserUpdated implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        if (in_array($this->user->user_type, ['global_administrator', 'administrator'])) {
+        if (in_array($this->user->user_type, [UserType::GlobalAdministrator, UserType::Administrator])) {
             return 'administrator.updated';
-        } elseif (in_array($this->user->user_type, ['reporter', 'security'])) {
+        } elseif (in_array($this->user->user_type, [UserType::Reporter, UserType::Security])) {
             return 'reporter.updated';
-        } elseif ($this->user->user_type === 'student') {
+        } elseif ($this->user->user_type === UserType::Student) {
             return 'student.updated';
         }
 
@@ -93,7 +94,7 @@ class UserUpdated implements ShouldBroadcastNow
         ];
 
         // Add specific data based on user type
-        if (in_array($this->user->user_type, ['global_administrator', 'administrator'])) {
+        if (in_array($this->user->user_type, [UserType::GlobalAdministrator, UserType::Administrator])) {
             $administrator = $this->user->administrator;
             if ($administrator) {
                 $data['administrator'] = [
@@ -109,7 +110,7 @@ class UserUpdated implements ShouldBroadcastNow
                     'updated_at' => $administrator->updated_at,
                 ];
             }
-        } elseif (in_array($this->user->user_type, ['reporter', 'security'])) {
+        } elseif (in_array($this->user->user_type, [UserType::Reporter, UserType::Security])) {
             $reporter = $this->user->reporter;
             if ($reporter) {
                 $data['reporter'] = [
@@ -126,7 +127,7 @@ class UserUpdated implements ShouldBroadcastNow
                     'updated_at' => $reporter->updated_at,
                 ];
             }
-        } elseif ($this->user->user_type === 'student') {
+        } elseif ($this->user->user_type === UserType::Student) {
             $student = $this->user->student;
             if ($student) {
                 $data['student'] = [

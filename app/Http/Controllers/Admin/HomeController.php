@@ -53,7 +53,7 @@ class HomeController extends Controller
         foreach ($recentUsers as $user) {
             $activities->push([
                 'type' => 'user_registration',
-                'message' => "New {$user->user_type} registered: {$user->first_name} {$user->last_name}",
+                'message' => "New {$user->user_type->label()} registered: {$user->first_name} {$user->last_name}",
                 'time' => $user->created_at,
                 'color' => 'green',
             ]);

@@ -12,7 +12,7 @@
                     Welcome, {{ Auth::user()->name }}!
                 </h2>
                 <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">
-                    You are logged in as <span class="font-semibold capitalize">{{ str_replace('_', ' ', Auth::user()->user_type) }}</span>
+                    You are logged in as <span class="font-semibold capitalize">{{ Auth::user()->user_type->label() }}</span>
                 </p>
             </div>
             <div class="hidden sm:flex w-12 h-12 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900 rounded-full items-center justify-center flex-shrink-0">
@@ -53,7 +53,7 @@
             </a>
         </div>
 
-        @if(Auth::user()->user_type === 'security')
+        @if(Auth::user()->user_type === App\Enums\UserType::Security)
             <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -69,34 +69,6 @@
                 </a>
             </div>
         @endif
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Activity</h3>
-        <div class="space-y-4">
-            <div class="flex items-center space-x-4">
-                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">Report submitted: Parking violation - ABC-1234</p>
-                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">2 hours ago</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">Vehicle registered: XYZ-5678</p>
-                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">1 day ago</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div class="flex-1">
-                    <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">Report resolved: Blocking fire exit</p>
-                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">3 days ago</p>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 @endsection

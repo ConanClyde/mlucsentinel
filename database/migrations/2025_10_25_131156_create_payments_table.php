@@ -19,12 +19,21 @@ return new class extends Migration
             $table->enum('status', ['pending', 'paid', 'failed', 'cancelled'])->default('pending');
             $table->decimal('amount', 10, 2)->nullable();
             $table->string('reference')->nullable()->unique();
+            $table->string('batch_id')->nullable();
+            $table->integer('vehicle_count')->default(1);
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['status', 'type']);
             $table->index('paid_at');
+            $table->index('batch_id');
+
+            // Performance indexes
+            $table->index('created_at', 'payments_created_at_index');
+            $table->index(['user_id', 'status'], 'payments_user_id_status_index');
+            $table->index(['status', 'created_at'], 'payments_status_created_at_index');
+            $table->index(['batch_id', 'status'], 'payments_batch_id_status_index');
         });
     }
 

@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\Admin\CampusMapController;
 use App\Http\Controllers\Admin\CollegeController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
+use App\Http\Controllers\Admin\MapLocationController;
 use App\Http\Controllers\Admin\Registration\AdministratorController;
 use App\Http\Controllers\Admin\Registration\ReporterController;
 use App\Http\Controllers\Admin\Registration\SecurityController as AdminRegistrationSecurityController;
@@ -30,7 +30,11 @@ use App\Http\Controllers\Reporter\MyReportController;
 use App\Http\Controllers\Reporter\MyVehiclesController;
 use App\Http\Controllers\Reporter\ReportUserController;
 use App\Http\Controllers\SettingsController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+// Broadcasting Authentication
+Broadcast::routes(['middleware' => ['web', 'auth']]);
 
 // Landing Page
 Route::get('/', [AuthController::class, 'landing'])->name('landing');
@@ -56,6 +60,15 @@ Route::middleware('guest')->group(function () {
 });
 
 // Logout
+Route::get('/logout', function () {
+    // Handle GET requests to /logout with a friendly auto-submit form
+    if (auth()->check()) {
+        return view('auth.logout-confirm');
+    }
+
+    return redirect()->route('landing')->with('info', 'You are already logged out.');
+})->name('logout.get');
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // Notification Routes (Protected)
@@ -73,10 +86,10 @@ Route::get('/dashboard', [AdminDashboardController::class, 'index'])->middleware
 Route::get('/home', function () {
     $user = auth()->user();
 
-    // Redirect based on user type
-    if (in_array($user->user_type, ['global_administrator', 'administrator'])) {
+    // Redirect based on user type (using Enum)
+    if (in_array($user->user_type, [\App\Enums\UserType::GlobalAdministrator, \App\Enums\UserType::Administrator])) {
         return app(AdminHomeController::class)->index();
-    } elseif (in_array($user->user_type, ['reporter', 'security'])) {
+    } elseif (in_array($user->user_type, [\App\Enums\UserType::Reporter, \App\Enums\UserType::Security])) {
         return app(ReporterHomeController::class)->index();
     } else {
         // For other user types, redirect to admin home as fallback
@@ -96,7 +109,15 @@ Route::get('/settings', [SettingsController::class, 'index'])->middleware('auth'
 
 // Admin Routes
 Route::middleware(['auth', 'user.type:global_administrator,administrator'])->group(function () {
-    Route::get('/campus-map', [CampusMapController::class, 'index'])->name('admin.campus-map');
+    // Campus Map Routes
+    Route::get('/campus-map', [MapLocationController::class, 'index'])->name('admin.campus-map');
+    Route::get('/api/map-locations', [MapLocationController::class, 'getLocations'])->name('api.map-locations.index');
+    Route::get('/api/map-location-types', [MapLocationController::class, 'getTypes'])->name('api.map-location-types.index');
+    Route::post('/api/map-locations', [MapLocationController::class, 'store'])->name('api.map-locations.store');
+    Route::get('/api/map-locations/{location}', [MapLocationController::class, 'show'])->name('api.map-locations.show');
+    Route::put('/api/map-locations/{location}', [MapLocationController::class, 'update'])->name('api.map-locations.update');
+    Route::delete('/api/map-locations/{location}', [MapLocationController::class, 'destroy'])->name('api.map-locations.destroy');
+    Route::post('/api/map-locations/{location}/toggle-active', [MapLocationController::class, 'toggleActive'])->name('api.map-locations.toggle-active');
 
     // College Routes
     Route::get('/api/colleges', [CollegeController::class, 'index'])->name('api.colleges.index');
@@ -117,6 +138,9 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
     Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports');
     Route::put('/reports/{report}/status', [ReportsController::class, 'updateStatus'])->name('admin.reports.status');
 
+    // Dashboard Export Route
+    Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
+
     // Stickers Routes - Marketing Admin Only
     Route::middleware(['marketing.admin'])->group(function () {
         Route::get('/stickers', [StickersController::class, 'index'])->name('admin.stickers');
@@ -125,6 +149,8 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/stickers/request', [StickersController::class, 'createRequest'])->name('admin.stickers.request');
         Route::patch('/stickers/{payment}/pay', [StickersController::class, 'markAsPaid'])->name('admin.stickers.pay');
         Route::patch('/stickers/{payment}/cancel', [StickersController::class, 'cancel'])->name('admin.stickers.cancel');
+        Route::delete('/stickers/{payment}', [StickersController::class, 'destroy'])->name('admin.stickers.destroy');
+        Route::get('/stickers/{payment}/receipt', [StickersController::class, 'downloadReceipt'])->name('admin.stickers.receipt');
     });
 
     // User Types Routes
@@ -155,19 +181,19 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
 
     // Registration Routes
     Route::get('/registration/student', [StudentController::class, 'index'])->name('admin.registration.student');
-    Route::post('/registration/student', [StudentController::class, 'store'])->name('admin.registration.student.store');
+    Route::post('/registration/student', [StudentController::class, 'store'])->name('admin.registration.student.store')->middleware('file.upload.security');
     Route::post('/registration/student/check-email', [StudentController::class, 'checkEmail'])->name('admin.registration.student.check-email');
     Route::post('/registration/student/check-student-id', [StudentController::class, 'checkStudentId'])->name('admin.registration.student.check-student-id');
     Route::post('/registration/student/check-license-no', [StudentController::class, 'checkLicenseNo'])->name('admin.registration.student.check-license-no');
     Route::post('/registration/student/check-plate-no', [StudentController::class, 'checkPlateNo'])->name('admin.registration.student.check-plate-no');
     Route::get('/registration/staff', [AdminRegistrationStaffController::class, 'index'])->name('admin.registration.staff');
-    Route::post('/registration/staff', [AdminRegistrationStaffController::class, 'store'])->name('admin.registration.staff.store');
+    Route::post('/registration/staff', [AdminRegistrationStaffController::class, 'store'])->name('admin.registration.staff.store')->middleware('file.upload.security');
     Route::post('/registration/staff/check-email', [AdminRegistrationStaffController::class, 'checkEmail'])->name('admin.registration.staff.check-email');
     Route::post('/registration/staff/check-staff-id', [AdminRegistrationStaffController::class, 'checkStaffId'])->name('admin.registration.staff.check-staff-id');
     Route::post('/registration/staff/check-license-no', [AdminRegistrationStaffController::class, 'checkLicenseNo'])->name('admin.registration.staff.check-license-no');
     Route::post('/registration/staff/check-plate-no', [AdminRegistrationStaffController::class, 'checkPlateNo'])->name('admin.registration.staff.check-plate-no');
     Route::get('/registration/security', [AdminRegistrationSecurityController::class, 'index'])->name('admin.registration.security');
-    Route::post('/registration/security', [AdminRegistrationSecurityController::class, 'store'])->name('admin.registration.security.store');
+    Route::post('/registration/security', [AdminRegistrationSecurityController::class, 'store'])->name('admin.registration.security.store')->middleware('file.upload.security');
     Route::post('/registration/security/check-email', [AdminRegistrationSecurityController::class, 'checkEmail'])->name('admin.registration.security.check-email');
     Route::post('/registration/security/check-security-id', [AdminRegistrationSecurityController::class, 'checkSecurityId'])->name('admin.registration.security.check-security-id');
     Route::post('/registration/security/check-license-no', [AdminRegistrationSecurityController::class, 'checkLicenseNo'])->name('admin.registration.security.check-license-no');
@@ -176,7 +202,7 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
     Route::post('/registration/reporter', [ReporterController::class, 'store'])->name('admin.registration.reporter.store');
     Route::post('/registration/reporter/check-email', [ReporterController::class, 'checkEmail'])->name('admin.registration.reporter.check-email');
     Route::get('/registration/stakeholder', [StakeholderController::class, 'index'])->name('admin.registration.stakeholder');
-    Route::post('/registration/stakeholder', [StakeholderController::class, 'store'])->name('admin.registration.stakeholder.store');
+    Route::post('/registration/stakeholder', [StakeholderController::class, 'store'])->name('admin.registration.stakeholder.store')->middleware('file.upload.security');
     Route::post('/registration/stakeholder/check-email', [StakeholderController::class, 'checkEmail'])->name('admin.registration.stakeholder.check-email');
     Route::post('/registration/stakeholder/check-license-no', [StakeholderController::class, 'checkLicenseNo'])->name('admin.registration.stakeholder.check-license-no');
     Route::post('/registration/stakeholder/check-plate-no', [StakeholderController::class, 'checkPlateNo'])->name('admin.registration.stakeholder.check-plate-no');
@@ -192,7 +218,7 @@ Route::middleware(['auth', 'user.type:reporter,security'])->group(function () {
     Route::post('/report-user/search', [ReportUserController::class, 'searchVehicle'])->name('reporter.search-vehicle');
     // Rate limit: max 10 reports per minute per user
     Route::post('/report-user/submit', [ReportUserController::class, 'store'])
-        ->middleware('throttle:10,1')
+        ->middleware(['throttle:10,1', 'file.upload.security'])
         ->name('reporter.report-submit');
     Route::get('/my-reports', [MyReportController::class, 'index'])->name('reporter.my-reports');
 });

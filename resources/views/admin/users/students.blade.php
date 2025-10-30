@@ -179,7 +179,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title text-red-500 flex items-center gap-2">
-                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
                 Delete Student
             </h2>
         </div>
@@ -188,7 +188,7 @@
         </div>
         <div class="modal-footer">
             <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
-            <button onclick="confirmDelete()" class="btn btn-danger">Delete</button>
+            <button onclick="confirmDeleteStudent()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -755,7 +755,7 @@ function closeDeleteModal() {
     deleteStudentId = null;
 }
 
-function confirmDelete() {
+function confirmDeleteStudent() {
     if (!deleteStudentId) return;
     
     fetch(`/users/students/${deleteStudentId}`, {
@@ -1303,7 +1303,7 @@ window.openEditModal = openEditModal;
 window.deleteStudent = deleteStudent;
 window.closeViewModal = closeViewModal;
 window.closeDeleteModal = closeDeleteModal;
-window.confirmDelete = confirmDelete;
+window.confirmDeleteStudent = confirmDeleteStudent;
 window.exportToCSV = exportToCSV;
 window.closeEditModal = closeEditModal;
 window.addEditVehicle = addEditVehicle;

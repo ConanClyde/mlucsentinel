@@ -109,7 +109,7 @@
                                 </div>
                                 <div>
                                     <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $vehicle->user->first_name }} {{ $vehicle->user->last_name }}</div>
-                                    <div class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ ucfirst(str_replace('_', ' ', $vehicle->user->user_type)) }}</div>
+                                    <div class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $vehicle->user->user_type->label() }}</div>
                                 </div>
                             </div>
                         </td>
@@ -197,7 +197,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title text-red-500 flex items-center gap-2">
-                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
                 Delete Vehicle
             </h2>
         </div>

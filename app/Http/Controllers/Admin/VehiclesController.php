@@ -7,7 +7,7 @@ use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Vehicle;
-use App\Models\VehicleType;
+use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -29,7 +29,7 @@ class VehiclesController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $vehicleTypes = VehicleType::orderBy('name')->get();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return view('admin.vehicles', [
             'pageTitle' => 'Vehicles Management',

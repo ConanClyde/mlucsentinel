@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\SecureFileUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreReportRequest extends FormRequest
@@ -12,7 +13,7 @@ class StoreReportRequest extends FormRequest
     public function authorize(): bool
     {
         // Only reporters and security can submit reports
-        return in_array($this->user()->user_type, ['reporter', 'security']);
+        return in_array($this->user()->user_type, [\App\Enums\UserType::Reporter, \App\Enums\UserType::Security]);
     }
 
     /**
@@ -26,8 +27,8 @@ class StoreReportRequest extends FormRequest
             'vehicle_id' => ['required', 'exists:vehicles,id'],
             'violation_type_id' => ['required', 'exists:violation_types,id'],
             'location' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string', 'min:10', 'max:1000'],
-            'evidence_image' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg', 'max:2048'], // 2MB max
+            'description' => ['nullable', 'string', 'max:1000'],
+            'evidence_image' => ['required', 'file', new SecureFileUpload(['image/jpeg', 'image/png', 'image/jpg', 'image/heic', 'image/heif'], 5120, ['jpg', 'jpeg', 'png', 'heic', 'heif'], true)],
         ];
     }
 
@@ -45,13 +46,11 @@ class StoreReportRequest extends FormRequest
             'violation_type_id.exists' => 'The selected violation type is invalid.',
             'location.required' => 'Please specify the location of the violation.',
             'location.max' => 'Location description cannot exceed 255 characters.',
-            'description.required' => 'Please provide a description of the violation.',
-            'description.min' => 'Description must be at least 10 characters.',
             'description.max' => 'Description cannot exceed 1000 characters.',
             'evidence_image.required' => 'Evidence image is required.',
             'evidence_image.image' => 'The file must be an image.',
-            'evidence_image.mimes' => 'Image must be a JPEG, PNG, or JPG file.',
-            'evidence_image.max' => 'Image size cannot exceed 2MB.',
+            'evidence_image.mimes' => 'Image must be a JPEG, PNG, HEIC, or HEIF file.',
+            'evidence_image.max' => 'Image size cannot exceed 5MB.',
         ];
     }
 

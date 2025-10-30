@@ -13,7 +13,9 @@ class StoreStudentRequest extends FormRequest
     public function authorize(): bool
     {
         // Only global administrators and administrators can register students
-        return in_array($this->user()->user_type, ['global_administrator', 'administrator']);
+        // user_type is an Enum, so we need to get its value
+        $userType = $this->user()->user_type->value ?? $this->user()->user_type;
+        return in_array($userType, ['global_administrator', 'administrator']);
     }
 
     /**
@@ -42,8 +44,17 @@ class StoreStudentRequest extends FormRequest
                 'unique:students,student_id',
                 'regex:/^2[0-9]{2}-[0-9]{4}-2$/',
             ],
-            'license_no' => ['required', 'string', 'max:255', 'unique:students,license_no'],
-            'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'license_no' => [
+                'nullable',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if ($value && \App\Models\Student::where('license_no', $value)->exists()) {
+                        $fail('The license number has already been taken.');
+                    }
+                },
+            ],
+            'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'],
             'vehicles' => ['required', 'array', 'min:1', 'max:3'],
             'vehicles.*.type_id' => ['required', 'exists:vehicle_types,id'],
             'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],

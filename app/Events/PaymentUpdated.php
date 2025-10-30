@@ -4,6 +4,7 @@ namespace App\Events;
 
 use App\Models\Payment;
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -22,7 +23,7 @@ class PaymentUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new Channel('payments'),
+            new PrivateChannel('payments'),
         ];
     }
 
@@ -33,6 +34,15 @@ class PaymentUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        // Load relationships
+        $this->payment->load(['user', 'vehicle.type']);
+        
+        // Get vehicle count for this user
+        $vehicleCount = 0;
+        if ($this->payment->user) {
+            $vehicleCount = \App\Models\Vehicle::where('user_id', $this->payment->user_id)->count();
+        }
+        
         return [
             'payment' => [
                 'id' => $this->payment->id,
@@ -44,6 +54,8 @@ class PaymentUpdated implements ShouldBroadcastNow
                 'reference' => $this->payment->reference,
                 'paid_at' => $this->payment->paid_at,
                 'created_at' => $this->payment->created_at,
+                'updated_at' => $this->payment->updated_at,
+                'vehicle_count' => $vehicleCount,
                 'user' => $this->payment->user ? [
                     'id' => $this->payment->user->id,
                     'first_name' => $this->payment->user->first_name,

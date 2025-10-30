@@ -211,8 +211,8 @@
                     <div class="notification-item ${!notif.is_read ? 'unread bg-blue-50 dark:bg-blue-900/10' : ''} p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer" 
                          data-id="${notif.id}" 
                          data-url="${notif.data?.url || ''}" 
-                         data-admin-id="${notif.data?.administrator_id || ''}"
-                         data-reporter-id="${notif.data?.reporter_id || ''}"
+                         data-entity-id="${notif.data?.administrator_id || notif.data?.reporter_id || notif.data?.student_id || notif.data?.staff_id || notif.data?.security_id || notif.data?.stakeholder_id || ''}"
+                         data-entity-type="${notif.data?.administrator_id ? 'administrator' : notif.data?.reporter_id ? 'reporter' : notif.data?.student_id ? 'student' : notif.data?.staff_id ? 'staff' : notif.data?.security_id ? 'security' : notif.data?.stakeholder_id ? 'stakeholder' : ''}"
                          data-action="${notif.data?.action || ''}">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
@@ -230,26 +230,22 @@
                     item.addEventListener('click', function() {
                         const id = this.dataset.id;
                         const url = this.dataset.url;
-                        const adminId = this.dataset.adminId;
-                        const reporterId = this.dataset.reporterId;
+                        const entityId = this.dataset.entityId;
+                        const entityType = this.dataset.entityType;
                         const action = this.dataset.action;
                         
                         // Mark as read
                         markAsRead(id);
                         
                         // Navigate and open modal if applicable
-                        handleNotificationClick(url, adminId, reporterId, action);
+                        handleNotificationClick(url, entityId, entityType, action);
                     });
                 });
             }
 
             // Handle notification click - navigate and open modal
-            function handleNotificationClick(url, adminId, reporterId, action) {
+            function handleNotificationClick(url, entityId, entityType, action) {
                 if (!url) return;
-                
-                // Determine which ID to use and which function to call
-                const entityId = adminId || reporterId;
-                const isReporter = !!reporterId;
                 
                 // If we're already on the page and it's an update action, open the view modal
                 if (window.location.pathname === url && entityId && action === 'updated') {
@@ -258,16 +254,34 @@
                     
                     // Wait a bit then open modal
                     setTimeout(() => {
-                        if (isReporter && typeof viewReporter === 'function') {
-                            viewReporter(parseInt(entityId));
-                        } else if (!isReporter && typeof viewAdministrator === 'function') {
-                            viewAdministrator(parseInt(entityId));
+                        const id = parseInt(entityId);
+                        
+                        // Call the appropriate view function based on entity type
+                        switch(entityType) {
+                            case 'administrator':
+                                if (typeof viewAdministrator === 'function') viewAdministrator(id);
+                                break;
+                            case 'reporter':
+                                if (typeof viewReporter === 'function') viewReporter(id);
+                                break;
+                            case 'student':
+                                if (typeof viewStudent === 'function') viewStudent(id);
+                                break;
+                            case 'staff':
+                                if (typeof viewStaff === 'function') viewStaff(id);
+                                break;
+                            case 'security':
+                                if (typeof viewSecurity === 'function') viewSecurity(id);
+                                break;
+                            case 'stakeholder':
+                                if (typeof viewStakeholder === 'function') viewStakeholder(id);
+                                break;
                         }
                     }, 100);
                 } else {
                     // Navigate to the page with query parameter
                     if (entityId && action === 'updated') {
-                        window.location.href = `${url}?view=${entityId}`;
+                        window.location.href = `${url}?view=${entityId}&type=${entityType}`;
                     } else {
                         window.location.href = url;
                     }
@@ -339,8 +353,13 @@
                 notificationElement.className = 'notification-item unread bg-blue-50 dark:bg-blue-900/10 p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer';
                 notificationElement.setAttribute('data-id', notification.id);
                 notificationElement.setAttribute('data-url', notification.data?.url || '');
-                notificationElement.setAttribute('data-admin-id', notification.data?.administrator_id || '');
-                notificationElement.setAttribute('data-reporter-id', notification.data?.reporter_id || '');
+                
+                // Determine entity ID and type
+                const entityId = notification.data?.administrator_id || notification.data?.reporter_id || notification.data?.student_id || notification.data?.staff_id || notification.data?.security_id || notification.data?.stakeholder_id || '';
+                const entityType = notification.data?.administrator_id ? 'administrator' : notification.data?.reporter_id ? 'reporter' : notification.data?.student_id ? 'student' : notification.data?.staff_id ? 'staff' : notification.data?.security_id ? 'security' : notification.data?.stakeholder_id ? 'stakeholder' : '';
+                
+                notificationElement.setAttribute('data-entity-id', entityId);
+                notificationElement.setAttribute('data-entity-type', entityType);
                 notificationElement.setAttribute('data-action', notification.data?.action || '');
                 
                 notificationElement.innerHTML = `
@@ -358,15 +377,15 @@
                 notificationElement.addEventListener('click', function() {
                     const id = this.dataset.id;
                     const url = this.dataset.url;
-                    const adminId = this.dataset.adminId;
-                    const reporterId = this.dataset.reporterId;
+                    const entityId = this.dataset.entityId;
+                    const entityType = this.dataset.entityType;
                     const action = this.dataset.action;
                     
                     // Mark as read
                     markAsRead(id);
                     
                     // Navigate and open modal if applicable
-                    handleNotificationClick(url, adminId, reporterId, action);
+                    handleNotificationClick(url, entityId, entityType, action);
                 });
                 
                 // Add animation class
@@ -394,8 +413,34 @@
                 return date.toLocaleDateString();
             }
 
+            // Request notification permission on first visit
+            function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    return; // Browser doesn't support notifications
+                }
+                
+                const preference = localStorage.getItem('browserNotifications');
+                
+                // If user hasn't made a choice yet, automatically request permission
+                if (!preference && Notification.permission === 'default') {
+                    Notification.requestPermission().then(function(permission) {
+                        if (permission === 'granted') {
+                            localStorage.setItem('browserNotifications', 'enabled');
+                            console.log('✅ Browser notifications enabled');
+                        } else {
+                            // User denied, don't ask again
+                            localStorage.setItem('browserNotifications', 'disabled');
+                            console.log('❌ Browser notifications denied');
+                        }
+                    });
+                }
+            }
+
             // Load notifications on page load
             loadNotifications();
+
+            // Request notification permission on first visit
+            requestNotificationPermission();
 
             // Listen for real-time notifications
             if (window.Echo) {
@@ -412,6 +457,17 @@
                         
                         // Add new notification to the list without full reload
                         addNotificationToList(event.notification);
+                        
+                        // Show browser notification if enabled
+                        const browserNotificationsEnabled = localStorage.getItem('browserNotifications') === 'enabled';
+                        if (browserNotificationsEnabled && Notification.permission === 'granted') {
+                            new Notification('MLUC Sentinel', {
+                                body: event.notification.message || 'You have a new notification',
+                                icon: '/favicon.ico',
+                                badge: '/favicon.ico',
+                                tag: 'mluc-notification-' + event.notification.id
+                            });
+                        }
                     });
             }
         });

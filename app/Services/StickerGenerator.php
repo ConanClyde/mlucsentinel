@@ -40,9 +40,11 @@ class StickerGenerator
         $svgOptions = new QROptions([
             'version' => 5,
             'outputType' => QRCode::OUTPUT_MARKUP_SVG,
+            'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
             'eccLevel' => QRCode::ECC_L,
             'scale' => 8,
             'imageBase64' => false,
+            'svgDefs' => '',
         ]);
         $qrSvg = (new QRCode($svgOptions))->render($qrData);
 

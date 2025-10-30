@@ -11,7 +11,7 @@
         This is a test to see if the content is displaying properly.
     </p>
     <p class="text-[#706f6c] dark:text-[#A1A09A] mt-2">
-        User: {{ Auth::user()->name }} ({{ Auth::user()->user_type }})
+        User: {{ Auth::user()->name }} ({{ Auth::user()->user_type->label() }})
     </p>
 </div>
 @endsection

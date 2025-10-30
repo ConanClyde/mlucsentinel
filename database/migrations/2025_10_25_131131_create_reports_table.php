@@ -40,6 +40,14 @@ return new class extends Migration
             $table->index('violation_type_id');
             $table->index(['status', 'reported_at']);
             $table->index('assigned_to');
+
+            // Performance indexes
+            $table->index(['assigned_to', 'status'], 'reports_assigned_to_status_index');
+            $table->index('violator_sticker_number', 'reports_violator_sticker_number_index');
+            $table->index(['reported_by', 'created_at'], 'reports_reported_by_created_at_index');
+            $table->index(['violator_vehicle_id', 'status'], 'reports_violator_vehicle_status_index');
+            $table->index(['location', 'created_at'], 'reports_location_created_at_index');
+            $table->index(['violation_type_id', 'status'], 'reports_violation_type_status_index');
         });
     }
 

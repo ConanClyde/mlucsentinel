@@ -92,7 +92,7 @@ Get-ExecutionPolicy -list
 composer install
 npm install
 php artisan storage:link
-
+php artisan storage:link
 php artisan migrate
 php artisan serve
 php artisan reverb:start

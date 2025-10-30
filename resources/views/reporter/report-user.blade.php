@@ -4,36 +4,29 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Page Header - Mobile Optimized -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 sm:p-6">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex-1 min-w-0">
-                <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
-                    Report Violation
-                </h2>
-                <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">
-                    Choose identification method
+    <!-- Page Header - Simple -->
+    <div class="mb-6">
+        <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
+            Report Violation
+        </h2>
+        <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">
+            Choose identification method
+        </p>
+        @php
+            $isSBO = Auth::user()->user_type === App\Enums\UserType::Reporter && 
+                     Auth::user()->reporter && 
+                     (Auth::user()->reporter->reporterType->name ?? '') === 'SBO';
+        @endphp
+        @if($isSBO)
+            <div class="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p class="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 flex items-start sm:items-center">
+                    <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span><strong>Note:</strong> As an SBO member, you can only report student vehicles.</span>
                 </p>
-                @php
-                    $isSBO = Auth::user()->user_type === 'reporter' && 
-                             Auth::user()->reporter && 
-                             (Auth::user()->reporter->reporterType->name ?? '') === 'SBO';
-                @endphp
-                @if($isSBO)
-                    <div class="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <p class="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 flex items-start sm:items-center">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span><strong>Note:</strong> As an SBO member, you can only report student vehicles.</span>
-                        </p>
-                    </div>
-                @endif
             </div>
-            <div class="hidden sm:flex w-12 h-12 sm:w-16 sm:h-16 bg-red-100 dark:bg-red-900 rounded-full items-center justify-center flex-shrink-0">
-                <x-heroicon-o-exclamation-triangle class="w-6 h-6 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" />
-            </div>
-        </div>
+        @endif
     </div>
 
     <!-- Options Grid - Mobile Optimized with Large Touch Targets -->
@@ -50,8 +43,8 @@
                     <h3 class="text-lg sm:text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">QR Scan</h3>
                     <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">Scan sticker QR code</p>
                 </div>
-                <button type="button" class="btn btn-primary w-full !py-3 !text-base sm:!text-lg font-semibold">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button type="button" class="btn btn-primary w-full">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
@@ -72,8 +65,8 @@
                     <h3 class="text-lg sm:text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Manual Entry</h3>
                     <p class="text-sm sm:text-base text-[#706f6c] dark:text-[#A1A09A]">Enter details manually</p>
                 </div>
-                <button type="button" class="btn btn-success w-full !py-3 !text-base sm:!text-lg font-semibold">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button type="button" class="btn btn-success w-full">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                     </svg>
                     Enter Manually
@@ -93,7 +86,7 @@
             </button>
         </div>
         <div class="modal-body p-0 relative">
-            <video id="qrVideo" class="w-full h-auto bg-black" autoplay playsinline></video>
+            <video id="qrVideo" class="w-full aspect-square object-cover bg-black" autoplay playsinline></video>
             <canvas id="qrCanvas" class="hidden"></canvas>
             <!-- Flip Camera Button -->
             <button onclick="flipQRCamera()" class="absolute top-4 right-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full p-3 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Flip Camera">
@@ -101,16 +94,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
             </button>
-        </div>
-        <div class="modal-footer flex-col items-start gap-2">
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Position the QR code within the camera frame</p>
-            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                <strong>Troubleshooting:</strong> If camera doesn't work:
-                <br>• Allow camera permissions in your browser
-                <br>• Close other apps using the camera
-                <br>• Use HTTPS or localhost connection
-                <br>• Try refreshing the page
-            </p>
         </div>
     </div>
 </div>
@@ -137,12 +120,14 @@
                             <label class="form-label">Sticker Color</label>
                             <select id="sticker_color" class="form-input">
                                 <option value="">Select Color</option>
-                                <option value="red">Red</option>
                                 <option value="blue">Blue</option>
                                 <option value="green">Green</option>
                                 <option value="yellow">Yellow</option>
+                                <option value="pink">Pink</option>
                                 <option value="orange">Orange</option>
-                                <option value="purple">Purple</option>
+                                <option value="maroon">Maroon</option>
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
                             </select>
                         </div>
                     </div>
@@ -163,6 +148,26 @@
         <div class="modal-footer">
             <button onclick="closeManualEntry()" class="btn btn-secondary">Cancel</button>
             <button onclick="searchVehicle()" class="btn btn-primary">Search Vehicle</button>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal-backdrop hidden">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title flex items-center gap-3">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-heroicon-o-exclamation-circle class="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <span class="text-[#1b1b18] dark:text-[#EDEDEC]">Vehicle Not Found</span>
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="errorMessage" class="text-[#706f6c] dark:text-[#A1A09A]"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeErrorModal()">Close</button>
         </div>
     </div>
 </div>
@@ -315,13 +320,22 @@ function searchVehicle() {
         if (data.success) {
             window.location.href = data.redirect_url;
         } else {
-            alert(data.message || 'Vehicle not found');
+            showErrorModal(data.message || 'Vehicle not found');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while searching for the vehicle');
+        showErrorModal('An error occurred while searching for the vehicle');
     });
+}
+
+function showErrorModal(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').classList.remove('hidden');
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.add('hidden');
 }
 
 // Expose functions to global scope
@@ -331,5 +345,7 @@ window.flipQRCamera = flipQRCamera;
 window.openManualEntry = openManualEntry;
 window.closeManualEntry = closeManualEntry;
 window.searchVehicle = searchVehicle;
+window.showErrorModal = showErrorModal;
+window.closeErrorModal = closeErrorModal;
 </script>
 @endpush

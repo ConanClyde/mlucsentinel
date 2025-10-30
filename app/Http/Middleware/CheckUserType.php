@@ -21,7 +21,10 @@ class CheckUserType
 
         $userType = auth()->user()->user_type;
 
-        if (! in_array($userType, $allowedTypes)) {
+        // Get the enum value (string) for comparison
+        $userTypeValue = $userType->value;
+
+        if (! in_array($userTypeValue, $allowedTypes)) {
             abort(403, 'Access denied. Insufficient permissions.');
         }
 

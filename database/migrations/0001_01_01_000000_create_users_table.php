@@ -31,6 +31,11 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
+
+            // Performance indexes
+            $table->index(['user_type', 'is_active'], 'users_user_type_is_active_index');
+            $table->index(['email', 'is_active'], 'users_email_is_active_index');
+            $table->index(['created_at', 'user_type'], 'users_created_at_user_type_index');
         });
 
         Schema::create('sessions', function (Blueprint $table) {

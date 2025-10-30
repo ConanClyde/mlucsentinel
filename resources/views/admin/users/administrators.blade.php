@@ -237,7 +237,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title text-red-500 flex items-center gap-2">
-                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
                 Delete Administrator
             </h2>
         </div>
@@ -246,7 +246,7 @@
         </div>
         <div class="modal-footer">
             <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
-            <button onclick="confirmDelete()" class="btn btn-danger">Delete</button>
+            <button onclick="confirmDeleteAdministrator()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -691,7 +691,7 @@ function closeDeleteModal() {
     deleteAdminId = null;
 }
 
-function confirmDelete() {
+function confirmDeleteAdministrator() {
     if (!deleteAdminId) return;
     
     fetch(`/users/administrators/${deleteAdminId}`, {
@@ -773,7 +773,7 @@ window.openEditModal = openEditModal;
 window.deleteAdministrator = deleteAdministrator;
 window.closeViewModal = closeViewModal;
 window.closeDeleteModal = closeDeleteModal;
-window.confirmDelete = confirmDelete;
+window.confirmDeleteAdministrator = confirmDeleteAdministrator;
 window.exportToCSV = exportToCSV;
 window.closeEditModal = closeEditModal;
 

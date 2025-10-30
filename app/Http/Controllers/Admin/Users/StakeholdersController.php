@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Admin\Users;
 
 use App\Events\NotificationCreated;
+use App\Events\PaymentUpdated;
 use App\Events\StakeholderUpdated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\Payment;
 use App\Models\Stakeholder;
 use App\Models\StakeholderType;
 use App\Models\User;
-use App\Models\VehicleType;
+use App\Models\Vehicle;
+use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,8 +30,8 @@ class StakeholdersController extends Controller
             ->latest()
             ->paginate(10);
 
-        $vehicleTypes = VehicleType::orderBy('name')->get();
-        $stakeholderTypes = StakeholderType::orderBy('name')->get();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
+        $stakeholderTypes = StaticDataCacheService::getStakeholderTypes();
 
         return view('admin.users.stakeholders', [
             'pageTitle' => 'Stakeholders Management',
@@ -100,7 +103,7 @@ class StakeholdersController extends Controller
             'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
             'vehicles_to_delete' => ['nullable', 'array'],
             'vehicles_to_delete.*' => ['integer', 'exists:vehicles,id'],
-            'license_image' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'], // 5MB max
         ]);
 
         // Additional validation for plate numbers - check for duplicates
@@ -166,8 +169,10 @@ class StakeholdersController extends Controller
                     }
                 }
 
-                // Store new license image
-                $path = $request->file('license_image')->store('licenses', 'public');
+                // Store new license image (without optimization to avoid GD dependency)
+                $file = $request->file('license_image');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('licenses', $filename, 'public');
                 $licenseImageData['license_image'] = $path;
             }
 
@@ -182,6 +187,25 @@ class StakeholdersController extends Controller
                 foreach ($vehiclesToDelete as $vehicleId) {
                     $vehicle = \App\Models\Vehicle::find($vehicleId);
                     if ($vehicle && $vehicle->user_id === $stakeholder->user_id) {
+                        // Check if vehicle has pending payment and delete it
+                        $pendingPayment = Payment::where('vehicle_id', $vehicle->id)
+                            ->where('status', 'pending')
+                            ->first();
+                        
+                        if ($pendingPayment) {
+                            $pendingPayment->load(['user', 'vehicle.type', 'batchVehicles']);
+                            
+                            // Broadcast payment deletion BEFORE deleting
+                            broadcast(new PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
+                            
+                            // If it's part of a batch, delete all batch payments
+                            if ($pendingPayment->batch_id) {
+                                Payment::where('batch_id', $pendingPayment->batch_id)->delete();
+                            } else {
+                                $pendingPayment->delete();
+                            }
+                        }
+                        
                         // Broadcast vehicle deletion before deleting
                         $vehicle->load(['user', 'type']);
                         broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
@@ -235,6 +259,20 @@ class StakeholdersController extends Controller
                     // Broadcast vehicle creation
                     $vehicle->load(['user', 'type']);
                     broadcast(new VehicleUpdated($vehicle, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                    
+                    // Create pending payment for the new vehicle
+                    $payment = Payment::create([
+                        'user_id' => $stakeholder->user_id,
+                        'vehicle_id' => $vehicle->id,
+                        'type' => 'sticker_fee',
+                        'status' => 'pending',
+                        'amount' => 15.00,
+                        'reference' => 'STK-'.strtoupper(uniqid()),
+                    ]);
+                    
+                    // Broadcast payment creation
+                    $payment->load(['user', 'vehicle.type', 'batchVehicles']);
+                    broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
                 }
             }
 

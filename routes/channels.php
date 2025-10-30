@@ -11,7 +11,22 @@ Broadcast::channel('vehicles', function ($user) {
 });
 
 Broadcast::channel('payments', function ($user) {
-    return auth()->check();
+    // Only marketing admins and global admins can listen to payment updates
+    // user_type is an Enum, so we need to get its value
+    $userType = $user->user_type->value ?? $user->user_type;
+    
+    if ($userType === 'global_administrator') {
+        return true;
+    }
+    
+    if ($userType === 'administrator' && $user->administrator) {
+        // Load the adminRole relationship (not 'role')
+        $user->administrator->load('adminRole');
+        
+        return $user->administrator->adminRole && $user->administrator->adminRole->name === 'Marketing';
+    }
+    
+    return false;
 });
 
 Broadcast::channel('administrators', function ($user) {

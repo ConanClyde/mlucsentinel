@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin\Registration;
 use App\Events\AdministratorUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Administrator;
-use App\Models\AdminRole;
 use App\Models\User;
+use App\Services\StaticDataCacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -18,7 +18,7 @@ class AdministratorController extends Controller
      */
     public function index()
     {
-        $adminRoles = AdminRole::orderBy('name')->get();
+        $adminRoles = StaticDataCacheService::getAdminRoles();
 
         return view('admin.registration.administrator', [
             'pageTitle' => 'Administrator Registration',

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\PaymentReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,10 +16,35 @@ class StickersController extends Controller
     /**
      * Show the stickers page.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Get pending payments
+        $payments = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
+            ->batchRepresentative()
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get transactions with default filter (paid)
+        $statusFilter = $request->get('status', 'paid');
+        $transactionsQuery = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
+            ->batchRepresentative();
+
+        if ($statusFilter === 'all') {
+            $transactionsQuery->whereIn('status', ['paid', 'failed', 'cancelled']);
+        } else {
+            $transactionsQuery->where('status', $statusFilter);
+        }
+
+        $transactions = $transactionsQuery->orderBy('paid_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('admin.stickers', [
             'pageTitle' => 'Stickers Management',
+            'payments' => $payments,
+            'transactions' => $transactions,
+            'statusFilter' => $statusFilter,
         ]);
     }
 
@@ -29,6 +55,7 @@ class StickersController extends Controller
     {
         $tab = $request->get('tab', 'payment');
         $search = $request->get('search', '');
+        $statusFilter = $request->get('status', 'paid'); // Default to 'paid'
 
         $query = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
             ->batchRepresentative(); // Only get one payment per batch
@@ -37,7 +64,12 @@ class StickersController extends Controller
         if ($tab === 'payment') {
             $query->where('status', 'pending');
         } elseif ($tab === 'transactions') {
-            $query->whereIn('status', ['paid', 'failed', 'cancelled']);
+            // Apply status filter for transactions
+            if ($statusFilter === 'all') {
+                $query->whereIn('status', ['paid', 'failed', 'cancelled']);
+            } else {
+                $query->where('status', $statusFilter);
+            }
         }
 
         // Apply search filter
@@ -238,6 +270,14 @@ class StickersController extends Controller
                     ]);
             }
 
+            // Generate receipt
+            $receiptService = new PaymentReceiptService;
+            if ($payment->batch_id) {
+                $receiptService->generateBatchReceipt($payment);
+            } else {
+                $receiptService->generateReceipt($payment);
+            }
+
             $payment->load(['user', 'vehicle.type', 'batchVehicles']);
             broadcast(new PaymentUpdated($payment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
         });
@@ -249,28 +289,80 @@ class StickersController extends Controller
     }
 
     /**
-     * Cancel payment
+     * Cancel payment request
      */
     public function cancel(Payment $payment)
     {
         DB::transaction(function () use ($payment) {
-            // Update main payment
-            $payment->update(['status' => 'cancelled']);
+            // Update main payment to cancelled status
+            $payment->update([
+                'status' => 'cancelled',
+                'paid_at' => now(), // Set timestamp for when it was cancelled
+            ]);
 
             // Update all payments in the same batch
             if ($payment->batch_id) {
                 Payment::where('batch_id', $payment->batch_id)
                     ->where('id', '!=', $payment->id)
-                    ->update(['status' => 'cancelled']);
+                    ->update([
+                        'status' => 'cancelled',
+                        'paid_at' => now(),
+                    ]);
             }
 
+            // Broadcast payment update
             $payment->load(['user', 'vehicle.type', 'batchVehicles']);
             broadcast(new PaymentUpdated($payment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
         });
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment cancelled successfully!',
+            'message' => 'Payment request cancelled successfully!',
         ]);
+    }
+
+    /**
+     * Delete payment request (physical deletion)
+     */
+    public function destroy(Payment $payment)
+    {
+        // Broadcast payment deletion BEFORE deleting
+        $payment->load(['user', 'vehicle.type', 'batchVehicles']);
+        broadcast(new PaymentUpdated($payment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
+
+        DB::transaction(function () use ($payment) {
+            // Force delete (permanent) all payments in the same batch if exists
+            if ($payment->batch_id) {
+                Payment::where('batch_id', $payment->batch_id)->forceDelete();
+            } else {
+                $payment->forceDelete();
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment request deleted successfully!',
+        ]);
+    }
+
+    /**
+     * Download payment receipt
+     */
+    public function downloadReceipt(Payment $payment)
+    {
+        $receiptService = new PaymentReceiptService;
+
+        // Check if receipt exists, generate if not
+        if (! $receiptService->receiptExists($payment)) {
+            if ($payment->batch_id) {
+                $receiptService->generateBatchReceipt($payment);
+            } else {
+                $receiptService->generateReceipt($payment);
+            }
+        }
+
+        $receiptUrl = $receiptService->getReceiptUrl($payment);
+
+        return redirect($receiptUrl);
     }
 }

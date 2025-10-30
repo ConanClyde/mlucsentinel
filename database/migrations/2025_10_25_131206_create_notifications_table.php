@@ -22,8 +22,9 @@ return new class extends Migration
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'is_read']);
+            $table->index(['user_id', 'is_read'], 'notifications_user_id_is_read_index');
             $table->index(['type', 'created_at']);
+            $table->index(['created_at', 'user_id'], 'notifications_created_at_user_id_index');
         });
     }
 

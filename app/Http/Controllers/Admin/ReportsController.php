@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserType;
+use App\Events\ReportStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateReportStatusRequest;
 use App\Models\Report;
 use App\Notifications\ReportStatusUpdatedNotification;
+use App\Services\StaticDataCacheService;
 
 class ReportsController extends Controller
 {
@@ -18,9 +21,9 @@ class ReportsController extends Controller
         $user = auth()->user();
         $canViewReports = false;
 
-        if ($user->user_type === 'global_administrator') {
+        if ($user->user_type === UserType::GlobalAdministrator) {
             $canViewReports = true;
-        } elseif ($user->user_type === 'administrator' && $user->administrator) {
+        } elseif ($user->user_type === UserType::Administrator && $user->administrator) {
             $adminRole = $user->administrator->adminRole->name ?? '';
             $canViewReports = in_array($adminRole, ['Chancellor', 'Security', 'SAS (Student Affairs & Services)']);
         }
@@ -31,9 +34,9 @@ class ReportsController extends Controller
 
         // Determine admin role for filtering
         $adminRole = null;
-        if ($user->user_type === 'global_administrator') {
+        if ($user->user_type === UserType::GlobalAdministrator) {
             $adminRole = 'Global Administrator';
-        } elseif ($user->user_type === 'administrator' && $user->administrator) {
+        } elseif ($user->user_type === UserType::Administrator && $user->administrator) {
             $adminRole = $user->administrator->adminRole->name ?? '';
         }
 
@@ -68,7 +71,7 @@ class ReportsController extends Controller
             ->paginate(50);
 
         // Get colleges for SAS filter
-        $colleges = \App\Models\College::orderBy('name')->get();
+        $colleges = StaticDataCacheService::getColleges();
 
         return view('admin.reports', [
             'pageTitle' => 'Reports Management',
@@ -106,6 +109,9 @@ class ReportsController extends Controller
                 $violator->notify(new \App\Notifications\ViolationApprovedNotification($report));
             }
         }
+
+        // Broadcast the status update for real-time updates
+        broadcast(new ReportStatusUpdated($report))->toOthers();
 
         return response()->json([
             'message' => 'Status updated successfully',

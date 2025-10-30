@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\VehicleTypeUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\VehicleType;
+use App\Services\StaticDataCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,7 @@ class VehicleTypeController extends Controller
      */
     public function index(): JsonResponse
     {
-        $vehicleTypes = VehicleType::orderBy('name')->get();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return response()->json([
             'success' => true,

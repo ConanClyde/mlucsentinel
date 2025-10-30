@@ -3,7 +3,7 @@
 @section('page-title', 'My Reports')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" data-user-id="{{ Auth::id() }}">
     <!-- Filter Card -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
         <div class="flex flex-col md:flex-row gap-4 items-end">
@@ -49,17 +49,14 @@
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">My Reports</h3>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
-                        <option value="10" selected>10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
             </div>
         </div>
 

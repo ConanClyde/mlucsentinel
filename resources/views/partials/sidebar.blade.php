@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto" id="sidebar">
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
     <div class="flex flex-col h-full">
         <!-- Logo and Title -->
         <div class="flex items-center h-16 px-6 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
@@ -14,7 +14,7 @@
         </div>
 
         <!-- Navigation Menu -->
-        <nav class="flex-1 px-4 py-6 space-y-2">
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             <!-- Main Navigation -->
             <div class="space-y-1">
                 <!-- Home -->
@@ -23,7 +23,7 @@
                     Home
                 </a>
 
-                @if(in_array(Auth::user()->user_type, ['global_administrator', 'administrator']))
+                @if(in_array(Auth::user()->user_type, [App\Enums\UserType::GlobalAdministrator, App\Enums\UserType::Administrator]))
                     @php
                         $isMarketingAdmin = Auth::user()->isMarketingAdmin();
                     @endphp
@@ -108,9 +108,9 @@
 
                     @php
                         $canViewReports = false;
-                        if (Auth::user()->user_type === 'global_administrator') {
+                        if (Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator) {
                             $canViewReports = true;
-                        } elseif (Auth::user()->user_type === 'administrator' && Auth::user()->administrator) {
+                        } elseif (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator) {
                             $adminRole = Auth::user()->administrator->adminRole->name ?? '';
                             $canViewReports = in_array($adminRole, ['Chancellor', 'SAS (Student Affairs & Services)']);
                         }
@@ -135,7 +135,7 @@
                         <x-heroicon-o-map class="w-5 h-5 mr-3" />
                         Map
                     </a>
-                @elseif(Auth::user()->user_type === 'reporter')
+                @elseif(Auth::user()->user_type === App\Enums\UserType::Reporter)
                     <!-- Reporter Navigation -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 mr-3" />
@@ -146,7 +146,7 @@
                         <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
                         My Reports
                     </a>
-                @elseif(Auth::user()->user_type === 'security')
+                @elseif(Auth::user()->user_type === App\Enums\UserType::Security)
                     <!-- Security Navigation -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 mr-3" />
@@ -169,16 +169,26 @@
 
         <!-- User Info at Bottom -->
         <div class="px-4 py-4 border-t border-[#e3e3e0] dark:border-[#3E3E3A]">
-            <a href="{{ route('profile') }}" class="flex items-start space-x-3 mb-3 p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] {{ request()->routeIs('profile') ? 'bg-blue-100 dark:bg-blue-900' : '' }}">
-            <div class="w-8 h-8 ml-2 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 mt-0.5" id="user-avatar" style="background-color: {{ $avatarColor }}">
-                {{ strtoupper(substr(Auth::user()->first_name ?? 'User', 0, 1)) }}
-            </div>
-                <div class="sidebar-user-info">
-                    <p class="sidebar-user-name" title="{{ Auth::user()->first_name ?? 'User' }}">
+            <a href="{{ route('profile') }}" class="flex items-start space-x-3 mb-3 p-3 rounded-lg transition-all duration-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 border border-blue-100 dark:border-blue-800/30 {{ request()->routeIs('profile') ? 'ring-2 ring-blue-500 dark:ring-blue-400' : '' }}">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-base flex-shrink-0 shadow-md" id="user-avatar" style="background-color: {{ $avatarColor }}">
+                    {{ strtoupper(substr(Auth::user()->first_name ?? 'User', 0, 1)) }}
+                </div>
+                <div class="sidebar-user-info flex-1 min-w-0">
+                    <p class="sidebar-user-name font-semibold text-sm text-[#1b1b18] dark:text-[#EDEDEC] truncate" title="{{ Auth::user()->first_name ?? 'User' }}">
                         {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
                     </p>
-                    <p class="sidebar-user-email" title="{{ Auth::user()->email ?? 'user@example.com' }}">
-                        {{ Auth::user()->email ?? 'user@example.com' }}
+                    <p class="sidebar-user-email text-xs text-blue-600 dark:text-blue-400 truncate font-medium">
+                        @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator)
+                            Global Administrator
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator)
+                            {{ Auth::user()->administrator->adminRole->name ?? 'Administrator' }}
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Reporter && Auth::user()->reporter)
+                            {{ Auth::user()->reporter->reporterType->name ?? 'Reporter' }}
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Security)
+                            Security Personnel
+                        @else
+                            {{ Auth::user()->user_type->label() }}
+                        @endif
                     </p>
                 </div>
             </a>

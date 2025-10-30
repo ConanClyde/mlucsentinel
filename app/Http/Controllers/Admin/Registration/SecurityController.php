@@ -11,7 +11,7 @@ use App\Models\Payment;
 use App\Models\Security;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\VehicleType;
+use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +31,7 @@ class SecurityController extends Controller
      */
     public function index()
     {
-        $vehicleTypes = VehicleType::orderBy('name')->get();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return view('admin.registration.security', [
             'pageTitle' => 'Security Registration',
@@ -50,8 +50,17 @@ class SecurityController extends Controller
                 'last_name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[^\s@]+@(gmail\.com|dmmmsu\.edu\.ph)$/'],
                 'security_id' => ['required', 'string', 'max:255', 'unique:security,security_id'],
-                'license_no' => ['required', 'string', 'max:255', 'unique:security,license_no'],
-                'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+                'license_no' => [
+                    'nullable',
+                    'string',
+                    'max:255',
+                    function ($attribute, $value, $fail) {
+                        if ($value && \App\Models\Security::where('license_no', $value)->exists()) {
+                            $fail('The license number has already been taken.');
+                        }
+                    },
+                ],
+                'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'],
                 'vehicles' => ['required', 'array', 'min:1', 'max:3'],
                 'vehicles.*.type_id' => ['required', 'exists:vehicle_types,id'],
                 'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
@@ -115,10 +124,12 @@ class SecurityController extends Controller
                 'is_active' => true,
             ]);
 
-            // Handle license image upload
+            // Handle license image upload (store without optimization to avoid GD dependency)
             $licenseImagePath = null;
             if ($request->hasFile('license_image')) {
-                $licenseImagePath = $request->file('license_image')->store('licenses', 'public');
+                $file = $request->file('license_image');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $licenseImagePath = $file->storeAs('licenses', $filename, 'public');
             }
 
             // Create security record

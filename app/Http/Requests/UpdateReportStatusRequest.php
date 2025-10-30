@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateReportStatusRequest extends FormRequest
@@ -14,12 +15,12 @@ class UpdateReportStatusRequest extends FormRequest
         $user = $this->user();
 
         // Global administrators can update any report
-        if ($user->user_type === 'global_administrator') {
+        if ($user->user_type === UserType::GlobalAdministrator) {
             return true;
         }
 
         // Administrators with Chancellor or SAS role can update reports
-        if ($user->user_type === 'administrator' && $user->administrator) {
+        if ($user->user_type === UserType::Administrator && $user->administrator) {
             $adminRole = $user->administrator->adminRole->name ?? '';
 
             return in_array($adminRole, ['Chancellor', 'SAS (Student Affairs & Services)']);

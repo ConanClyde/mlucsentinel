@@ -256,7 +256,6 @@ class VehicleTypesRealtime {
         const createdDate = new Date(vehicleType.created_at).toLocaleDateString();
 
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${vehicleType.id}</td>
             <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(vehicleType.name)}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
@@ -284,7 +283,7 @@ class VehicleTypesRealtime {
     showEmptyState() {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 No vehicle types found. Click Add button to create one.
             </td>
         `;

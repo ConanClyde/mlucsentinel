@@ -9,7 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Staff;
 use App\Models\User;
-use App\Models\VehicleType;
+use App\Models\Vehicle;
+use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class StaffController extends Controller
             ->latest()
             ->paginate(10);
 
-        $vehicleTypes = VehicleType::orderBy('name')->get();
+        $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return view('admin.users.staff', [
             'pageTitle' => 'Staff Management',
@@ -92,7 +93,7 @@ class StaffController extends Controller
             'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
             'vehicles_to_delete' => ['nullable', 'array'],
             'vehicles_to_delete.*' => ['integer', 'exists:vehicles,id'],
-            'license_image' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'], // 5MB max
         ]);
 
         // Additional validation for plate numbers - check for duplicates
@@ -158,8 +159,10 @@ class StaffController extends Controller
                     }
                 }
 
-                // Store new license image
-                $path = $request->file('license_image')->store('licenses', 'public');
+                // Store new license image (without optimization to avoid GD dependency)
+                $file = $request->file('license_image');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('licenses', $filename, 'public');
                 $licenseImageData['license_image'] = $path;
             }
 
@@ -174,6 +177,26 @@ class StaffController extends Controller
                 foreach ($vehiclesToDelete as $vehicleId) {
                     $vehicle = \App\Models\Vehicle::find($vehicleId);
                     if ($vehicle && $vehicle->user_id === $staff->user_id) {
+                        // Delete associated pending payment if exists
+                        $pendingPayment = \App\Models\Payment::where('vehicle_id', $vehicle->id)
+                            ->where('status', 'pending')
+                            ->first();
+                        
+                        if ($pendingPayment) {
+                            // Load relationships before deletion
+                            $pendingPayment->load(['user', 'vehicle.type', 'batchVehicles']);
+                            
+                            // Broadcast payment deletion BEFORE deleting
+                            broadcast(new \App\Events\PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
+                            
+                            // If it's part of a batch, delete all batch payments
+                            if ($pendingPayment->batch_id) {
+                                \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)->delete();
+                            } else {
+                                $pendingPayment->delete();
+                            }
+                        }
+                        
                         // Broadcast vehicle deletion before deleting
                         $vehicle->load(['user', 'type']);
                         broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
@@ -186,6 +209,7 @@ class StaffController extends Controller
             if (! empty($vehiclesData)) {
                 // Add new vehicles only
                 $stickerGenerator = new StickerGenerator;
+                $newVehicleIds = [];
 
                 foreach ($vehiclesData as $vehicleData) {
                     $plateNumber = $vehicleData['plate_no'] ?? null;
@@ -223,6 +247,47 @@ class StaffController extends Controller
                     // Broadcast vehicle creation
                     $vehicle->load(['user', 'type']);
                     broadcast(new VehicleUpdated($vehicle, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                    
+                    // Track new vehicle IDs for payment creation
+                    $newVehicleIds[] = $vehicle->id;
+                }
+                
+                // Create pending payments for new vehicles (batched if multiple)
+                if (count($newVehicleIds) > 0) {
+                    $batchId = count($newVehicleIds) > 1 ? 'BATCH-'.strtoupper(uniqid()) : null;
+                    $totalAmount = count($newVehicleIds) * 15.00;
+                    
+                    // Create main payment record
+                    $payment = \App\Models\Payment::create([
+                        'user_id' => $staff->user_id,
+                        'vehicle_id' => $newVehicleIds[0],
+                        'type' => 'sticker_fee',
+                        'status' => 'pending',
+                        'amount' => $totalAmount,
+                        'reference' => 'STK-'.strtoupper(uniqid()),
+                        'batch_id' => $batchId,
+                        'vehicle_count' => count($newVehicleIds),
+                    ]);
+                    
+                    // Create child payment records for other vehicles
+                    if (count($newVehicleIds) > 1) {
+                        for ($i = 1; $i < count($newVehicleIds); $i++) {
+                            \App\Models\Payment::create([
+                                'user_id' => $staff->user_id,
+                                'vehicle_id' => $newVehicleIds[$i],
+                                'type' => 'sticker_fee',
+                                'status' => 'pending',
+                                'amount' => 15.00,
+                                'reference' => 'STK-'.strtoupper(uniqid()),
+                                'batch_id' => $batchId,
+                                'vehicle_count' => 1,
+                            ]);
+                        }
+                    }
+                    
+                    // Broadcast payment creation (only broadcast the main payment)
+                    $payment->load(['user', 'vehicle.type', 'batchVehicles']);
+                    broadcast(new \App\Events\PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
                 }
             }
 

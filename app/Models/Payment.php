@@ -51,6 +51,24 @@ class Payment extends Model
     }
 
     /**
+     * Get receipt URL for this payment
+     */
+    public function getReceiptUrl(): string
+    {
+        $receiptService = new \App\Services\PaymentReceiptService();
+        return $receiptService->getReceiptUrl($this);
+    }
+
+    /**
+     * Check if receipt exists for this payment
+     */
+    public function hasReceipt(): bool
+    {
+        $receiptService = new \App\Services\PaymentReceiptService();
+        return $receiptService->receiptExists($this);
+    }
+
+    /**
      * Scope to get only batch representative payments (main payment per batch)
      */
     public function scopeBatchRepresentative($query)

@@ -60,7 +60,7 @@
                                 <div>
                                     <label class="form-label">User Type</label>
                                     <div class="p-3 bg-gray-50 dark:bg-[#1f1f1d] rounded-lg text-[#1b1b18] dark:text-[#EDEDEC]">
-                                        {{ ucfirst(str_replace('_', ' ', $user->user_type)) }}
+                                        {{ $user->user_type->label() }}
                                     </div>
                                 </div>
                                 
@@ -211,12 +211,10 @@
 <div id="deleteAccountModal" class="modal-backdrop hidden">
     <div class="modal-container">
         <div class="modal-header">
-            <div class="flex items-center">
-                <div class="modal-icon-error mr-3">
-                    <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
-                </div>
-                <h3 class="modal-title">Delete Account</h3>
-            </div>
+            <h2 class="modal-title text-red-500 flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Delete Account
+            </h2>
         </div>
         <div class="modal-body">
             <div class="mb-4">
