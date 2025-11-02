@@ -780,7 +780,7 @@ function renderReportMapLocations() {
             label.setAttribute('paint-order', 'stroke fill');
             label.setAttribute('font-weight', '600');
             label.setAttribute('font-size', '0.8');
-            label.setAttribute('font-family', 'Inter, ui-sans-serif, system-ui, sans-serif');
+            label.setAttribute('font-family', 'Satoshi, ui-sans-serif, system-ui, sans-serif');
             label.setAttribute('transform', `scale(1, ${1 / reportMapAspectRatio})`);
             label.setAttribute('transform-origin', `${location.center_x} ${location.center_y}`);
             label.textContent = location.short_code || location.name.substring(0, 3).toUpperCase();

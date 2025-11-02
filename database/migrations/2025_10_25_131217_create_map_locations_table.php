@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('color')->default('#3B82F6'); // Hex color for the polygon overlay
 
             // Polygon vertices (array of {x, y} coordinates as percentage-based positions)
-            $table->json('vertices'); // Array of points: [{x: 10.5, y: 20.3}, {x: 15.2, y: 25.8}, ...]
+            // Optional - only needed if the location should be displayed on the map
+            $table->json('vertices')->nullable(); // Array of points: [{x: 10.5, y: 20.3}, {x: 15.2, y: 25.8}, ...]
 
             // Center point for label display (calculated from vertices)
             $table->decimal('center_x', 8, 4)->nullable(); // Center X position (0-100%)
@@ -28,6 +29,7 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(true);
             $table->integer('display_order')->default(0);
+            $table->string('sticker_path')->nullable();
             $table->timestamps();
 
             // Indexes for performance

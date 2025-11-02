@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
@@ -22,13 +22,15 @@
 </head>
 <body class="bg-[#FDFDFC] dark:bg-[#161615]">
     <!-- Navigation -->
-    <nav class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1b1b18]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+    <nav class="sticky top-0 z-50 border-b border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1b1b18] backdrop-blur-sm bg-white/95 dark:bg-[#1b1b18]/95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="flex justify-between items-center h-16 relative z-10">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">MLUC Sentinel</h1>
+                    <a href="#" id="scroll-to-top" class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#3b82f6] dark:hover:text-[#60a5fa] transition-colors duration-200 cursor-pointer">MLUC Sentinel</a>
                 </div>
-                <div class="flex items-center gap-4">
+                
+                {{-- Desktop Menu --}}
+                <div class="hidden md:flex items-center gap-4">
                     {{-- Dark/Light Mode Toggle --}}
                     <button id="theme-toggle" class="btn btn-secondary !px-2 !py-2 aspect-square">
                         {{-- Sun Icon (Light Mode) --}}
@@ -40,9 +42,37 @@
                     <a href="{{ route('login') }}" class="btn btn-secondary">Sign In</a>
                     <a href="{{ route('register') }}" class="btn btn-primary">Get Started</a>
                 </div>
+
+                {{-- Mobile Menu Button --}}
+                <button id="mobile-menu-toggle" class="btn btn-secondary !px-2 !py-2 aspect-square !inline-flex md:!hidden">
+                    {{-- Hamburger Icon --}}
+                    <svg id="hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    {{-- Close Icon (hidden by default) --}}
+                    <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Mobile Menu Dropdown - Below navbar, above content --}}
+            <div id="mobile-menu" class="absolute top-full left-0 right-0 hidden md:hidden bg-white dark:bg-[#1b1b18] border-b border-[#e3e3e0] dark:border-[#3E3E3A] shadow-lg z-40 overflow-hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 space-y-3 pt-2">
+                    {{-- Dark/Light Mode Toggle (Mobile) --}}
+                    <button id="theme-toggle-mobile" class="w-full btn btn-secondary justify-start">
+                        <span id="theme-text-mobile">Dark Mode</span>
+                    </button>
+                    
+                    <a href="{{ route('login') }}" class="block w-full btn btn-secondary text-center">Sign In</a>
+                    <a href="{{ route('register') }}" class="block w-full btn btn-primary text-center">Get Started</a>
+                </div>
             </div>
         </div>
     </nav>
+
+    {{-- Mobile Menu Overlay --}}
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden transition-opacity duration-300"></div>
 
     <!-- Hero Section -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -285,20 +315,169 @@
     <script>
         // Dark/Light Mode Toggle
         document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('theme-toggle');
             const html = document.documentElement;
             
             // Check for saved theme preference or default to light mode
             const currentTheme = localStorage.getItem('theme') || 'light';
             html.classList.toggle('dark', currentTheme === 'dark');
             
-            themeToggle.addEventListener('click', function() {
+            // Update theme icons and text based on current theme
+            function updateThemeUI() {
                 const isDark = html.classList.contains('dark');
-                const newTheme = isDark ? 'light' : 'dark';
+                const sunIcons = document.querySelectorAll('#sun-icon');
+                const moonIcons = document.querySelectorAll('#moon-icon');
+                const themeTextMobile = document.getElementById('theme-text-mobile');
                 
-                html.classList.toggle('dark');
-                localStorage.setItem('theme', newTheme);
-            });
+                sunIcons.forEach(icon => {
+                    icon.classList.toggle('hidden', !isDark);
+                    icon.classList.toggle('block', isDark);
+                });
+                
+                moonIcons.forEach(icon => {
+                    icon.classList.toggle('hidden', isDark);
+                    icon.classList.toggle('block', !isDark);
+                });
+                
+                if (themeTextMobile) {
+                    themeTextMobile.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+                }
+            }
+            
+            // Initial UI update
+            updateThemeUI();
+            
+            // Desktop theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const isDark = html.classList.contains('dark');
+                    const newTheme = isDark ? 'light' : 'dark';
+                    
+                    html.classList.toggle('dark');
+                    localStorage.setItem('theme', newTheme);
+                    updateThemeUI();
+                });
+            }
+            
+            // Mobile theme toggle
+            const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+            if (themeToggleMobile) {
+                themeToggleMobile.addEventListener('click', function() {
+                    const isDark = html.classList.contains('dark');
+                    const newTheme = isDark ? 'light' : 'dark';
+                    
+                    html.classList.toggle('dark');
+                    localStorage.setItem('theme', newTheme);
+                    updateThemeUI();
+                });
+            }
+
+            // Mobile Menu Toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            const closeIcon = document.getElementById('close-icon');
+            
+            // Function to close menu
+            function closeMobileMenu() {
+                if (!mobileMenu) return;
+                mobileMenu.style.maxHeight = '0';
+                
+                // Hide overlay
+                if (mobileMenuOverlay) {
+                    mobileMenuOverlay.classList.add('hidden');
+                }
+                
+                // Unlock body scroll
+                document.body.style.overflow = 'auto';
+                
+                setTimeout(() => {
+                    mobileMenu.classList.add('hidden');
+                }, 300);
+                
+                if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+                if (closeIcon) closeIcon.classList.add('hidden');
+            }
+            
+            // Function to open menu
+            function openMobileMenu() {
+                if (!mobileMenu) return;
+                // Remove hidden class first
+                mobileMenu.classList.remove('hidden');
+                
+                // Show overlay
+                if (mobileMenuOverlay) {
+                    mobileMenuOverlay.classList.remove('hidden');
+                }
+                
+                // Lock body scroll
+                document.body.style.overflow = 'hidden';
+                
+                // Get the actual height
+                const menuHeight = mobileMenu.scrollHeight;
+                // Animate to full height (slides down from below navbar)
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        mobileMenu.style.maxHeight = menuHeight + 'px';
+                    }, 10);
+                });
+                
+                if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+                if (closeIcon) closeIcon.classList.remove('hidden');
+            }
+            
+            if (mobileMenuToggle && mobileMenu) {
+                // Set initial hidden state and transition
+                mobileMenu.style.maxHeight = '0';
+                mobileMenu.style.overflow = 'hidden';
+                mobileMenu.style.transition = 'max-height 0.3s ease-in-out';
+                
+                mobileMenuToggle.addEventListener('click', function() {
+                    const isHidden = mobileMenu.classList.contains('hidden');
+                    
+                    if (isHidden) {
+                        openMobileMenu();
+                    } else {
+                        closeMobileMenu();
+                    }
+                });
+                
+                // Close menu when clicking overlay or outside
+                if (mobileMenuOverlay) {
+                    mobileMenuOverlay.addEventListener('click', function() {
+                        closeMobileMenu();
+                    });
+                }
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    const isClickInsideMenu = mobileMenu.contains(event.target);
+                    const isClickOnToggle = mobileMenuToggle.contains(event.target);
+                    const isClickOnOverlay = mobileMenuOverlay && mobileMenuOverlay.contains(event.target);
+                    
+                    if (!isClickInsideMenu && !isClickOnToggle && !isClickOnOverlay && !mobileMenu.classList.contains('hidden')) {
+                        closeMobileMenu();
+                    }
+                });
+            }
+
+            // Smooth scroll to top functionality
+            const scrollToTopButton = document.getElementById('scroll-to-top');
+            if (scrollToTopButton) {
+                scrollToTopButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Close mobile menu if open
+                    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                        closeMobileMenu();
+                    }
+                });
+            }
         });
     </script>
 </body>

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->foreignId('violation_type_id')->constrained('violation_types')->onDelete('restrict');
             $table->text('description');
             $table->string('location');
+            $table->decimal('pin_x', 8, 4)->nullable(); // X coordinate (0-100%)
+            $table->decimal('pin_y', 8, 4)->nullable(); // Y coordinate (0-100%)
 
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
             $table->string('assigned_to_user_type')->nullable(); // For reference: 'Administrator', 'Security', etc.
@@ -48,6 +50,7 @@ return new class extends Migration
             $table->index(['violator_vehicle_id', 'status'], 'reports_violator_vehicle_status_index');
             $table->index(['location', 'created_at'], 'reports_location_created_at_index');
             $table->index(['violation_type_id', 'status'], 'reports_violation_type_status_index');
+            $table->index(['pin_x', 'pin_y'], 'reports_pin_coordinates_index');
         });
     }
 

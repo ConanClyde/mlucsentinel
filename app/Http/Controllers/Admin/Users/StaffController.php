@@ -181,22 +181,40 @@ class StaffController extends Controller
                         $pendingPayment = \App\Models\Payment::where('vehicle_id', $vehicle->id)
                             ->where('status', 'pending')
                             ->first();
-                        
+
                         if ($pendingPayment) {
-                            // Load relationships before deletion
-                            $pendingPayment->load(['user', 'vehicle.type', 'batchVehicles']);
-                            
-                            // Broadcast payment deletion BEFORE deleting
-                            broadcast(new \App\Events\PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            
-                            // If it's part of a batch, delete all batch payments
+                            // Check if this payment is part of a batch
                             if ($pendingPayment->batch_id) {
-                                \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)->delete();
-                            } else {
+                                // Get all payments in this batch
+                                $batchPayments = \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)
+                                    ->where('status', 'pending')
+                                    ->where('id', '!=', $pendingPayment->id)
+                                    ->get();
+
+                                // Delete the payment for this specific vehicle
                                 $pendingPayment->delete();
+
+                                // Update vehicle_count for remaining payments in the batch
+                                if ($batchPayments->isNotEmpty()) {
+                                    $newVehicleCount = $batchPayments->count();
+
+                                    \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)
+                                        ->where('status', 'pending')
+                                        ->update(['vehicle_count' => $newVehicleCount]);
+
+                                    // Broadcast payment update for real-time updates
+                                    $updatedPayment = $batchPayments->first()->fresh(['user', 'vehicle.type']);
+                                    broadcast(new \App\Events\PaymentUpdated($updatedPayment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
+                                }
+                            } else {
+                                // Single vehicle payment - delete the entire payment
+                                $pendingPayment->delete();
+
+                                // Broadcast payment deletion
+                                broadcast(new \App\Events\PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
                             }
                         }
-                        
+
                         // Broadcast vehicle deletion before deleting
                         $vehicle->load(['user', 'type']);
                         broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
@@ -247,16 +265,16 @@ class StaffController extends Controller
                     // Broadcast vehicle creation
                     $vehicle->load(['user', 'type']);
                     broadcast(new VehicleUpdated($vehicle, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
-                    
+
                     // Track new vehicle IDs for payment creation
                     $newVehicleIds[] = $vehicle->id;
                 }
-                
+
                 // Create pending payments for new vehicles (batched if multiple)
                 if (count($newVehicleIds) > 0) {
                     $batchId = count($newVehicleIds) > 1 ? 'BATCH-'.strtoupper(uniqid()) : null;
                     $totalAmount = count($newVehicleIds) * 15.00;
-                    
+
                     // Create main payment record
                     $payment = \App\Models\Payment::create([
                         'user_id' => $staff->user_id,
@@ -268,7 +286,7 @@ class StaffController extends Controller
                         'batch_id' => $batchId,
                         'vehicle_count' => count($newVehicleIds),
                     ]);
-                    
+
                     // Create child payment records for other vehicles
                     if (count($newVehicleIds) > 1) {
                         for ($i = 1; $i < count($newVehicleIds); $i++) {
@@ -284,7 +302,7 @@ class StaffController extends Controller
                             ]);
                         }
                     }
-                    
+
                     // Broadcast payment creation (only broadcast the main payment)
                     $payment->load(['user', 'vehicle.type', 'batchVehicles']);
                     broadcast(new \App\Events\PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));

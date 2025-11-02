@@ -133,8 +133,26 @@
                     <!-- Map -->
                     <a href="{{ route('admin.campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-map class="w-5 h-5 mr-3" />
-                        Map
+                        Campus Map
                     </a>
+
+                    @php
+                        $canViewPatrolMonitor = false;
+                        if (Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator) {
+                            $canViewPatrolMonitor = true;
+                        } elseif (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator) {
+                            $adminRole = Auth::user()->administrator->adminRole->name ?? '';
+                            $canViewPatrolMonitor = ($adminRole === 'Security');
+                        }
+                    @endphp
+
+                    @if($canViewPatrolMonitor)
+                        <!-- Patrol Monitoring -->
+                        <a href="{{ route('admin.patrol-history') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.patrol-history') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-shield-check class="w-5 h-5 mr-3" />
+                            Patrol Monitor
+                        </a>
+                    @endif
                 @elseif(Auth::user()->user_type === App\Enums\UserType::Reporter)
                     <!-- Reporter Navigation -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
@@ -148,6 +166,20 @@
                     </a>
                 @elseif(Auth::user()->user_type === App\Enums\UserType::Security)
                     <!-- Security Navigation -->
+                    
+                    <!-- Patrol Scanner -->
+                    <a href="{{ route('security.patrol-scanner') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('security.patrol-scanner') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-qr-code class="w-5 h-5 mr-3" />
+                        Scan Patrol Point
+                    </a>
+
+                    <!-- Patrol History -->
+                    <a href="{{ route('security.patrol-history') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('security.patrol-history') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-clock class="w-5 h-5 mr-3" />
+                        My Patrol History
+                    </a>
+
+                    <!-- Report User -->
                     <a href="{{ route('reporter.report-user') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.report-user') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 mr-3" />
                         Report User

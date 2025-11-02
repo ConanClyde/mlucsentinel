@@ -29,11 +29,24 @@ class HomeController extends Controller
             'assignedTo:id,first_name,last_name',
         ])->orderBy('reported_at', 'desc')->limit(50)->get();
 
+        // Recent Reports (compact list for widget)
+        $recentReports = Report::with(['reportedBy', 'violationType'])
+            ->orderBy('reported_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Recent Users (latest registrations)
+        $recentUsers = User::orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
         return view('admin.home', [
-            'pageTitle' => 'Admin Home',
+            'pageTitle' => 'Home',
             'recentActivity' => $recentActivity,
             'recentUsersCount' => $recentUsersCount,
             'reports' => $reports,
+            'recentReports' => $recentReports,
+            'recentUsers' => $recentUsers,
         ]);
     }
 

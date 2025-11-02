@@ -17,6 +17,11 @@ class AuthController extends Controller
      */
     public function landing()
     {
+        // Redirect authenticated users to home
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
         return view('auth.landing');
     }
 
@@ -25,6 +30,11 @@ class AuthController extends Controller
      */
     public function showLogin()
     {
+        // Redirect authenticated users to home
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
         return view('auth.login');
     }
 
@@ -57,6 +67,11 @@ class AuthController extends Controller
      */
     public function showRegister()
     {
+        // Redirect authenticated users to home
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
         return view('auth.register');
     }
 

@@ -32,7 +32,14 @@ class StickersRealtime {
                 this.handlePaymentUpdate(event);
             });
 
-        console.log('Stickers real-time listening on private payments channel');
+        // Listen to vehicles channel for new stickers
+        window.Echo.channel('vehicles')
+            .listen('.vehicle.updated', (event) => {
+                console.log('Received vehicle update:', event);
+                this.handleVehicleUpdate(event);
+            });
+
+        console.log('Stickers real-time listening on payments and vehicles channels');
         this.updateConnectionStatus(true);
     }
 
@@ -64,7 +71,17 @@ class StickersRealtime {
             return;
         }
 
-        // Show notification
+        // Check if the editor is the current user (skip notifications for own actions)
+        const isOwnAction = editor && window.currentUserName && editor === window.currentUserName;
+        
+        if (isOwnAction) {
+            console.log('Skipping notification for own action by', editor);
+            // Still update the UI, just skip notifications
+            this.updateUIWithoutNotification(payment, action);
+            return;
+        }
+
+        // Show notification only for other admins' actions
         switch (action) {
             case 'created':
                 this.showBrowserNotification(
@@ -104,6 +121,18 @@ class StickersRealtime {
                     // Remove from payments table
                     this.removePaymentFromTable(payment.id);
                     this.updatePaymentBadge(-1);
+                } else if (payment.status === 'pending') {
+                    // Payment is still pending but was updated (e.g., vehicle count changed)
+                    this.showBrowserNotification(
+                        'Payment Updated',
+                        `${editor} updated payment request for ${payment.user?.first_name} ${payment.user?.last_name}`,
+                        payment.id,
+                        'updated'
+                    );
+                    // Update the payment row in the table
+                    if (window.currentTab === 'payment') {
+                        this.updatePaymentInTable(payment);
+                    }
                 }
                 break;
                 
@@ -115,6 +144,40 @@ class StickersRealtime {
                     'deleted'
                 );
                 // Remove from payments table
+                this.removePaymentFromTable(payment.id);
+                this.updatePaymentBadge(-1);
+                break;
+        }
+    }
+
+    updateUIWithoutNotification(payment, action) {
+        // Update UI without showing notifications (for current user's own actions)
+        switch (action) {
+            case 'created':
+                if (window.currentTab === 'payment' && payment.status === 'pending') {
+                    this.addPaymentToTable(payment);
+                    this.updatePaymentBadge(1);
+                }
+                break;
+
+            case 'updated':
+                if (payment.status === 'paid') {
+                    this.removePaymentFromTable(payment.id);
+                    this.updatePaymentBadge(-1);
+                    if (window.currentTab === 'transactions') {
+                        this.addTransactionToTable(payment);
+                    }
+                } else if (payment.status === 'cancelled') {
+                    this.removePaymentFromTable(payment.id);
+                    this.updatePaymentBadge(-1);
+                } else if (payment.status === 'pending') {
+                    if (window.currentTab === 'payment') {
+                        this.updatePaymentInTable(payment);
+                    }
+                }
+                break;
+                
+            case 'deleted':
                 this.removePaymentFromTable(payment.id);
                 this.updatePaymentBadge(-1);
                 break;
@@ -262,6 +325,43 @@ class StickersRealtime {
         }, 500);
     }
 
+    updatePaymentInTable(payment) {
+        const tbody = document.getElementById('paymentTableBody');
+        if (!tbody) return;
+        
+        const row = tbody.querySelector(`tr[data-payment-id="${payment.id}"]`);
+        if (!row) {
+            console.log('Payment row not found, adding it');
+            this.addPaymentToTable(payment);
+            return;
+        }
+        
+        // Update vehicle info cell
+        const vehicleCell = row.cells[2]; // 3rd column (0-indexed)
+        if (vehicleCell) {
+            const vehicleInfo = payment.vehicle_count > 1 
+                ? `<p class="text-sm font-medium text-blue-600 dark:text-blue-400">${payment.vehicle_count} Vehicles</p>
+                   <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Batch payment</p>`
+                : `<p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.type?.name || 'N/A'}</p>
+                   <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.plate_no || payment.vehicle?.color + '-' + payment.vehicle?.number || ''}</p>`;
+            vehicleCell.innerHTML = vehicleInfo;
+        }
+        
+        // Update amount cell
+        const amountCell = row.cells[3]; // 4th column (0-indexed)
+        if (amountCell) {
+            amountCell.innerHTML = `<span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">₱${parseFloat(payment.amount).toFixed(2)}</span>`;
+        }
+        
+        // Add highlight animation to show it was updated
+        row.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
+        setTimeout(() => {
+            row.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
+        }, 2000);
+        
+        console.log('Payment row updated in table');
+    }
+
     removePaymentFromTable(paymentId) {
         const tbody = document.getElementById('paymentTableBody');
         if (!tbody) return;
@@ -336,9 +436,56 @@ class StickersRealtime {
         }, 2000);
     }
 
+    handleVehicleUpdate(event) {
+        const { vehicle, action, editor } = event;
+
+        console.log(`Vehicle ${action}:`, vehicle);
+
+        // Check if the editor is the current user (skip notifications for own actions)
+        const isOwnAction = editor && window.currentUserName && editor === window.currentUserName;
+
+        // Only handle vehicle creation/updates with stickers
+        if (action === 'created' && vehicle.sticker) {
+            console.log('New vehicle with sticker created:', vehicle);
+            
+            // Reload stickers tab if currently viewing it
+            if (window.currentTab === 'stickers' && typeof window.loadStickers === 'function') {
+                console.log('Reloading stickers tab...');
+                window.loadStickers();
+            }
+
+            // Show notification only for other admins' actions
+            if (!isOwnAction) {
+                this.showBrowserNotification(
+                    'New Sticker Issued',
+                    `${editor} issued a new sticker for ${vehicle.user?.first_name} ${vehicle.user?.last_name}`,
+                    vehicle.id,
+                    'created'
+                );
+            }
+        } else if (action === 'deleted') {
+            // Reload stickers tab if a vehicle with sticker is deleted
+            if (window.currentTab === 'stickers' && typeof window.loadStickers === 'function') {
+                console.log('Vehicle deleted, reloading stickers tab...');
+                window.loadStickers();
+            }
+
+            // Show notification only for other admins' actions
+            if (!isOwnAction && vehicle.sticker) {
+                this.showBrowserNotification(
+                    'Sticker Removed',
+                    `${editor} removed a sticker`,
+                    vehicle.id,
+                    'deleted'
+                );
+            }
+        }
+    }
+
     disconnect() {
         if (window.Echo) {
             window.Echo.leaveChannel('payments');
+            window.Echo.leaveChannel('vehicles');
         }
         this.isInitialized = false;
     }

@@ -146,6 +146,8 @@ class ReportUserController extends Controller
             'violation_type_id' => $request->violation_type_id,
             'description' => $request->description,
             'location' => $request->location,
+            'pin_x' => $request->pin_x,
+            'pin_y' => $request->pin_y,
             'assigned_to' => $assignment['assigned_to'] ?? null,
             'assigned_to_user_type' => $assignment['assigned_to_user_type'] ?? null,
             'status' => 'pending',

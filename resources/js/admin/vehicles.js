@@ -29,6 +29,8 @@ function initializeFilters() {
     const typeFilter = document.getElementById('type-filter');
     const colorFilter = document.getElementById('color-filter');
     const userTypeFilter = document.getElementById('user-type-filter');
+    const collegeFilter = document.getElementById('college-filter');
+    const collegeFilterWrapper = document.getElementById('college-filter-wrapper');
     const resetButton = document.getElementById('reset-filters');
 
     // Add event listeners
@@ -49,6 +51,24 @@ function initializeFilters() {
     
     if (userTypeFilter) {
         userTypeFilter.addEventListener('change', function() {
+            const selectedUserType = this.value;
+            
+            // Show/hide college filter based on user type
+            if (selectedUserType === 'student') {
+                collegeFilterWrapper.classList.remove('hidden');
+            } else {
+                collegeFilterWrapper.classList.add('hidden');
+                // Reset college filter when hiding
+                if (collegeFilter) collegeFilter.value = '';
+            }
+            
+            currentPage = 1;
+            applyPagination();
+        });
+    }
+    
+    if (collegeFilter) {
+        collegeFilter.addEventListener('change', function() {
             currentPage = 1;
             applyPagination();
         });
@@ -59,6 +79,8 @@ function initializeFilters() {
         typeFilter.value = '';
         colorFilter.value = '';
         if (userTypeFilter) userTypeFilter.value = '';
+        if (collegeFilter) collegeFilter.value = '';
+        if (collegeFilterWrapper) collegeFilterWrapper.classList.add('hidden');
         currentPage = 1;
         applyPagination();
     });
@@ -81,6 +103,7 @@ function applyPagination() {
     const typeFilter = document.getElementById('type-filter');
     const colorFilter = document.getElementById('color-filter');
     const userTypeFilter = document.getElementById('user-type-filter');
+    const collegeFilter = document.getElementById('college-filter');
     
     let visibleCount = 0;
     let totalFiltered = 0;
@@ -96,6 +119,7 @@ function applyPagination() {
         const typeValue = typeFilter.value;
         const colorValue = colorFilter.value;
         const userTypeValue = userTypeFilter ? userTypeFilter.value : '';
+        const collegeValue = collegeFilter ? collegeFilter.value : '';
         
         const vehicleId = row.getAttribute('data-id');
         const vehicle = window.vehicles.find(v => v.id == vehicleId);
@@ -104,15 +128,24 @@ function applyPagination() {
         const matchesType = typeValue === '' || (vehicle && vehicle.type_id == typeValue);
         const matchesColor = colorValue === '' || (vehicle && vehicle.color === colorValue);
         const matchesUserType = userTypeValue === '' || (vehicle && vehicle.user && vehicle.user.user_type === userTypeValue);
+        const matchesCollege = collegeValue === '' || (vehicle && vehicle.user && vehicle.user.student && vehicle.user.student.college_id == collegeValue);
         
-        if (matchesSearch && matchesType && matchesColor && matchesUserType) {
+        if (matchesSearch && matchesType && matchesColor && matchesUserType && matchesCollege) {
             totalFiltered++;
         }
     });
     
     // Second pass: apply pagination
     rows.forEach((row) => {
-        if (row.querySelector('td[colspan]')) return; // Skip empty row
+        // Handle empty state row
+        if (row.querySelector('td[colspan]')) {
+            if (totalFiltered === 0) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+            return;
+        }
         
         const ownerName = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
         const plateNo = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
@@ -121,6 +154,7 @@ function applyPagination() {
         const typeValue = typeFilter.value;
         const colorValue = colorFilter.value;
         const userTypeValue = userTypeFilter ? userTypeFilter.value : '';
+        const collegeValue = collegeFilter ? collegeFilter.value : '';
         
         const vehicleId = row.getAttribute('data-id');
         const vehicle = window.vehicles.find(v => v.id == vehicleId);
@@ -129,8 +163,9 @@ function applyPagination() {
         const matchesType = typeValue === '' || (vehicle && vehicle.type_id == typeValue);
         const matchesColor = colorValue === '' || (vehicle && vehicle.color === colorValue);
         const matchesUserType = userTypeValue === '' || (vehicle && vehicle.user && vehicle.user.user_type === userTypeValue);
+        const matchesCollege = collegeValue === '' || (vehicle && vehicle.user && vehicle.user.student && vehicle.user.student.college_id == collegeValue);
         
-        if (matchesSearch && matchesType && matchesColor && matchesUserType) {
+        if (matchesSearch && matchesType && matchesColor && matchesUserType && matchesCollege) {
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             
@@ -191,12 +226,47 @@ function updatePaginationInfo(totalCount) {
 }
 
 function changePage(direction) {
-    const rows = document.querySelectorAll('#vehiclesTableBody tr:not([style*="display: none"])');
-    const totalPages = Math.ceil(rows.length / itemsPerPage);
+    // First, we need to calculate the total filtered count
+    const rows = document.querySelectorAll('#vehiclesTableBody tr');
+    const searchInput = document.getElementById('search-input');
+    const typeFilter = document.getElementById('type-filter');
+    const colorFilter = document.getElementById('color-filter');
+    const userTypeFilter = document.getElementById('user-type-filter');
+    const collegeFilter = document.getElementById('college-filter');
+    
+    let totalFiltered = 0;
+    
+    rows.forEach((row) => {
+        if (row.querySelector('td[colspan]')) return; // Skip empty row
+        
+        const ownerName = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+        const plateNo = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const typeValue = typeFilter.value;
+        const colorValue = colorFilter.value;
+        const userTypeValue = userTypeFilter ? userTypeFilter.value : '';
+        const collegeValue = collegeFilter ? collegeFilter.value : '';
+        
+        const vehicleId = row.getAttribute('data-id');
+        const vehicle = window.vehicles.find(v => v.id == vehicleId);
+        
+        const matchesSearch = ownerName.includes(searchTerm) || plateNo.includes(searchTerm);
+        const matchesType = typeValue === '' || (vehicle && vehicle.type_id == typeValue);
+        const matchesColor = colorValue === '' || (vehicle && vehicle.color === colorValue);
+        const matchesUserType = userTypeValue === '' || (vehicle && vehicle.user && vehicle.user.user_type === userTypeValue);
+        const matchesCollege = collegeValue === '' || (vehicle && vehicle.user && vehicle.user.student && vehicle.user.student.college_id == collegeValue);
+        
+        if (matchesSearch && matchesType && matchesColor && matchesUserType && matchesCollege) {
+            totalFiltered++;
+        }
+    });
+    
+    const totalPages = Math.ceil(totalFiltered / itemsPerPage);
     
     currentPage += direction;
     if (currentPage < 1) currentPage = 1;
-    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
     
     applyPagination();
 }

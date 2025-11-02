@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'user.type' => \App\Http\Middleware\CheckUserType::class,
             'marketing.admin' => \App\Http\Middleware\MarketingAdminMiddleware::class,
             'file.upload.security' => \App\Http\Middleware\FileUploadSecurity::class,
+            'patrol.monitor' => \App\Http\Middleware\CheckPatrolMonitorAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

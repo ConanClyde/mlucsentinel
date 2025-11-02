@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Services\PaymentReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use ZipArchive;
 
 class StickersController extends Controller
 {
@@ -364,5 +365,142 @@ class StickersController extends Controller
         $receiptUrl = $receiptService->getReceiptUrl($payment);
 
         return redirect($receiptUrl);
+    }
+
+    /**
+     * Get issued stickers with filters
+     */
+    public function getIssuedStickers(Request $request)
+    {
+        $query = Vehicle::with(['user', 'type'])
+            ->whereNotNull('sticker');
+
+        // Filter by date range
+        if ($request->has('from_date') && $request->from_date) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->has('to_date') && $request->to_date) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('plate_no', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $stickers = $query->orderBy('created_at', 'desc')->get()->map(function ($vehicle) {
+            return [
+                'id' => $vehicle->id,
+                'plate_no' => $vehicle->plate_no,
+                'color' => $vehicle->color,
+                'number' => $vehicle->number,
+                'sticker' => $vehicle->sticker,
+                'created_at' => $vehicle->created_at,
+                'owner_name' => $vehicle->user ? $vehicle->user->first_name.' '.$vehicle->user->last_name : 'N/A',
+                'vehicle_type' => $vehicle->type ? $vehicle->type->name : 'N/A',
+                'user' => $vehicle->user ? [
+                    'id' => $vehicle->user->id,
+                    'first_name' => $vehicle->user->first_name,
+                    'last_name' => $vehicle->user->last_name,
+                ] : null,
+            ];
+        });
+
+        return response()->json($stickers);
+    }
+
+    /**
+     * Download single sticker
+     */
+    public function downloadSticker(Vehicle $vehicle)
+    {
+        if (! $vehicle->sticker) {
+            return response()->json(['error' => 'No sticker available for this vehicle'], 404);
+        }
+
+        $stickerPath = public_path($vehicle->sticker);
+
+        if (! file_exists($stickerPath)) {
+            return response()->json(['error' => 'Sticker file not found'], 404);
+        }
+
+        $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
+        $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
+        $filename = "sticker_{$ownerName}_{$plateNo}.png";
+
+        return response()->download($stickerPath, $filename);
+    }
+
+    /**
+     * Download all filtered stickers as ZIP
+     */
+    public function downloadFilteredStickers(Request $request)
+    {
+        $query = Vehicle::with(['user', 'type'])
+            ->whereNotNull('sticker');
+
+        // Filter by date range
+        if ($request->has('from_date') && $request->from_date) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->has('to_date') && $request->to_date) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('plate_no', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $vehicles = $query->orderBy('created_at', 'desc')->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json(['error' => 'No stickers found with the current filters'], 404);
+        }
+
+        // Create temporary ZIP file
+        $zipFileName = 'stickers_'.date('Y-m-d_His').'.zip';
+        $zipPath = storage_path('app/temp/'.$zipFileName);
+
+        // Ensure temp directory exists
+        if (! file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        $zip = new ZipArchive;
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            foreach ($vehicles as $vehicle) {
+                $stickerPath = public_path($vehicle->sticker);
+
+                if (file_exists($stickerPath)) {
+                    $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
+                    $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
+                    $filename = "sticker_{$ownerName}_{$plateNo}.png";
+
+                    $zip->addFile($stickerPath, $filename);
+                }
+            }
+
+            $zip->close();
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 }

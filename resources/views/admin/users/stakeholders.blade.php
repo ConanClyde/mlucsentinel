@@ -492,6 +492,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // First pass: count total filtered rows
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const typeText = row.querySelector('td:nth-child(3)')?.textContent.trim() || '';
@@ -520,6 +525,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Second pass: apply pagination
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                row.style.display = totalFiltered === 0 ? '' : 'none';
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const typeText = row.querySelector('td:nth-child(3)')?.textContent.trim() || '';
@@ -611,6 +622,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalFiltered = 0;
         
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const stakeholdersId = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';

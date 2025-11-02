@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CollegeController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\MapLocationController;
+use App\Http\Controllers\Admin\PatrolHistoryController;
 use App\Http\Controllers\Admin\Registration\AdministratorController;
 use App\Http\Controllers\Admin\Registration\ReporterController;
 use App\Http\Controllers\Admin\Registration\SecurityController as AdminRegistrationSecurityController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Reporter\HomeController as ReporterHomeController;
 use App\Http\Controllers\Reporter\MyReportController;
 use App\Http\Controllers\Reporter\MyVehiclesController;
 use App\Http\Controllers\Reporter\ReportUserController;
+use App\Http\Controllers\Security\PatrolCheckinController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -145,6 +147,9 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
     Route::middleware(['marketing.admin'])->group(function () {
         Route::get('/stickers', [StickersController::class, 'index'])->name('admin.stickers');
         Route::get('/stickers/data', [StickersController::class, 'data'])->name('admin.stickers.data');
+        Route::get('/stickers/issued', [StickersController::class, 'getIssuedStickers'])->name('admin.stickers.issued');
+        Route::get('/stickers/download-filtered', [StickersController::class, 'downloadFilteredStickers'])->name('admin.stickers.download-filtered');
+        Route::get('/stickers/vehicle/{vehicle}/download', [StickersController::class, 'downloadSticker'])->name('admin.stickers.download');
         Route::get('/stickers/search-users', [StickersController::class, 'searchUsers'])->name('admin.stickers.search-users');
         Route::post('/stickers/request', [StickersController::class, 'createRequest'])->name('admin.stickers.request');
         Route::patch('/stickers/{payment}/pay', [StickersController::class, 'markAsPaid'])->name('admin.stickers.pay');
@@ -209,6 +214,12 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
     Route::get('/registration/administrator', [AdministratorController::class, 'index'])->name('admin.registration.administrator');
     Route::post('/registration/administrator', [AdministratorController::class, 'store'])->name('admin.registration.administrator.store');
     Route::post('/registration/administrator/check-email', [AdministratorController::class, 'checkEmail'])->name('admin.registration.administrator.check-email');
+
+    // Patrol History Routes (Security Admin & Global Admin only)
+    Route::middleware(['patrol.monitor'])->group(function () {
+        Route::get('/patrol-history', [PatrolHistoryController::class, 'index'])->name('admin.patrol-history');
+        Route::get('/patrol-history/export', [PatrolHistoryController::class, 'export'])->name('admin.patrol-history.export');
+    });
 });
 
 // Reporter Routes
@@ -226,6 +237,12 @@ Route::middleware(['auth', 'user.type:reporter,security'])->group(function () {
 // Security-only Routes
 Route::middleware(['auth', 'user.type:security'])->group(function () {
     Route::get('/my-vehicles', [MyVehiclesController::class, 'index'])->name('reporter.my-vehicles');
+
+    // Patrol Routes
+    Route::get('/security/patrol-scanner', [PatrolCheckinController::class, 'scanner'])->name('security.patrol-scanner');
+    Route::get('/security/patrol-checkin', [PatrolCheckinController::class, 'show'])->name('security.patrol-checkin.show');
+    Route::post('/security/patrol-checkin', [PatrolCheckinController::class, 'store'])->name('security.patrol-checkin.store');
+    Route::get('/security/patrol-history', [PatrolCheckinController::class, 'history'])->name('security.patrol-history');
 });
 
 // Test Admin Dashboard Route

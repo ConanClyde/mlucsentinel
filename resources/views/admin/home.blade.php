@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page-title', 'Admin Home')
+@section('page-title', 'Home')
 
 @section('content')
 <div class="space-y-6">
@@ -55,23 +55,70 @@
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Activity</h3>
-        <div class="space-y-4" id="recent-activity-container">
-            @forelse($recentActivity as $activity)
-                <div class="flex items-center space-x-4">
-                    <div class="w-2 h-2 bg-{{ $activity['color'] }}-500 rounded-full"></div>
-                    <div class="flex-1">
-                        <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">{{ $activity['message'] }}</p>
-                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $activity['time']->diffForHumans() }}</p>
+    <!-- Recent Section: Activity | Reports | Users -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Activity -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Activity</h3>
+            <div class="space-y-4" id="recent-activity-container">
+                @forelse($recentActivity as $activity)
+                    <div class="flex items-center space-x-4">
+                        <div class="w-2 h-2 rounded-full"
+                             style="background-color: {{ $activity['color'] === 'green' ? '#22c55e' : ($activity['color'] === 'yellow' ? '#eab308' : ($activity['color'] === 'blue' ? '#3b82f6' : '#9ca3af')) }}">
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">{{ $activity['message'] }}</p>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ \Carbon\Carbon::parse($activity['time'])->diffForHumans() }}</p>
+                        </div>
                     </div>
-                </div>
-            @empty
-                <div class="text-center py-8">
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">No recent activity</p>
-                </div>
-            @endforelse
+                @empty
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-center py-4">No recent activity</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Reports</h3>
+            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
+                @forelse($recentReports as $report)
+                    <div class="py-3 flex items-start justify-between">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] truncate">{{ $report->violationType->name ?? 'Violation' }}</p>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] truncate">
+                                by {{ optional($report->reportedBy)->first_name }} {{ optional($report->reportedBy)->last_name }}
+                                • {{ optional($report->reported_at)->diffForHumans() ?? optional($report->created_at)->diffForHumans() }}
+                            </p>
+                        </div>
+                        <span class="ml-4 inline-flex items-center px-2 py-1 rounded text-xs font-medium
+                            {{ $report->status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ($report->status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300') }}">
+                            {{ ucfirst($report->status) }}
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-center py-4">No recent reports</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Users</h3>
+            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
+                @forelse($recentUsers as $user)
+                    <div class="py-3 flex items-center justify-between">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] truncate">{{ $user->first_name }} {{ $user->last_name }}</p>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] truncate">{{ $user->user_type->label() }} • {{ $user->created_at->diffForHumans() }}</p>
+                        </div>
+                        <span class="ml-4 inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                            New
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-center py-4">No recent users</p>
+                @endforelse
+            </div>
         </div>
     </div>
 </div>

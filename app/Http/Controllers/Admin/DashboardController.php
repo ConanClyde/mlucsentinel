@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MapLocation;
+use App\Models\PatrolLog;
 use App\Models\Payment;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\ViolationType;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -105,10 +106,50 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Get all reports with their exact pin coordinates for heatmap dots
+        $reportsForHeatmap = Report::select('id', 'location', 'pin_x', 'pin_y', 'reported_at', 'violation_type_id')
+            ->with('violationType:id,name')
+            ->whereNotNull('pin_x')
+            ->whereNotNull('pin_y')
+            ->get()
+            ->map(function ($report) {
+                return [
+                    'id' => $report->id,
+                    'location' => $report->location,
+                    'x' => floatval($report->pin_x),
+                    'y' => floatval($report->pin_y),
+                    'violation_type' => $report->violationType->name ?? 'Unknown',
+                    'reported_at' => $report->reported_at->format('M d, Y'),
+                ];
+            });
+
+        // Get map locations for display on heatmap (view-only)
+        $mapLocations = MapLocation::with('type')
+            ->where('is_active', true)
+            ->whereNotNull('vertices')
+            ->orderBy('display_order')
+            ->get()
+            ->map(function ($location) {
+                return [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'short_code' => $location->short_code,
+                    'type' => [
+                        'id' => $location->type->id,
+                        'name' => $location->type->name,
+                    ],
+                    'color' => $location->color,
+                    'vertices' => $location->vertices,
+                    'center_x' => $location->center_x,
+                    'center_y' => $location->center_y,
+                    'description' => $location->description,
+                ];
+            });
+
         // Get recent activity (last 10 activities)
         $recentActivity = $this->getRecentActivity();
 
-        // Get recent reports for real-time updates
+        // Get recent reports for real-time updates (full list used by charts/realtime)
         $reports = Report::with([
             'reportedBy:id,first_name,last_name,email,user_type',
             'violatorVehicle.user:id,first_name,last_name,email,user_type',
@@ -116,6 +157,17 @@ class DashboardController extends Controller
             'violationType:id,name',
             'assignedTo:id,first_name,last_name',
         ])->orderBy('reported_at', 'desc')->limit(50)->get();
+
+        // Recent Reports (compact list for dashboard widget)
+        $recentReports = Report::with(['reportedBy', 'violationType'])
+            ->orderBy('reported_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Recent Users (latest registrations)
+        $recentUsers = User::orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
         // Get payment statistics
         $paymentsByStatus = Payment::select('status', DB::raw('count(*) as count'))
@@ -140,6 +192,9 @@ class DashboardController extends Controller
             ->pluck('reports_count', 'name')
             ->toArray();
 
+        // Get patrol statistics (last 24 hours)
+        $patrolStats = $this->getPatrolStats();
+
         return view('admin.dashboard', [
             'pageTitle' => 'Dashboard & Analytics',
             'stats' => $stats,
@@ -151,14 +206,18 @@ class DashboardController extends Controller
             'topReporters' => $topReporters,
             'topViolators' => $topViolators,
             'topLocations' => $topLocations,
+            'reportsForHeatmap' => $reportsForHeatmap,
+            'mapLocations' => $mapLocations,
             'recentActivity' => $recentActivity,
             'reports' => $reports,
+            'recentReports' => $recentReports,
+            'recentUsers' => $recentUsers,
             'paymentsByStatus' => $paymentsByStatus,
             'monthlyRevenue' => $monthlyRevenue,
             'violationsByType' => $violationsByType,
+            'patrolStats' => $patrolStats,
         ]);
     }
-
 
     /**
      * Get recent system activity
@@ -215,5 +274,32 @@ class DashboardController extends Controller
         }
 
         return $activities->sortByDesc('time')->take(10)->values();
+    }
+
+    /**
+     * Get patrol statistics (last 24 hours)
+     */
+    private function getPatrolStats(): array
+    {
+        $query = PatrolLog::where('checked_in_at', '>=', now()->subHours(24));
+
+        $totalCheckins = $query->count();
+        $uniqueGuards = $query->distinct('security_user_id')->count('security_user_id');
+        $uniqueLocations = $query->distinct('map_location_id')->count('map_location_id');
+
+        // Most visited location
+        $mostVisitedLocation = PatrolLog::selectRaw('map_location_id, COUNT(*) as visit_count')
+            ->where('checked_in_at', '>=', now()->subHours(24))
+            ->groupBy('map_location_id')
+            ->orderByDesc('visit_count')
+            ->with('mapLocation')
+            ->first();
+
+        return [
+            'total_checkins' => $totalCheckins,
+            'unique_guards' => $uniqueGuards,
+            'unique_locations' => $uniqueLocations,
+            'most_visited_location' => $mostVisitedLocation,
+        ];
     }
 }

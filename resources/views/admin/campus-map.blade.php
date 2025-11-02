@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Campus Map Manager</h1>
-            <p class="text-[#706f6c] dark:text-[#A1A09A]">Click points on the map to create polygon locations</p>
+            <p class="text-[#706f6c] dark:text-[#A1A09A]">Manage patrol locations and map polygons</p>
         </div>
         <div class="flex space-x-2">
             <button id="add-location-btn" class="btn btn-primary">
@@ -42,8 +42,29 @@
                     <button id="complete-polygon-btn" class="btn btn-success" disabled>
                         Complete Polygon
                     </button>
-                    <button id="cancel-drawing-btn" class="btn btn-danger">
-                        Cancel
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editing Vertices Mode Notice -->
+    <div id="editing-notice" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+            </svg>
+            <div class="ml-3 flex-1">
+                <h3 class="text-sm font-semibold text-green-800 dark:text-green-300">Editing Vertices Mode</h3>
+                <p class="text-sm text-green-700 dark:text-green-400 mt-1">
+                    Drag to move • Click polygon to add • Right-click to delete • Click "Save Location" when done
+                    <span class="font-semibold" id="edit-point-counter">Points: 0</span>
+                </p>
+                <div class="flex space-x-2 mt-2">
+                    <button id="undo-edit-point-btn" class="btn btn-warning" disabled>
+                        Remove Last Point
+                    </button>
+                    <button id="undo-vertex-change-btn" class="btn btn-secondary" disabled>
+                        Undo
                     </button>
                 </div>
             </div>
@@ -56,17 +77,16 @@
         <div class="xl:col-span-2">
             <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4">
                 <div class="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-900" id="campus-map-container">
-            <div id="map-wrapper" class="relative w-full" style="transform-origin: center center; transition: transform 0.3s ease-out;">
+            <div id="map-wrapper" class="relative w-full origin-center transition-transform duration-300 ease-out">
                 <!-- Campus Map Image -->
-                <img id="campus-map" src="{{ asset('images/campus-map.png') }}" alt="Campus Map" 
+                <img id="campus-map" src="{{ asset('images/campus-map.svg') }}" alt="Campus Map" 
                      class="block w-full h-auto select-none" 
                      draggable="false"
                      onerror="handleMapError(this)"
-                     onload="initializeMapDimensions()"
-                     style="display: block;">
+                     onload="initializeMapDimensions()">
 
                 <!-- Locations Overlay Canvas -->
-                <div id="locations-overlay" class="absolute inset-0 pointer-events-none" style="z-index: 10;">
+                <div id="locations-overlay" class="absolute inset-0 pointer-events-none z-10">
                     <!-- Saved locations will be rendered here as SVG polygons -->
                     <svg class="w-full h-full" id="locations-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <defs>
@@ -82,7 +102,7 @@
                 </div>
 
                 <!-- Drawing Canvas (INSIDE wrapper so it DOES transform with the map) -->
-                <svg id="drawing-canvas" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" style="z-index: 20;">
+                <svg id="drawing-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <!-- Preview polygon will be drawn here -->
                     <polygon id="preview-polygon" points="" fill="rgba(37, 99, 235, 0.2)" stroke="#2563eb" stroke-width="0.3" class="hidden"/>
                     <!-- Preview points -->
@@ -91,7 +111,7 @@
             </div>
 
             <!-- Zoom Controls (inside container, outside wrapper so they don't zoom) -->
-            <div class="absolute top-2 right-2 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-2 space-y-2" style="z-index: 30; pointer-events: auto;">
+            <div class="absolute top-2 right-2 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-2 space-y-2 z-30 pointer-events-auto">
                 <button id="zoom-in-btn" class="flex items-center justify-center w-8 h-8 bg-blue-600 dark:bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors">
                     <span class="text-lg font-bold leading-none">+</span>
                 </button>
@@ -110,7 +130,8 @@
 
         <!-- Locations Table (1/3 width on desktop, full width on tablet/mobile) -->
         <div class="xl:col-span-1">
-            <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4" style="max-height: 600px; overflow-y-auto;">
+            <!-- Locations List -->
+            <div id="locations-list-container" class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 max-h-[600px] overflow-y-auto">
                 <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4 sticky top-0 bg-white dark:bg-[#1a1a1a] pb-2">Locations</h3>
                 <div class="space-y-2">
                     @forelse($locations as $location)
@@ -151,40 +172,33 @@
                         No locations yet.<br>Click "Add Location" to start.
                     </div>
                     @endforelse
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Legend -->
-    <div id="map-legend" class="hidden bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4">
-        <h3 class="text-md font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Map Legend</h3>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" id="legend-items">
-            @foreach($locationTypes as $type)
-            <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 rounded" style="background-color: {{ $type->default_color }};"></div>
-                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $type->name }}</span>
-            </div>
-            @endforeach
+            <!-- Inline Location Form (Hidden by default) -->
+            <div id="inline-location-form" class="hidden bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <!-- Header -->
+                <div class="p-4 pb-3 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]" id="form-title">Add New Location</h3>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1" id="form-vertices-info">0 points added (optional for patrol-only locations)</p>
+                    <div id="edit-vertices-help" class="hidden mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-800 dark:text-blue-200">
+                        <p class="font-semibold mb-1">Edit Vertices:</p>
+                        <ul class="space-y-0.5 ml-4 list-disc">
+                            <li><strong>Drag</strong> vertices to move them</li>
+                            <li><strong>Click</strong> on polygon to add new vertex</li>
+                            <li><strong>Right-click</strong> vertex to delete (min. 3 required)</li>
+                        </ul>
         </div>
     </div>
 
-</div>
-
-<!-- Location Form Modal -->
-<div id="location-modal" class="modal-backdrop hidden" onclick="if(event.target === this) closeLocationModal()">
-    <div class="modal-container">
-        <div class="modal-header">
-            <h2 class="modal-title" id="modal-title">Add New Location</h2>
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1" id="vertices-info">0 points added</p>
-        </div>
         <form id="location-form">
             @csrf
             <input type="hidden" id="location-id" name="location_id">
             <input type="hidden" id="location-vertices" name="vertices">
+            <input type="hidden" id="location-center-x" name="center_x">
+            <input type="hidden" id="location-center-y" name="center_y">
 
-            <div class="modal-body max-h-[70vh] overflow-y-auto">
-                <div class="space-y-4">
+                    <div class="p-4 space-y-4">
                     <!-- Type -->
                     <div class="form-group">
                         <label for="location-type" class="form-label">
@@ -238,33 +252,46 @@
                         <label for="location-color" class="form-label">
                             Color <span class="text-red-500">*</span>
                         </label>
-                        <div class="flex items-center space-x-2">
-                            <input type="color" id="location-color" name="color" value="#3B82F6" required
-                                   class="w-12 h-10 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded cursor-pointer">
-                            <input type="text" id="location-color-text" value="#3B82F6" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$"
-                                   class="form-input flex-1"
-                                   placeholder="#3B82F6">
-                        </div>
+                        <input type="hidden" id="location-color" name="color" value="#3B82F6" required>
+                        <!-- Color palette removed: color is controlled by selected Location Type -->
+                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">Color is controlled by the selected Location Type.</p>
                         <p class="text-xs text-red-500 mt-1 hidden" id="error-color"></p>
                     </div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" onclick="closeLocationModal()" class="btn btn-secondary">
+
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2 pt-2">
+                            <button type="button" onclick="closeInlineForm()" class="btn btn-secondary flex-1">
                     Cancel
                 </button>
-                <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary flex-1">
                     Save Location
                 </button>
+                        </div>
             </div>
         </form>
+            </div>
     </div>
+    </div>
+
+    <!-- Legend -->
+    <div id="map-legend" class="hidden bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4">
+        <h3 class="text-md font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Map Legend</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" id="legend-items">
+            @foreach($locationTypes as $type)
+            <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 rounded" style="background-color: {{ $type->default_color }};"></div>
+                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $type->name }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
 </div>
 
 <!-- View Location Modal -->
 <div id="viewLocationModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeViewLocationModal()">
-    <div class="modal-container">
+    <div class="modal-container-wide">
         <div class="modal-header">
             <h2 class="modal-title">Location Details</h2>
         </div>
@@ -314,6 +341,23 @@ let isDraggingPoint = false;
 let draggingPointIndex = -1;
 let deletingLocationId = null;
 let aspectRatio = 1; // Default aspect ratio
+let editingVertices = [];
+let editVertexColor = '#3B82F6';
+let draggingVertexIndex = null;
+let vertexHistory = []; // Stack for undo functionality
+
+// Helper function to check if we're in drawing or editing mode
+function isInAddOrEditMode() {
+    return isDrawing || (editingVertices.length > 0);
+}
+
+// Helper function to update map cursor based on mode
+function updateMapCursor() {
+    const container = document.getElementById('campus-map-container');
+    if (container) {
+        container.style.cursor = isInAddOrEditMode() ? 'crosshair' : 'grab';
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
@@ -352,16 +396,19 @@ function initializeMap() {
         img.addEventListener('load', initializeMapDimensions);
     }
     
-    // Zoom controls
-    document.getElementById('zoom-in-btn').addEventListener('click', () => zoomMap(0.2));
-    document.getElementById('zoom-out-btn').addEventListener('click', () => zoomMap(-0.2));
+    // Zoom controls with long press support
+    setupLongPressZoom('zoom-in-btn', 0.2);
+    setupLongPressZoom('zoom-out-btn', -0.2);
     document.getElementById('reset-zoom-btn').addEventListener('click', resetZoom);
 
     // Drawing mode
     document.getElementById('add-location-btn').addEventListener('click', enableDrawingMode);
-    document.getElementById('cancel-drawing-btn').addEventListener('click', cancelDrawingMode);
     document.getElementById('undo-point-btn').addEventListener('click', undoLastPoint);
     document.getElementById('complete-polygon-btn').addEventListener('click', completePolygon);
+    
+    // Editing mode
+    document.getElementById('undo-edit-point-btn').addEventListener('click', undoLastEditPoint);
+    document.getElementById('undo-vertex-change-btn').addEventListener('click', undoVertexChange);
 
     // Legend toggle
     document.getElementById('toggle-legend-btn').addEventListener('click', () => {
@@ -374,12 +421,16 @@ function initializeMap() {
     // Map click for adding points
     container.addEventListener('click', handleMapClick);
 
-    // Mouse drag to pan (works even while drawing)
+    // Mouse drag to pan (works even while drawing) - LEFT CLICK ONLY
     let isDraggingMap = false;
     let dragStartX, dragStartY;
     let startPanX, startPanY;
     
     container.addEventListener('mousedown', (e) => {
+        // Only work on LEFT click (button === 0 or not right button)
+        // Right click (button === 2) is for label dragging
+        if (e.button === 2) return; // Ignore right click for map panning
+        
         isDraggingMap = true;
         hasDragged = false;
         dragStartX = e.clientX;
@@ -428,20 +479,21 @@ function initializeMap() {
         }
     });
     
-    container.addEventListener('mouseup', () => {
-        // Reset point dragging
-        if (isDraggingPoint) {
+    container.addEventListener('mouseup', (e) => {
+        // Reset point dragging (only on left button)
+        if (isDraggingPoint && e.button === 0) {
             isDraggingPoint = false;
             draggingPointIndex = -1;
             // Reset cursor on all point groups
             document.querySelectorAll('#preview-points g').forEach(g => {
-                g.style.cursor = 'grab';
+                g.style.cursor = 'pointer';
             });
         }
         
-        if (isDraggingMap) {
+        // Only stop map dragging on left button release (not right button)
+        if (isDraggingMap && e.button === 0) {
             isDraggingMap = false;
-            container.style.cursor = isDrawing ? 'crosshair' : 'grab';
+            container.style.cursor = isInAddOrEditMode() ? 'crosshair' : 'grab';
             
             // Re-enable transition
             wrapper.style.transition = 'transform 0.3s ease-out';
@@ -451,13 +503,13 @@ function initializeMap() {
     container.addEventListener('mouseleave', () => {
         if (isDraggingMap) {
             isDraggingMap = false;
-            container.style.cursor = isDrawing ? 'crosshair' : 'default';
+            container.style.cursor = isInAddOrEditMode() ? 'crosshair' : 'default';
             wrapper.style.transition = 'transform 0.3s ease-out';
         }
     });
     
-    // Set initial cursor
-    container.style.cursor = 'grab';
+    // Set initial cursor - update dynamically based on mode
+    updateMapCursor();
     
     // Mouse wheel zoom (zoom toward cursor like Google Maps)
     container.addEventListener('wheel', (e) => {
@@ -495,27 +547,12 @@ function initializeMap() {
         }
     });
 
-    // Color picker sync
-    const colorPicker = document.getElementById('location-color');
-    const colorText = document.getElementById('location-color-text');
-    
-    colorPicker.addEventListener('input', (e) => {
-        colorText.value = e.target.value.toUpperCase();
-    });
-    
-    colorText.addEventListener('input', (e) => {
-        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-            colorPicker.value = e.target.value;
-        }
-    });
-
     // Type change updates color
     document.getElementById('location-type').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const defaultColor = selectedOption.dataset.color;
         if (defaultColor) {
-            colorPicker.value = defaultColor;
-            colorText.value = defaultColor.toUpperCase();
+            selectColor(defaultColor);
         }
     });
 
@@ -531,17 +568,35 @@ function initializeMap() {
 function enableDrawingMode() {
     isDrawing = true;
     currentPoints = [];
+    // Disable the Add Location button
+    const addLocationBtn = document.getElementById('add-location-btn');
+    addLocationBtn.disabled = true;
+    addLocationBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    // Show the inline form immediately, replacing the locations card
+    openLocationModal([]);
     document.getElementById('drawing-notice').classList.remove('hidden');
-    document.getElementById('campus-map-container').style.cursor = 'crosshair';
+    updateMapCursor();
+    // Initialize form state
+    document.getElementById('location-vertices').value = JSON.stringify(currentPoints);
+    updateVerticesInfo(currentPoints.length);
     updatePointCounter();
     updateDrawingButtons();
+}
+
+function updateVerticesInfo(count) {
+    const suffix = count === 0 ? ' (optional for patrol-only locations)' : '';
+    document.getElementById('form-vertices-info').textContent = `${count} points added${suffix}`;
 }
 
 function cancelDrawingMode() {
     isDrawing = false;
     currentPoints = [];
+    // Re-enable the Add Location button
+    const addLocationBtn = document.getElementById('add-location-btn');
+    addLocationBtn.disabled = false;
+    addLocationBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     document.getElementById('drawing-notice').classList.add('hidden');
-    document.getElementById('campus-map-container').style.cursor = 'default';
+    updateMapCursor();
     document.getElementById('preview-polygon').classList.add('hidden');
     document.getElementById('preview-points').innerHTML = '';
 }
@@ -575,6 +630,11 @@ function handleMapClick(e) {
     currentPoints.push({ x: parseFloat(x.toFixed(4)), y: parseFloat(y.toFixed(4)) });
     console.log('✅ Point added! Total points:', currentPoints.length);
     
+    // Live-update the form while drawing
+    const verticesInput = document.getElementById('location-vertices');
+    const info = document.getElementById('form-vertices-info');
+    if (verticesInput) verticesInput.value = JSON.stringify(currentPoints);
+    if (info) info.textContent = `${currentPoints.length} points added`;
     updatePointCounter();
     updateDrawingButtons();
     drawPreviewPolygon();
@@ -583,6 +643,11 @@ function handleMapClick(e) {
 function undoLastPoint() {
     if (currentPoints.length > 0) {
         currentPoints.pop();
+        // Live-update the form while drawing
+        const verticesInput = document.getElementById('location-vertices');
+        const info = document.getElementById('form-vertices-info');
+        if (verticesInput) verticesInput.value = JSON.stringify(currentPoints);
+        if (info) info.textContent = `${currentPoints.length} points added`;
         updatePointCounter();
         updateDrawingButtons();
         drawPreviewPolygon();
@@ -594,8 +659,7 @@ function completePolygon() {
         alert('You need at least 3 points to create a polygon.');
         return;
     }
-    
-    openLocationModal(currentPoints);
+    // Form is already open and synced; just exit drawing mode
     cancelDrawingMode();
 }
 
@@ -624,6 +688,10 @@ function drawPreviewPolygon() {
         return;
     }
     
+    // Determine current selected color (fallback to blue)
+    const colorInput = document.getElementById('location-color');
+    const currentColor = colorInput && colorInput.value ? colorInput.value : '#2563eb';
+    
     // Draw points with fixed size (compensate for zoom scale)
     const fixedRadius = 1.5 / currentScale; // Inverse of current zoom scale
     const fixedFontSize = 1.2 / currentScale;
@@ -634,7 +702,7 @@ function drawPreviewPolygon() {
         // Create a group for each point (so we can make it draggable)
         const pointGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         pointGroup.setAttribute('data-point-index', index);
-        pointGroup.style.cursor = 'grab';
+        pointGroup.style.cursor = 'pointer';
         pointGroup.style.pointerEvents = 'auto'; // Enable mouse events
         
         // Use ellipse to compensate for aspect ratio, making it appear as a perfect circle
@@ -643,7 +711,7 @@ function drawPreviewPolygon() {
         ellipse.setAttribute('cy', point.y);
         ellipse.setAttribute('rx', fixedRadius); // Horizontal radius
         ellipse.setAttribute('ry', fixedRadius / aspectRatio); // Vertical radius - DIVIDE to compensate
-        ellipse.setAttribute('fill', '#2563eb'); // Blue-600 - same as primary button
+        ellipse.setAttribute('fill', currentColor);
         ellipse.setAttribute('stroke', 'none');
         pointGroup.appendChild(ellipse);
         
@@ -681,6 +749,8 @@ function drawPreviewPolygon() {
         
         polygon.setAttribute('points', pointsString);
         polygon.setAttribute('stroke-width', fixedStrokeWidth);
+        polygon.setAttribute('fill', currentColor + '20');
+        polygon.setAttribute('stroke', currentColor);
         polygon.classList.remove('hidden');
         console.log('🔷 Polygon created with points:', pointsString);
     } else {
@@ -688,44 +758,549 @@ function drawPreviewPolygon() {
     }
 }
 
+function selectColor(color) {
+    // Update hidden input
+    document.getElementById('location-color').value = color;
+    
+    // Update visual selection (border)
+    document.querySelectorAll('.color-option').forEach(btn => {
+        if (btn.onclick.toString().includes(color)) {
+            btn.classList.remove('border-transparent');
+            btn.classList.add('border-gray-600');
+        } else {
+            btn.classList.remove('border-gray-600');
+            btn.classList.add('border-transparent');
+        }
+    });
+    
+    // If currently editing vertices, update color in real-time
+    if (typeof editingVertices !== 'undefined' && editingVertices.length > 0) {
+        editVertexColor = color;
+        redrawEditVertices();
+    }
+    // If currently drawing, redraw preview with new color
+    if (typeof isDrawing !== 'undefined' && isDrawing) {
+        drawPreviewPolygon();
+    }
+}
+
 function openLocationModal(vertices, locationData = null) {
-    const modal = document.getElementById('location-modal');
+    const locationsList = document.getElementById('locations-list-container');
+    const inlineForm = document.getElementById('inline-location-form');
     const form = document.getElementById('location-form');
+    
+    // Hide locations list and show inline form
+    locationsList.classList.add('hidden');
+    inlineForm.classList.remove('hidden');
     
     // Reset form
     form.reset();
     editingLocationId = null;
     document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
     
+    // Clear center coordinates
+    document.getElementById('location-center-x').value = '';
+    document.getElementById('location-center-y').value = '';
+    
     // Set vertices
     document.getElementById('location-vertices').value = JSON.stringify(vertices);
-    document.getElementById('vertices-info').textContent = `${vertices.length} points added`;
+    updateVerticesInfo(vertices.length);
     
     // If editing existing location
     if (locationData) {
         editingLocationId = locationData.id;
-        document.getElementById('modal-title').textContent = 'Edit Location';
+        document.getElementById('form-title').textContent = 'Edit Location';
         document.getElementById('location-id').value = locationData.id;
         document.getElementById('location-type').value = locationData.type_id;
         document.getElementById('location-name').value = locationData.name;
         document.getElementById('location-code').value = locationData.short_code || '';
         document.getElementById('location-description').value = locationData.description || '';
-        document.getElementById('location-color').value = locationData.color;
-        document.getElementById('location-color-text').value = locationData.color;
+        
+        // Set center coordinates for label dragging
+        if (locationData.center_x && locationData.center_y) {
+            document.getElementById('location-center-x').value = locationData.center_x;
+            document.getElementById('location-center-y').value = locationData.center_y;
+        }
+        
+        // Enforce color from type
+        enforceColorFromType();
+        
+        // Re-render locations so labels become draggable
+        renderLocations();
+        
+        // Automatically enable vertex editing mode if location has vertices
+        if (vertices && vertices.length >= 3) {
+            // Small delay to ensure form is fully rendered
+            setTimeout(() => {
+                enableVertexEditing();
+            }, 100);
+        }
     } else {
-        document.getElementById('modal-title').textContent = 'Add New Location';
+        document.getElementById('form-title').textContent = 'Add New Location';
+        
+        // Enforce color from type for new locations as well
+        enforceColorFromType();
+    }
+}
+
+function enableVertexEditing() {
+    // Get current vertices from form
+    const verticesJson = document.getElementById('location-vertices').value;
+    const vertices = verticesJson ? JSON.parse(verticesJson) : [];
+    
+    if (!vertices || vertices.length < 3) {
+        alert('This location has no polygon to edit. You can only edit vertices for locations with map polygons.');
+        return;
     }
     
-    modal.classList.remove('hidden');
+    // Get current color
+    const color = document.getElementById('location-color').value;
+    
+    // Enter vertex editing mode
+    displayVerticesOnMap(vertices, color);
+}
+
+function displayVerticesOnMap(vertices, color) {
+    // Clear any existing edit vertices
+    clearEditVertices();
+    
+    // Store original vertices for cancel functionality
+    const verticesInput = document.getElementById('location-vertices');
+    verticesInput.setAttribute('data-original-vertices', JSON.stringify(vertices));
+    
+    // Store vertices for editing
+    editingVertices = JSON.parse(JSON.stringify(vertices)); // Deep copy
+    editVertexColor = color;
+    
+    // Initialize history with initial state
+    vertexHistory = [];
+    saveVertexState();
+    
+    // Show edit help and notice
+    document.getElementById('edit-vertices-help').classList.remove('hidden');
+    document.getElementById('editing-notice').classList.remove('hidden');
+    document.getElementById('edit-point-counter').textContent = `Points: ${editingVertices.length}`;
+    
+    // Update button state
+    updateEditingButtons();
+    
+    redrawEditVertices();
+    updateMapCursor();
+    document.getElementById('add-location-btn').disabled = true;
+    document.getElementById('add-location-btn').classList.add('opacity-40', 'cursor-not-allowed');
+}
+
+function saveVertexState() {
+    // Save current vertex state to history
+    vertexHistory.push(JSON.parse(JSON.stringify(editingVertices)));
+    // Limit history to 50 states to prevent memory issues
+    if (vertexHistory.length > 50) {
+        vertexHistory.shift();
+    }
+    updateEditingButtons();
+}
+
+function updateEditingButtons() {
+    document.getElementById('undo-edit-point-btn').disabled = editingVertices.length <= 3;
+    
+    // Enable/disable undo button based on history
+    const undoVertexBtn = document.getElementById('undo-vertex-change-btn');
+    if (undoVertexBtn) {
+        undoVertexBtn.disabled = vertexHistory.length <= 1;
+    }
+}
+
+function undoLastEditPoint() {
+    if (editingVertices.length <= 3) {
+        alert('Cannot remove point. A polygon must have at least 3 points.');
+        return;
+    }
+    
+    // Save state before removing
+    saveVertexState();
+    
+    // Remove last point
+    editingVertices.pop();
+    
+    // Update UI
+    redrawEditVertices();
+    
+    // Update form and counters
+    document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+    updateVerticesInfo(editingVertices.length);
+    document.getElementById('edit-point-counter').textContent = `Points: ${editingVertices.length}`;
+    
+    // Update button state
+    updateEditingButtons();
+}
+
+function undoVertexChange() {
+    if (vertexHistory.length <= 1) return;
+    
+    // Remove current state (last item)
+    vertexHistory.pop();
+    
+    // Restore previous state
+    const previousState = vertexHistory[vertexHistory.length - 1];
+    if (previousState) {
+        editingVertices = JSON.parse(JSON.stringify(previousState)); // Deep copy
+        
+        // Update UI
+        redrawEditVertices();
+        
+        // Update form and counters
+        document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+        updateVerticesInfo(editingVertices.length);
+        document.getElementById('edit-point-counter').textContent = `Points: ${editingVertices.length}`;
+        
+        // Update button state
+        updateEditingButtons();
+    }
+}
+
+function cancelVertexEditing() {
+    // Revert to original vertices before editing started
+    const originalVerticesJson = document.getElementById('location-vertices').getAttribute('data-original-vertices');
+    if (originalVerticesJson) {
+        document.getElementById('location-vertices').value = originalVerticesJson;
+        const vertices = JSON.parse(originalVerticesJson);
+        updateVerticesInfo(vertices.length);
+    }
+    
+    // Close editing mode
+    clearEditVertices();
+}
+
+function redrawEditVertices() {
+    const pointsGroup = document.getElementById('preview-points');
+    const polygon = document.getElementById('preview-polygon');
+    
+    // Clear existing vertices
+    pointsGroup.innerHTML = '';
+    
+    // COPY EXACTLY from drawPreviewPolygon
+    const fixedRadius = 1.5 / currentScale;
+    const fixedFontSize = 1.2 / currentScale;
+    
+    // Draw points for each vertex - EXACTLY like drawing mode
+    editingVertices.forEach((point, index) => {
+        // Create a group for each point (EXACTLY like drawing mode)
+        const pointGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        pointGroup.setAttribute('data-point-index', index);
+        pointGroup.style.cursor = 'pointer';
+        pointGroup.style.pointerEvents = 'auto';
+        
+        // Use ellipse to compensate for aspect ratio, making it appear as a perfect circle
+        const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        ellipse.setAttribute('cx', point.x);
+        ellipse.setAttribute('cy', point.y);
+        ellipse.setAttribute('rx', fixedRadius);
+        ellipse.setAttribute('ry', fixedRadius / aspectRatio);
+        ellipse.setAttribute('fill', editVertexColor);
+        ellipse.setAttribute('stroke', 'none');
+        pointGroup.appendChild(ellipse);
+        
+        // Add point number
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', point.x);
+        text.setAttribute('y', point.y);
+        text.setAttribute('fill', '#ffffff');
+        text.setAttribute('font-size', fixedFontSize);
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'central');
+        text.style.pointerEvents = 'none';
+        text.textContent = index + 1;
+        pointGroup.appendChild(text);
+        
+        // Drag to move
+        pointGroup.addEventListener('mousedown', startDragVertex);
+        
+        // Right-click to delete
+        pointGroup.addEventListener('contextmenu', deleteVertex);
+        
+        pointsGroup.appendChild(pointGroup);
+    });
+    
+    // Draw the polygon shape
+    updateEditPolygon();
+}
+
+function startDragVertex(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Get index from data-point-index attribute
+    let target = e.currentTarget;
+    draggingVertexIndex = parseInt(target.getAttribute('data-point-index'));
+    
+    // Save initial position for comparison
+    const initialVertex = {...editingVertices[draggingVertexIndex]};
+    
+    // Save state before dragging starts
+    saveVertexState();
+    
+    // Add global listeners
+    document.addEventListener('mousemove', dragVertex);
+    document.addEventListener('mouseup', function stopHandler() {
+        stopDragVertex(initialVertex);
+        document.removeEventListener('mouseup', stopHandler);
+    });
+    
+    // Change cursor
+    document.body.style.cursor = 'grabbing';
+}
+
+function dragVertex(e) {
+    if (draggingVertexIndex === null || draggingVertexIndex === undefined) return;
+    
+    e.preventDefault();
+    
+    const wrapper = document.getElementById('map-wrapper');
+    const rect = wrapper.getBoundingClientRect();
+    
+    // Calculate position relative to wrapper
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    // Update vertex position
+    editingVertices[draggingVertexIndex] = {
+        x: parseFloat(x.toFixed(4)),
+        y: parseFloat(y.toFixed(4))
+    };
+    
+    // Update visual - find the group and update ellipse and text
+    const pointsGroup = document.getElementById('preview-points');
+    const group = pointsGroup.querySelector(`[data-point-index="${draggingVertexIndex}"]`);
+    if (group) {
+        const ellipse = group.querySelector('ellipse');
+        const text = group.querySelector('text');
+        
+        if (ellipse) {
+            ellipse.setAttribute('cx', editingVertices[draggingVertexIndex].x);
+            ellipse.setAttribute('cy', editingVertices[draggingVertexIndex].y);
+        }
+        if (text) {
+            text.setAttribute('x', editingVertices[draggingVertexIndex].x);
+            text.setAttribute('y', editingVertices[draggingVertexIndex].y);
+        }
+    }
+    
+    // Update polygon
+    const polygon = document.getElementById('preview-polygon');
+    const pointsString = editingVertices.map(p => `${p.x},${p.y}`).join(' ');
+    polygon.setAttribute('points', pointsString);
+}
+
+function stopDragVertex(initialVertex) {
+    if (draggingVertexIndex !== null) {
+        // Check if vertex actually moved (if initialVertex was provided)
+        let hasChanged = false;
+        if (initialVertex) {
+            const current = editingVertices[draggingVertexIndex];
+            hasChanged = current.x !== initialVertex.x || current.y !== initialVertex.y;
+        }
+        
+        // If vertex didn't move, remove the state we saved (undo the save)
+        if (initialVertex && !hasChanged && vertexHistory.length > 1) {
+            vertexHistory.pop();
+            updateEditingButtons();
+        }
+        
+        // Update hidden input with new vertices
+        document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+        updateVerticesInfo(editingVertices.length);
+    }
+    
+    draggingVertexIndex = null;
+    document.removeEventListener('mousemove', dragVertex);
+    
+    // Restore cursor
+    document.body.style.cursor = '';
+}
+
+function updateEditPolygon() {
+    const polygon = document.getElementById('preview-polygon');
+    
+    if (editingVertices.length >= 3) {
+        const pointsString = editingVertices.map(p => `${p.x},${p.y}`).join(' ');
+        const fixedStrokeWidth = 0.3 / currentScale;
+        
+        polygon.setAttribute('points', pointsString);
+        polygon.setAttribute('fill', editVertexColor + '20');
+        polygon.setAttribute('stroke', editVertexColor);
+        polygon.setAttribute('stroke-width', fixedStrokeWidth);
+        polygon.classList.remove('hidden');
+
+        // Accept clicks for adding points in edit mode
+        polygon.style.pointerEvents = 'auto';
+        polygon.style.cursor = 'crosshair';
+        polygon.onclick = addEditVertexOnPolygon;
+    } else {
+        polygon.classList.add('hidden');
+        polygon.onclick = null;
+    }
+}
+
+function addEditVertexOnPolygon(e) {
+    if (draggingVertexIndex !== null) return;
+    e.stopPropagation();
+    
+    // Save state before adding
+    saveVertexState();
+    
+    const wrapper = document.getElementById('map-wrapper');
+    const rect = wrapper.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const newPoint = {
+        x: parseFloat(x.toFixed(4)),
+        y: parseFloat(y.toFixed(4))
+    };
+    // Find closest edge and insert point there
+    let minDistance = Infinity;
+    let insertIndex = editingVertices.length;
+    for (let i = 0; i < editingVertices.length; i++) {
+        const p1 = editingVertices[i];
+        const p2 = editingVertices[(i + 1) % editingVertices.length];
+        const distance = distanceToLineSegment(newPoint, p1, p2);
+        if (distance < minDistance) {
+            minDistance = distance;
+            insertIndex = i + 1;
+        }
+    }
+    editingVertices.splice(insertIndex, 0, newPoint);
+    // Update everything
+    redrawEditVertices();
+    document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+    updateVerticesInfo(editingVertices.length);
+    document.getElementById('edit-point-counter').textContent = `Points: ${editingVertices.length}`;
+    updateEditingButtons();
+}
+
+
+function deleteVertex(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Get index from data-point-index attribute
+    let target = e.currentTarget;
+    const index = parseInt(target.getAttribute('data-point-index'));
+    
+    // Need at least 3 vertices to maintain a polygon
+    if (editingVertices.length <= 3) {
+        alert('Cannot delete vertex. A polygon must have at least 3 points.');
+        return;
+    }
+    
+    // Save state before deleting
+    saveVertexState();
+    
+    // Remove the vertex
+    editingVertices.splice(index, 1);
+    
+    // Update UI
+    redrawEditVertices();
+    
+    // Update form and counter
+    document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+    updateVerticesInfo(editingVertices.length);
+    document.getElementById('edit-point-counter').textContent = `Points: ${editingVertices.length}`;
+    
+    // Update button state
+    updateEditingButtons();
+}
+
+function distanceToLineSegment(point, lineStart, lineEnd) {
+    const dx = lineEnd.x - lineStart.x;
+    const dy = lineEnd.y - lineStart.y;
+    
+    if (dx === 0 && dy === 0) {
+        // Line segment is just a point
+        return Math.sqrt(Math.pow(point.x - lineStart.x, 2) + Math.pow(point.y - lineStart.y, 2));
+    }
+    
+    // Calculate projection of point onto line
+    const t = Math.max(0, Math.min(1, ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / (dx * dx + dy * dy)));
+    
+    // Find closest point on line segment
+    const closestX = lineStart.x + t * dx;
+    const closestY = lineStart.y + t * dy;
+    
+    // Return distance
+    return Math.sqrt(Math.pow(point.x - closestX, 2) + Math.pow(point.y - closestY, 2));
+}
+
+function clearEditVertices() {
+    // Clear edit vertices
+    const pointsGroup = document.getElementById('preview-points');
+    pointsGroup.innerHTML = '';
+    
+    // Hide preview polygon
+    const polygon = document.getElementById('preview-polygon');
+    polygon.classList.add('hidden');
+    
+    // Hide edit help and notice
+    document.getElementById('edit-vertices-help').classList.add('hidden');
+    document.getElementById('editing-notice').classList.add('hidden');
+    
+    // Reset editing state
+    editingVertices = [];
+    vertexHistory = [];
+    draggingVertexIndex = null;
+    document.getElementById('add-location-btn').disabled = false;
+    document.getElementById('add-location-btn').classList.remove('opacity-40', 'cursor-not-allowed');
+    updateMapCursor();
+    
+    // Disable undo buttons
+    const undoVertexBtn = document.getElementById('undo-vertex-change-btn');
+    if (undoVertexBtn) {
+        undoVertexBtn.disabled = true;
+    }
 }
 
 function closeLocationModal() {
-    document.getElementById('location-modal').classList.add('hidden');
+    const locationsList = document.getElementById('locations-list-container');
+    const inlineForm = document.getElementById('inline-location-form');
+    
+    // Hide inline form and show locations list
+    inlineForm.classList.add('hidden');
+    locationsList.classList.remove('hidden');
     editingLocationId = null;
+    
+    // Clear center coordinates
+    document.getElementById('location-center-x').value = '';
+    document.getElementById('location-center-y').value = '';
+    
+    // Clear vertices from map
+    clearEditVertices();
+    
+    // Re-render locations to remove draggable labels
+    renderLocations();
+}
+
+function closeInlineForm() {
+    // Cancel drawing mode if active
+    if (isDrawing) {
+        cancelDrawingMode();
+    }
+    
+    // Clear vertex editing mode if active
+    if (editingVertices && editingVertices.length > 0) {
+        cancelVertexEditing();
+    }
+    closeLocationModal();
 }
 
 async function handleFormSubmit(e) {
     e.preventDefault();
+    
+    // If in vertex editing mode, update vertices input with current editingVertices
+    if (editingVertices && editingVertices.length > 0) {
+        document.getElementById('location-vertices').value = JSON.stringify(editingVertices);
+        // Clear editing mode after capturing vertices
+        clearEditVertices();
+    }
     
     const formData = new FormData(e.target);
     const data = {};
@@ -734,6 +1309,11 @@ async function handleFormSubmit(e) {
     formData.forEach((value, key) => {
         if (key === 'vertices') {
             data[key] = JSON.parse(value);
+        } else if (key === 'center_x' || key === 'center_y') {
+            // Include center coordinates if they exist and are not empty
+            if (value && value.trim() !== '') {
+                data[key] = parseFloat(value);
+            }
         } else {
             data[key] = value;
         }
@@ -812,6 +1392,9 @@ function renderLocations() {
         svg.removeChild(svg.lastChild);
     }
     
+    // Store labels to append at the end (so they're on top)
+    const labelsToAppend = [];
+    
     locations.forEach(location => {
         if (!location.is_active || !location.vertices || location.vertices.length < 3) return;
         
@@ -819,7 +1402,10 @@ function renderLocations() {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'location-polygon');
         g.style.cursor = 'pointer';
-        g.style.pointerEvents = 'auto';
+        g.style.pointerEvents = 'auto'; // Always keep group enabled
+        
+        // Disable polygon pointer events when editing this location (so label can be dragged)
+        const isEditingThisLocation = editingLocationId === location.id;
         
         // Draw polygon (initially invisible, only shows on hover)
         const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -829,10 +1415,33 @@ function renderLocations() {
         polygon.setAttribute('stroke', 'none'); // No border
         polygon.setAttribute('class', 'transition-all duration-200');
         
-        // Add label if there's a center point
+        // When editing, hide the polygon completely so label is clearly on top
+        if (isEditingThisLocation) {
+            polygon.style.pointerEvents = 'none'; // Polygon won't capture events
+            polygon.style.display = 'none'; // Hide polygon visually
+            g.style.pointerEvents = 'none'; // Group won't capture events either - label is separate
+            g.style.display = 'none'; // Hide group visually too
+        } else {
+            // If ANY location is being edited, disable pointer events on all OTHER polygons
+            // This prevents them from intercepting mouse events intended for the label
+            if (editingLocationId !== null) {
+                polygon.style.pointerEvents = 'none'; // Disable so label can be dragged
+                g.style.pointerEvents = 'none'; // Disable group too
+            } else {
+                polygon.style.pointerEvents = 'auto';
+                g.style.pointerEvents = 'auto';
+            }
+            polygon.style.display = ''; // Show polygon
+            g.style.display = ''; // Show group
+        }
+        
+        // Add label if there's a center point and it's not a parking type
         let label = null;
-        if (location.center_x && location.center_y) {
-            const fixedFontSize = 1 / currentScale; // Fixed size regardless of zoom
+        const isParking = location.type && location.type.name && location.type.name.toLowerCase().includes('parking');
+        
+        if (location.center_x && location.center_y && !isParking) {
+            // Use consistent font size - don't scale with zoom to maintain readability
+            const fixedFontSize = 1; // Fixed size at 1 unit in viewBox coordinates
             
             label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             label.setAttribute('x', location.center_x);
@@ -841,63 +1450,379 @@ function renderLocations() {
             label.setAttribute('dominant-baseline', 'central');
             label.setAttribute('fill', '#4b5563'); // Dark gray (gray-600)
             label.setAttribute('stroke', '#ffffff'); // White outline
-            label.setAttribute('stroke-width', 0.15 / currentScale); // Fixed stroke width
+            label.setAttribute('stroke-width', 0.15); // Fixed stroke width
             label.setAttribute('paint-order', 'stroke fill'); // Draw stroke behind fill
             label.setAttribute('font-weight', '700'); // Bold for better visibility
             label.setAttribute('font-size', fixedFontSize);
-            label.setAttribute('font-family', 'Inter, ui-sans-serif, system-ui, sans-serif'); // Same as app.blade
+            label.setAttribute('font-family', 'Satoshi, ui-sans-serif, system-ui, sans-serif'); // Same as app.blade
             // Apply transform to counter the aspect ratio stretch
             label.setAttribute('transform', `scale(1, ${1 / aspectRatio})`);
             label.setAttribute('transform-origin', `${location.center_x} ${location.center_y}`);
-            label.setAttribute('style', 'pointer-events: none;');
-            label.textContent = location.short_code || location.name.substring(0, 3).toUpperCase();
+            label.setAttribute('data-location-id', location.id);
+            label.setAttribute('data-center-x', location.center_x);
+            label.setAttribute('data-center-y', location.center_y);
+            
+            // Make label draggable when editing this location
+            if (isEditingThisLocation) {
+                // Create a group for the draggable label with a hit area
+                const labelGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                labelGroup.setAttribute('data-location-id', location.id);
+                labelGroup.style.cursor = 'move';
+                labelGroup.style.pointerEvents = 'auto';
+                
+                // Make entire SVG draggable when editing this location
+                // We'll attach a global drag handler to the SVG itself
+                
+                // Keep original label styling - don't change appearance
+                label.style.pointerEvents = 'auto';
+                label.style.cursor = 'move';
+                // Keep original fill and stroke colors - don't change them
+                
+                // Store original position
+                labelGroup.setAttribute('data-original-x', location.center_x);
+                labelGroup.setAttribute('data-original-y', location.center_y);
+                labelGroup.setAttribute('data-center-x', location.center_x);
+                labelGroup.setAttribute('data-center-y', location.center_y);
+                
+                // Set text content before appending
+                label.textContent = location.short_code || location.name.substring(0, 3).toUpperCase();
+                
+                // Save reference to text element before we lose it
+                const textElement = label;
+                
+                // Append text to group
+                labelGroup.appendChild(textElement);
+                
+                // Make the entire SVG draggable when editing - attach handler to SVG
+                // This allows dragging from anywhere, not just on the label
+                makeLabelDraggableGlobal(location.id, labelGroup, textElement);
+                
+                // Also make the label group itself draggable for direct clicks
+                makeLabelDraggable(labelGroup, location.id);
+                makeLabelDraggable(textElement, location.id);
+                
+                // Replace label with labelGroup (for later reference)
+                label = labelGroup;
+            } else {
+                label.style.pointerEvents = 'none';
+                label.textContent = location.short_code || location.name.substring(0, 3).toUpperCase();
+            }
         }
         
-        // Hover effects - show shape and tooltip immediately
+        // Hover effects - show shape and tooltip immediately (only if not editing this location)
         let tooltip = null;
         
-        g.addEventListener('mouseenter', function(e) {
-            polygon.setAttribute('fill', location.color + '40'); // Show with 25% opacity
-            polygon.setAttribute('stroke', location.color);
-            const fixedStrokeWidth = 0.3 / currentScale;
-            polygon.setAttribute('stroke-width', fixedStrokeWidth);
-            polygon.setAttribute('filter', 'url(#glow)');
-            
-            // Show tooltip immediately
-            tooltip = document.createElement('div');
-            tooltip.className = 'absolute bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-50 pointer-events-none';
-            tooltip.style.left = e.clientX + 10 + 'px';
-            tooltip.style.top = e.clientY + 10 + 'px';
-            tooltip.textContent = location.name;
-            document.body.appendChild(tooltip);
-        });
-        
-        g.addEventListener('mouseleave', function() {
-            polygon.setAttribute('fill', 'transparent'); // Hide again
-            polygon.setAttribute('stroke', 'none');
-            polygon.removeAttribute('filter');
-            
-            // Remove tooltip
-            if (tooltip) {
-                tooltip.remove();
-                tooltip = null;
-            }
-        });
-        
-        // Update tooltip position on mouse move
-        g.addEventListener('mousemove', function(e) {
-            if (tooltip) {
+        if (!isEditingThisLocation) {
+            g.addEventListener('mouseenter', function(e) {
+                // Disable hover when in edit mode
+                if (editingVertices.length > 0 || isDrawing) return;
+                
+                polygon.setAttribute('fill', location.color + '20'); // Show with 12% opacity
+                polygon.setAttribute('stroke', location.color + '60'); // Stroke with 38% opacity
+                const fixedStrokeWidth = 0.3 / currentScale;
+                polygon.setAttribute('stroke-width', fixedStrokeWidth);
+                polygon.setAttribute('filter', 'url(#glow)');
+                
+                // Show tooltip immediately
+                tooltip = document.createElement('div');
+                tooltip.className = 'absolute bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-50 pointer-events-none';
                 tooltip.style.left = e.clientX + 10 + 'px';
                 tooltip.style.top = e.clientY + 10 + 'px';
-            }
+                tooltip.textContent = location.name;
+                document.body.appendChild(tooltip);
+            });
+            
+            g.addEventListener('mouseleave', function() {
+                polygon.setAttribute('fill', 'transparent'); // Hide again
+                polygon.setAttribute('stroke', 'none');
+                polygon.removeAttribute('filter');
+                
+                // Remove tooltip
+                if (tooltip) {
+                    tooltip.remove();
+                    tooltip = null;
+                }
+            });
+            
+            // Update tooltip position on mouse move
+            g.addEventListener('mousemove', function(e) {
+                if (tooltip) {
+                    tooltip.style.left = e.clientX + 10 + 'px';
+                    tooltip.style.top = e.clientY + 10 + 'px';
+                }
+            });
+            
+            // Click to view details
+            g.addEventListener('click', () => {
+                // Disable click when in edit mode
+                if (editingVertices.length > 0 || isDrawing) return;
+                viewLocationDetails(location.id);
+            });
+        }
+        
+        // When editing this location, DON'T append the polygon group at all
+        // This ensures the label (which will be appended later) is definitely on top
+        if (!isEditingThisLocation) {
+            g.appendChild(polygon);
+            svg.appendChild(g);
+        }
+        
+        // ALWAYS append labels directly to SVG (not inside group) so they're on top of ALL polygons
+        if (label) {
+            labelsToAppend.push(label);
+        }
+    });
+    
+    // Append ALL labels at the VERY END (after ALL polygon groups)
+    // This ensures they render on top with highest z-index (SVG renders last = top)
+    // Labels are appended directly to SVG, never inside polygon groups, so they're always on top
+    labelsToAppend.forEach((label) => {
+        svg.appendChild(label);
+    });
+    
+    // If editing a location, ensure its label is the ABSOLUTE LAST element
+    // Move it to the end if anything else got appended
+    if (editingLocationId !== null) {
+        const editingLabel = Array.from(svg.children).find(child => {
+            const locationId = child.getAttribute('data-location-id');
+            return locationId && parseInt(locationId) === editingLocationId;
         });
         
-        // Click to view details
-        g.addEventListener('click', () => viewLocationDetails(location.id));
+        if (editingLabel && svg.lastChild !== editingLabel) {
+            // Move editing label to absolute end
+            svg.removeChild(editingLabel);
+            svg.appendChild(editingLabel);
+        }
+    }
+}
+
+// Global drag state for label dragging from anywhere
+let globalDragState = null;
+let globalDragSetupDone = false;
+
+// Setup global drag handlers once
+function setupGlobalLabelDrag() {
+    if (globalDragSetupDone) return; // Already set up
+    globalDragSetupDone = true;
+    
+    const mapContainer = document.getElementById('campus-map-container');
+    if (!mapContainer) return;
+    
+    // Attach handler to map container - works from anywhere on the map
+    mapContainer.addEventListener('mousedown', function(e) {
+        // Only work if a location is being edited AND it's a right-click (button === 2)
+        if (!editingLocationId || e.button !== 2) return;
         
-        g.appendChild(polygon);
-        if (label) g.appendChild(label);
-        svg.appendChild(g);
+        const svg = document.getElementById('locations-svg');
+        if (!svg) return;
+        
+        // Find the editing location's label
+        const editingLabelGroup = Array.from(svg.children).find(child => {
+            const locationId = child.getAttribute('data-location-id');
+            return locationId && parseInt(locationId) === editingLocationId;
+        });
+        
+        if (!editingLabelGroup) return;
+        
+        const textElement = editingLabelGroup.querySelector('text');
+        if (!textElement) return;
+        
+        // Don't interfere if clicking directly on label (it has its own handler)
+        if (editingLabelGroup.contains(e.target)) return;
+        
+        // FORCE start drag from anywhere - block everything else
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get SVG bounding rect to calculate coordinates
+        const svgRect = svg.getBoundingClientRect();
+        const svgViewBox = svg.viewBox.baseVal;
+        
+        // Calculate initial label position in viewBox coordinates
+        const currentX = parseFloat(editingLabelGroup.getAttribute('data-center-x') || textElement.getAttribute('x') || '0');
+        const currentY = parseFloat(editingLabelGroup.getAttribute('data-center-y') || textElement.getAttribute('y') || '0');
+        
+        // Convert to screen coordinates for initial calculation
+        const startSvgX = (currentX / svgViewBox.width) * svgRect.width + svgRect.left;
+        const startSvgY = (currentY / svgViewBox.height) * svgRect.height + svgRect.top;
+        
+        // Start drag from anywhere on map
+        globalDragState = {
+            isDragging: true,
+            labelGroup: editingLabelGroup,
+            textElement: textElement,
+            startX: e.clientX,
+            startY: e.clientY,
+            startLabelX: currentX,
+            startLabelY: currentY,
+            svgRect: svgRect,
+            svgViewBox: svgViewBox,
+        };
+        
+        document.body.style.cursor = 'grabbing';
+    });
+    
+    // Handle drag movement
+    document.addEventListener('mousemove', function(e) {
+        if (!globalDragState || !globalDragState.isDragging) return;
+        
+        const svg = document.getElementById('locations-svg');
+        if (!svg) return;
+        
+        // Use cached rect or get fresh one
+        const svgRect = svg.getBoundingClientRect();
+        const svgViewBox = svg.viewBox.baseVal;
+        
+        // Calculate mouse position in viewBox coordinates
+        const mouseX = ((e.clientX - svgRect.left) / svgRect.width) * svgViewBox.width;
+        const mouseY = ((e.clientY - svgRect.top) / svgRect.height) * svgViewBox.height;
+        
+        // Calculate start position in viewBox coordinates
+        const startSvgX = ((globalDragState.startX - svgRect.left) / svgRect.width) * svgViewBox.width;
+        const startSvgY = ((globalDragState.startY - svgRect.top) / svgRect.height) * svgViewBox.height;
+        
+        // Calculate delta
+        const deltaX = mouseX - startSvgX;
+        const deltaY = (mouseY - startSvgY) * aspectRatio;
+        
+        // Calculate new position
+        const newX = Math.max(0, Math.min(100, globalDragState.startLabelX + deltaX));
+        const newY = Math.max(0, Math.min(100, globalDragState.startLabelY + deltaY));
+        
+        // Update label position
+        if (globalDragState.textElement) {
+            globalDragState.textElement.setAttribute('x', newX);
+            globalDragState.textElement.setAttribute('y', newY);
+            globalDragState.textElement.setAttribute('transform-origin', `${newX} ${newY}`);
+        }
+        
+        // Update group data
+        if (globalDragState.labelGroup) {
+            globalDragState.labelGroup.setAttribute('data-center-x', newX);
+            globalDragState.labelGroup.setAttribute('data-center-y', newY);
+        }
+        
+        // Update hidden inputs
+        const centerXInput = document.getElementById('location-center-x');
+        const centerYInput = document.getElementById('location-center-y');
+        if (centerXInput) centerXInput.value = newX.toFixed(4);
+        if (centerYInput) centerYInput.value = newY.toFixed(4);
+    });
+    
+    // Handle drag end (only on right button release)
+    document.addEventListener('mouseup', function(e) {
+        if (globalDragState && globalDragState.isDragging && e.button === 2) {
+            globalDragState.isDragging = false;
+            globalDragState = null;
+            document.body.style.cursor = '';
+        }
+    });
+}
+
+function makeLabelDraggableGlobal(locationId, labelGroup, textElement) {
+    // Setup once - will work for any editing location
+    setupGlobalLabelDrag();
+}
+
+// Make a label draggable in edit mode
+function makeLabelDraggable(labelElement, locationId) {
+    let isDragging = false;
+    let startX, startY;
+    let startLabelX, startLabelY;
+    
+    labelElement.addEventListener('mousedown', function(e) {
+        // Only activate on right-click (button === 2)
+        if (e.button !== 2) return;
+        
+        // Prevent polygon click and group handlers when dragging label
+        e.stopPropagation();
+        e.preventDefault(); // Also prevent default to stop context menu
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        // Get position from data attributes or element attributes
+        // If it's a text element, get from parent group's data attributes first, then from text's x/y
+        if (labelElement.tagName === 'text' && labelElement.parentElement) {
+            const parentGroup = labelElement.parentElement;
+            startLabelX = parseFloat(parentGroup.getAttribute('data-center-x') || labelElement.getAttribute('x') || '0');
+            startLabelY = parseFloat(parentGroup.getAttribute('data-center-y') || labelElement.getAttribute('y') || '0');
+        } else {
+            startLabelX = parseFloat(labelElement.getAttribute('data-center-x') || labelElement.getAttribute('x') || '0');
+            startLabelY = parseFloat(labelElement.getAttribute('data-center-y') || labelElement.getAttribute('y') || '0');
+        }
+        
+        // Change cursor
+        document.body.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        // Calculate SVG coordinates
+        const svg = document.getElementById('locations-svg');
+        const svgRect = svg.getBoundingClientRect();
+        const svgViewBox = svg.viewBox.baseVal; // viewBox is 0 0 100 100
+        
+        // Calculate mouse position relative to SVG in viewBox coordinates (0-100)
+        const mouseX = ((e.clientX - svgRect.left) / svgRect.width) * svgViewBox.width;
+        const mouseY = ((e.clientY - svgRect.top) / svgRect.height) * svgViewBox.height;
+        
+        // Calculate start position in viewBox coordinates
+        const startSvgX = ((startX - svgRect.left) / svgRect.width) * svgViewBox.width;
+        const startSvgY = ((startY - svgRect.top) / svgRect.height) * svgViewBox.height;
+        
+        // Calculate delta in viewBox coordinates
+        const deltaX = mouseX - startSvgX;
+        const deltaY = (mouseY - startSvgY) * aspectRatio; // Adjust for aspect ratio stretch
+        
+        // Calculate new position
+        const newX = Math.max(0, Math.min(100, startLabelX + deltaX));
+        const newY = Math.max(0, Math.min(100, startLabelY + deltaY));
+        
+        // Update label position - check if it's a group or text element
+        const textElement = labelElement.tagName === 'text' ? labelElement : labelElement.querySelector('text');
+        const parentGroup = labelElement.tagName === 'text' ? labelElement.parentElement : labelElement;
+        
+        if (textElement) {
+            textElement.setAttribute('x', newX);
+            textElement.setAttribute('y', newY);
+            textElement.setAttribute('transform-origin', `${newX} ${newY}`);
+        }
+        
+        // Update group's hitArea if parent is a group
+        if (parentGroup && parentGroup.tagName === 'g') {
+            const hitArea = parentGroup.querySelector('rect');
+            if (hitArea) {
+                hitArea.setAttribute('x', (newX - 8).toString()); // Match the larger hitArea size
+                hitArea.setAttribute('y', (newY - 3).toString());
+            }
+            // Update parent group's data attributes
+            parentGroup.setAttribute('data-center-x', newX);
+            parentGroup.setAttribute('data-center-y', newY);
+        }
+        
+        // Update data attributes on the element that's being dragged
+        if (labelElement.tagName === 'text') {
+            // Text element - update its own attributes
+            labelElement.setAttribute('data-center-x', newX);
+            labelElement.setAttribute('data-center-y', newY);
+        } else {
+            // Group element
+            labelElement.setAttribute('data-center-x', newX);
+            labelElement.setAttribute('data-center-y', newY);
+        }
+        
+        // Update hidden inputs
+        document.getElementById('location-center-x').value = newX.toFixed(4);
+        document.getElementById('location-center-y').value = newY.toFixed(4);
+    });
+    
+    document.addEventListener('mouseup', function(e) {
+        if (isDragging && e.button === 2) {
+            isDragging = false;
+            document.body.style.cursor = '';
+        }
     });
 }
 
@@ -908,26 +1833,46 @@ function viewLocationDetails(id) {
     const modal = document.getElementById('viewLocationModal');
     const content = document.getElementById('viewLocationContent');
     
+    // Process sticker path - encode # character for proper URL handling
+    let stickerImageUrl = null;
+    if (location.sticker_path) {
+        // Replace # with %23 to properly encode hex color codes in filename
+        stickerImageUrl = location.sticker_path.replace(/#/g, '%23');
+    }
+    
     content.innerHTML = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Name</label>
-                    <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC] font-medium">${location.name}</p>
+        <div class="grid grid-cols-1 ${stickerImageUrl ? 'md:grid-cols-2' : ''} gap-6">
+            <!-- Location Information -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Name</label>
+                        <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC] font-medium">${location.name}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Short Code</label>
+                        <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.short_code || 'N/A'}</p>
+                    </div>
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Short Code</label>
-                    <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.short_code || 'N/A'}</p>
+                    <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Type</label>
+                    <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.type.name}</p>
                 </div>
+                ${location.description ? `
+                <div>
+                    <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Description</label>
+                    <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.description}</p>
+                </div>
+                ` : ''}
             </div>
-            <div>
-                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Type</label>
-                <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.type.name}</p>
-            </div>
-            ${location.description ? `
-            <div>
-                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Description</label>
-                <p class="text-base text-[#1b1b18] dark:text-[#EDEDEC]">${location.description}</p>
+            
+            <!-- Location Sticker -->
+            ${stickerImageUrl ? `
+            <div class="space-y-2">
+                <label class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A]">Location Sticker</label>
+                <div class="bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <img src="${stickerImageUrl}" alt="${location.name} Sticker" class="vehicle-sticker-image">
+                </div>
             </div>
             ` : ''}
         </div>
@@ -1043,6 +1988,80 @@ function resetZoom() {
     applyMapTransform();
 }
 
+function setupLongPressZoom(buttonId, zoomDelta) {
+    const button = document.getElementById(buttonId);
+    let zoomInterval = null;
+    let longPressTimeout = null;
+    let isLongPress = false;
+    
+    const startZoom = () => {
+        isLongPress = false;
+        
+        // Start long press timer (250ms delay before continuous zoom)
+        longPressTimeout = setTimeout(() => {
+            isLongPress = true;
+            // Start continuous zooming (every 30ms for smooth animation)
+            zoomInterval = setInterval(() => {
+                zoomMap(zoomDelta * 0.15); // Smaller, frequent increments for smooth zoom
+            }, 30);
+        }, 250);
+    };
+    
+    const stopZoom = () => {
+        // If not long press, treat as single click
+        if (!isLongPress && longPressTimeout) {
+            zoomMap(zoomDelta); // Single click zoom
+        }
+        
+        // Clear timers
+        if (longPressTimeout) {
+            clearTimeout(longPressTimeout);
+            longPressTimeout = null;
+        }
+        if (zoomInterval) {
+            clearInterval(zoomInterval);
+            zoomInterval = null;
+        }
+        
+        isLongPress = false;
+    };
+    
+    // Mouse events
+    button.addEventListener('mousedown', startZoom);
+    button.addEventListener('mouseup', stopZoom);
+    button.addEventListener('mouseleave', () => {
+        // On mouse leave, just stop without zoom
+        if (longPressTimeout) {
+            clearTimeout(longPressTimeout);
+            longPressTimeout = null;
+        }
+        if (zoomInterval) {
+            clearInterval(zoomInterval);
+            zoomInterval = null;
+        }
+        isLongPress = false;
+    });
+    
+    // Touch events for mobile
+    button.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        startZoom();
+    });
+    button.addEventListener('touchend', stopZoom);
+    button.addEventListener('touchcancel', () => {
+        // On touch cancel, just stop without zoom
+        if (longPressTimeout) {
+            clearTimeout(longPressTimeout);
+            longPressTimeout = null;
+        }
+        if (zoomInterval) {
+            clearInterval(zoomInterval);
+            zoomInterval = null;
+        }
+        isLongPress = false;
+    });
+}
+
 function applyMapTransform() {
     const wrapper = document.getElementById('map-wrapper');
     const container = document.getElementById('campus-map-container');
@@ -1077,6 +2096,16 @@ function applyMapTransform() {
     }
     
     wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${currentScale})`;
+    
+    // Redraw points to update sizes based on new scale
+    if (isDrawing && currentPoints.length > 0) {
+        drawPreviewPolygon();
+    }
+    
+    // Redraw edit vertices to update sizes based on new scale
+    if (editingVertices.length > 0) {
+        redrawEditVertices();
+    }
 }
 
 function handleMapError(img) {
@@ -1092,6 +2121,37 @@ window.deleteLocation = deleteLocation;
 window.closeViewLocationModal = closeViewLocationModal;
 window.closeDeleteLocationModal = closeDeleteLocationModal;
 window.confirmDeleteLocation = confirmDeleteLocation;
+window.closeInlineForm = closeInlineForm;
+window.selectColor = selectColor;
+
+// Helper to enforce color from selected type and disable manual picking
+function enforceColorFromType() {
+    const typeSelect = document.getElementById('location-type');
+    if (!typeSelect) return;
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+    const defaultColor = selectedOption ? selectedOption.dataset.color : null;
+    if (defaultColor) {
+        selectColor(defaultColor);
+    }
+    // Disable manual color buttons
+    document.querySelectorAll('.color-option').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+    });
+}
+
+// Update type change handler to always enforce type color
+(function hookTypeColorEnforcement() {
+    const typeEl = document.getElementById('location-type');
+    if (!typeEl) return;
+    typeEl.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const defaultColor = selectedOption ? selectedOption.dataset.color : null;
+        if (defaultColor) {
+            selectColor(defaultColor);
+        }
+    });
+})();
 </script>
 
 <style>

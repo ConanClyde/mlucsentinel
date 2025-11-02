@@ -6,7 +6,7 @@
     <title>Password Reset Code - MLUC Sentinel</title>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #1b1b18;
             background-color: #FDFDFC;

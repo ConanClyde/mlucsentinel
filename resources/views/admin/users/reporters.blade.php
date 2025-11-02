@@ -348,6 +348,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // First pass: count total filtered rows
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const statusBadge = row.querySelector('td:nth-child(4) span');
@@ -373,6 +378,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Second pass: apply pagination
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                row.style.display = totalFiltered === 0 ? '' : 'none';
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const statusBadge = row.querySelector('td:nth-child(4) span');
@@ -461,6 +472,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalFiltered = 0;
         
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const name = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
             const email = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const statusBadge = row.querySelector('td:nth-child(4) span');

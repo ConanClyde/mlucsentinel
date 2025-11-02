@@ -18,6 +18,7 @@ class MapLocation extends Model
         'center_y',
         'is_active',
         'display_order',
+        'sticker_path',
     ];
 
     protected function casts(): array

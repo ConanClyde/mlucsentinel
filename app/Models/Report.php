@@ -23,6 +23,8 @@ class Report extends Model
         'violation_type_id',
         'description',
         'location',
+        'pin_x',
+        'pin_y',
         'assigned_to',
         'assigned_to_user_type',
         'status',

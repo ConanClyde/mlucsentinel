@@ -34,19 +34,14 @@ class ViolationApprovedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        // Load necessary relationships if not already loaded
+        $this->report->loadMissing(['violationType', 'violatorVehicle.type']);
+
         return (new MailMessage)
             ->subject('Violation Report Approved - Action Required')
-            ->line('A violation report against your vehicle has been approved.')
-            ->line("**Report ID:** {$this->report->id}")
-            ->line("**Violation Type:** {$this->report->violationType->name}")
-            ->line("**Location:** {$this->report->location}")
-            ->line("**Date:** {$this->report->reported_at->format('F d, Y h:i A')}")
-            ->when($this->report->description, function ($mail) {
-                $mail->line("**Description:** {$this->report->description}");
-            })
-            ->line('Please settle any required payments or penalties at the earliest convenience.')
-            ->line('For questions or concerns, please contact the administration office.')
-            ->line('Thank you for your attention to this matter.');
+            ->view('emails.violation-approved', [
+                'report' => $this->report,
+            ]);
     }
 
     /**

@@ -316,6 +316,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // First pass: count total filtered rows
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const reporter = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const violator = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
             const violatorType = row.querySelector('td:nth-child(3)')?.dataset.userType?.toLowerCase() || '';
@@ -341,6 +346,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Second pass: apply pagination
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                row.style.display = totalFiltered === 0 ? '' : 'none';
+                return;
+            }
+            
             const reporter = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const violator = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
             const violatorType = row.querySelector('td:nth-child(3)')?.dataset.userType?.toLowerCase() || '';
@@ -422,6 +433,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalFiltered = 0;
         
         rows.forEach((row) => {
+            // Skip empty state row
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
             const reporter = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
             const violator = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
             const location = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
@@ -440,12 +456,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         const totalPages = Math.ceil(totalFiltered / itemsPerPage);
-        const newPage = currentPage + direction;
-        
-        if (newPage >= 1 && newPage <= totalPages) {
-            currentPage = newPage;
-            applyPagination();
-        }
+        currentPage = Math.max(1, Math.min(currentPage + direction, totalPages));
+        applyPagination();
     };
     
     window.goToPage = function(page) {

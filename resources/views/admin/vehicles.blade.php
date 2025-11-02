@@ -52,6 +52,17 @@
                 </select>
             </div>
 
+            <!-- College Filter (only for students) -->
+            <div class="flex-1 hidden" id="college-filter-wrapper">
+                <label class="form-label">College</label>
+                <select id="college-filter" class="form-input w-full">
+                    <option value="">All Colleges</option>
+                    @foreach($colleges as $college)
+                        <option value="{{ $college->id }}">{{ $college->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- Reset Button -->
             <div class="flex-shrink-0">
                 <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
@@ -220,7 +231,7 @@ window.currentUserId = {{ auth()->id() }};
 
 // Initialize vehicles array and real-time updates
 let realtimeManager;
-vehicles = @json($vehicles);
+window.vehicles = @json($vehicles);
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the real-time manager

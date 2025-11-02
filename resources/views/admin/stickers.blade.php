@@ -2,12 +2,50 @@
 
 @section('page-title', 'Stickers Management')
 
+@push('styles')
+<style>
+    @keyframes fadeSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeSlideOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+    }
+    
+    .table-row-enter {
+        animation: fadeSlideIn 0.3s ease-out forwards;
+    }
+    
+    .table-row-exit {
+        animation: fadeSlideOut 0.3s ease-out forwards;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-6">
     <!-- Tabs Navigation -->
     <div class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] mb-6">
         <nav class="flex space-x-8">
-            <button id="requestTab" class="sticker-tab active" onclick="switchTab('request')">
+            <button id="stickersTab" class="sticker-tab active" onclick="switchTab('stickers')">
+                <x-heroicon-o-rectangle-stack class="w-5 h-5" />
+                Stickers
+            </button>
+            <button id="requestTab" class="sticker-tab" onclick="switchTab('request')">
                 <x-heroicon-o-document-plus class="w-5 h-5" />
                 Request Sticker
             </button>
@@ -23,8 +61,86 @@
         </nav>
     </div>
 
+    <!-- Stickers Tab Content -->
+    <div id="stickersContent" class="tab-content">
+        <!-- Header with Count and Download Button -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                    Issued Stickers (<span id="stickersCount">0</span>)
+                </h3>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                        <select id="stickersPaginationLimit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                            <option value="24" selected>24</option>
+                            <option value="48">48</option>
+                            <option value="72">72</option>
+                            <option value="96">96</option>
+                        </select>
+                    </div>
+                    <button onclick="downloadAllStickers()" class="btn btn-primary flex items-center gap-2">
+                        <x-heroicon-s-arrow-down-tray class="w-4 h-4" />
+                        Download All Filtered
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label">From Date</label>
+                    <input type="date" id="stickersFromDate" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">To Date</label>
+                    <input type="date" id="stickersToDate" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" id="stickersSearch" class="form-input" placeholder="Owner name or plate...">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="resetStickersFilters()" class="btn btn-secondary w-full">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stickers Grid -->
+        <div id="stickersGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            <!-- Cards will be populated by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="stickersEmptyState" class="hidden text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <x-heroicon-o-rectangle-stack class="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">No stickers issued yet</h3>
+            <p class="text-[#706f6c] dark:text-[#A1A09A]">Stickers will appear here once payments are confirmed.</p>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div id="stickersPaginationControls" class="flex items-center justify-between mt-6">
+            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                Showing <span id="stickersShowingStart">1</span>-<span id="stickersShowingEnd">0</span> of <span id="stickersTotalCount">0</span> stickers
+            </p>
+            <div class="flex space-x-2">
+                <button id="stickersPrevPage" class="btn-pagination btn-paginationDisable" onclick="changeStickersPage(-1)">
+                    <x-heroicon-o-chevron-left class="w-4 h-4" />
+                </button>
+                <div id="stickersPageNumbers" class="flex space-x-2"></div>
+                <button id="stickersNextPage" class="btn-pagination btn-paginationArrow" onclick="changeStickersPage(1)">
+                    <x-heroicon-o-chevron-right class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Request Tab Content -->
-    <div id="requestContent" class="tab-content">
+    <div id="requestContent" class="tab-content hidden">
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
             <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Request New Sticker</h3>
             
@@ -78,6 +194,15 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
+                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                        <select id="paymentPaginationLimit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
                         <div id="paymentConnectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                     </div>
@@ -97,8 +222,9 @@
                         </tr>
                     </thead>
                     <tbody id="paymentTableBody">
+                        <!-- Payments will be loaded via JavaScript with pagination -->
                         @forelse($payments as $payment)
-                        <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]">
+                        <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" style="display: none;">
                             <td class="py-2 px-3">
                                 <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $payment->reference ?? 'N/A' }}</span>
                             </td>
@@ -148,6 +274,22 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="paymentPaginationControls" class="flex items-center justify-between mt-6">
+                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                    Showing <span id="paymentShowingStart">1</span>-<span id="paymentShowingEnd">10</span> of <span id="paymentTotalCount">0</span> payments
+                </p>
+                <div class="flex space-x-2">
+                    <button id="paymentPrevPage" class="btn-pagination btn-paginationDisable" onclick="changePaymentPage(-1)">
+                        <x-heroicon-o-chevron-left class="w-4 h-4" />
+                    </button>
+                    <div id="paymentPageNumbers" class="flex space-x-2"></div>
+                    <button id="paymentNextPage" class="btn-pagination btn-paginationArrow" onclick="changePaymentPage(1)">
+                        <x-heroicon-o-chevron-right class="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -441,14 +583,23 @@
 <script>
 // Set current user ID for action tracking
 window.currentUserId = {{ auth()->id() }};
+window.currentUserName = '{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}';
 
 // Set current tab globally for real-time updates
-window.currentTab = 'payment';
-let currentTab = 'payment';
+window.currentTab = 'stickers';
+let currentTab = 'stickers';
 let selectedUser = null;
 let selectedVehicles = [];
 let currentPaymentId = null;
 let confirmationCallback = null;
+let stickersData = [];
+let stickersCurrentPage = 1;
+let stickersItemsPerPage = 24; // 3 rows x 8 columns
+
+// Payments pagination
+let allPayments = [];
+let paymentCurrentPage = 1;
+let paymentItemsPerPage = 10;
 
 // Transactions pagination
 let transactionsCurrentPage = 1;
@@ -471,19 +622,19 @@ function showNotification(title, message, type = 'info') {
     
     if (type === 'error' || title === 'Error' || title === 'Validation Error') {
         titleElement.classList.add('text-red-500');
-        iconElement.innerHTML = '<svg class="w-6 h-6 modal-icon-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+        iconElement.innerHTML = '<svg class="w-6 h-6 modal-icon-warning" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>';
         closeBtn.className = 'btn btn-danger';
     } else if (type === 'success' || title === 'Success') {
         titleElement.classList.add('text-green-600');
-        iconElement.innerHTML = '<svg class="w-6 h-6 modal-icon-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+        iconElement.innerHTML = '<svg class="w-6 h-6 modal-icon-success" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
         closeBtn.className = 'btn btn-success';
     } else if (type === 'warning' || title === 'Warning') {
         titleElement.classList.add('text-yellow-500');
-        iconElement.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+        iconElement.innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>';
         closeBtn.className = 'btn btn-secondary';
     } else {
         titleElement.classList.add('text-blue-500');
-        iconElement.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+        iconElement.innerHTML = '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>';
         closeBtn.className = 'btn btn-primary';
     }
     
@@ -519,9 +670,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize search functionality
     initializeSearch();
     
-    // Data is now loaded from server, no need for initial AJAX calls
-    // Update payment count
-    updatePaymentCount({{ $payments->count() }});
+    // Load payments with pagination on initial load if payment tab is active
+    // Initial payment count will be set by loadPayments()
+    if (currentTab === 'payment') {
+        loadPayments();
+    }
+
+    // Payment pagination limit change handler
+    const paymentPaginationLimit = document.getElementById('paymentPaginationLimit');
+    if (paymentPaginationLimit) {
+        paymentPaginationLimit.addEventListener('change', function() {
+            paymentItemsPerPage = parseInt(this.value);
+            paymentCurrentPage = 1; // Reset to first page
+            applyPaymentPagination();
+        });
+    }
+
+    // Stickers pagination limit change handler
+    const stickersPaginationLimit = document.getElementById('stickersPaginationLimit');
+    if (stickersPaginationLimit) {
+        stickersPaginationLimit.addEventListener('change', function() {
+            stickersItemsPerPage = parseInt(this.value);
+            stickersCurrentPage = 1; // Reset to first page
+            applyStickersPagination();
+        });
+    }
 
     // Setup user search with debounce
     let searchTimeout;
@@ -633,13 +806,19 @@ document.addEventListener('DOMContentLoaded', function() {
     applyPagination();
     
     window.changePage = function(direction) {
-        const totalPages = Math.ceil(document.querySelectorAll('#transactionsTableBody tr:not([style*="display: none"])').length / itemsPerPage);
-        const newPage = currentPage + direction;
+        const rows = document.querySelectorAll('#transactionsTableBody tr');
+        let totalFiltered = 0;
         
-        if (newPage >= 1 && newPage <= totalPages) {
-            currentPage = newPage;
-            applyPagination();
-        }
+        rows.forEach((row) => {
+            // Skip empty state row
+            if (!row.querySelector('td[colspan]')) {
+                totalFiltered++;
+            }
+        });
+        
+        const totalPages = Math.ceil(totalFiltered / itemsPerPage);
+        currentPage = Math.max(1, Math.min(currentPage + direction, totalPages));
+        applyPagination();
     };
 
     window.goToPage = function(page) {
@@ -661,7 +840,9 @@ function switchTab(tab) {
     document.getElementById(tab + 'Tab').classList.add('active');
     
     // Load data if needed
-    if (tab === 'payment') {
+    if (tab === 'stickers') {
+        loadStickers();
+    } else if (tab === 'payment') {
         loadPayments();
     } else if (tab === 'transactions') {
         loadTransactions();
@@ -724,8 +905,8 @@ function selectUser(user) {
         vehicleCardsDiv.innerHTML = user.vehicles.map(vehicle => `
             <div class="vehicle-sticker-card" data-vehicle-id="${vehicle.id}" onclick="toggleVehicleSelection(${vehicle.id})">
                 <div class="checkbox-indicator">
-                    <svg class="checkbox-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    <svg class="checkbox-icon" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                 </div>
                 <div class="sticker-image-container">
@@ -821,12 +1002,84 @@ function loadPayments() {
     })
     .then(response => response.json())
     .then(payments => {
-        displayPayments(payments);
+        allPayments = payments;
+        paymentCurrentPage = 1; // Reset to first page when loading
+        applyPaymentPagination();
         updatePaymentCount(payments.length);
     })
     .catch(error => {
         console.error('Error loading payments:', error);
     });
+}
+
+function applyPaymentPagination() {
+    const totalCount = allPayments.length;
+    const totalPages = Math.ceil(totalCount / paymentItemsPerPage);
+    const startIndex = (paymentCurrentPage - 1) * paymentItemsPerPage;
+    const endIndex = Math.min(startIndex + paymentItemsPerPage, totalCount);
+    
+    const paginatedPayments = allPayments.slice(startIndex, endIndex);
+    
+    displayPayments(paginatedPayments);
+    updatePaymentPaginationControls(startIndex + 1, endIndex, totalCount, totalPages);
+}
+
+function updatePaymentPaginationControls(start, end, total, totalPages) {
+    const showingStart = document.getElementById('paymentShowingStart');
+    const showingEnd = document.getElementById('paymentShowingEnd');
+    const totalCount = document.getElementById('paymentTotalCount');
+    
+    if (showingStart) showingStart.textContent = total === 0 ? 0 : start;
+    if (showingEnd) showingEnd.textContent = end;
+    if (totalCount) totalCount.textContent = total;
+
+    const prevButton = document.getElementById('paymentPrevPage');
+    const nextButton = document.getElementById('paymentNextPage');
+    const pageNumbersDiv = document.getElementById('paymentPageNumbers');
+    
+    if (!prevButton || !nextButton || !pageNumbersDiv) return;
+
+    prevButton.disabled = paymentCurrentPage === 1;
+    prevButton.className = paymentCurrentPage === 1 ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+
+    nextButton.disabled = paymentCurrentPage >= totalPages;
+    nextButton.className = paymentCurrentPage >= totalPages ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+
+    pageNumbersDiv.innerHTML = '';
+    if (totalPages > 0) {
+        const maxPagesToShow = 3;
+        let startPage = Math.max(1, paymentCurrentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.className = i === paymentCurrentPage 
+                ? 'btn-pagination btn-paginationActive' 
+                : 'btn-pagination btn-paginationNumber';
+            pageButton.onclick = () => goToPaymentPage(i);
+            pageNumbersDiv.appendChild(pageButton);
+        }
+    }
+}
+
+function changePaymentPage(direction) {
+    const totalPages = Math.ceil(allPayments.length / paymentItemsPerPage);
+    const newPage = paymentCurrentPage + direction;
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        paymentCurrentPage = newPage;
+        applyPaymentPagination();
+    }
+}
+
+function goToPaymentPage(page) {
+    paymentCurrentPage = page;
+    applyPaymentPagination();
 }
 
 function displayPayments(payments) {
@@ -838,7 +1091,7 @@ function displayPayments(payments) {
     }
 
     tbody.innerHTML = payments.map(payment => `
-        <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]">
+        <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] table-row-enter" data-payment-id="${payment.id}">
             <td class="py-2 px-3">
                 <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${payment.reference || 'N/A'}</span>
             </td>
@@ -988,7 +1241,6 @@ function confirmDeletePayment() {
     .then(data => {
         console.log('Response data:', data);
         if (data.success) {
-            showNotification('Success', 'Payment request deleted successfully', 'success');
             loadPayments();
             loadTransactions();
         } else {
@@ -1073,7 +1325,7 @@ function displayTransactions(transactions) {
         }
 
         return `
-            <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]">
+            <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] table-row-enter">
                 <td class="py-2 px-3">
                     <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${payment.reference || 'N/A'}</span>
                 </td>
@@ -1163,7 +1415,7 @@ function updateTransactionsPaginationControls(start, end, total, totalPages) {
             const pageButton = document.createElement('button');
             pageButton.textContent = i;
             pageButton.className = i === transactionsCurrentPage 
-                ? 'btn-pagination btn-paginationActive btn-paginationNumber' 
+                ? 'btn-pagination btn-paginationActive' 
                 : 'btn-pagination btn-paginationNumber';
             pageButton.onclick = () => goToTransactionsPage(i);
             pageNumbersDiv.appendChild(pageButton);
@@ -1259,8 +1511,8 @@ function showBatchVehicles(payment) {
         <div class="relative inline-block">
             <button id="batchActionDropdownBtn" onclick="toggleBatchActionDropdown()" class="btn btn-primary inline-flex items-center gap-2">
                 <span>Actions</span>
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
             </button>
             <div id="batchActionDropdown" class="hidden absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] z-50">
@@ -1419,7 +1671,6 @@ function confirmDeleteTransaction() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('Success', 'Transaction deleted successfully', 'success');
             loadTransactions();
             closeDeleteTransactionModal();
         } else {
@@ -1755,6 +2006,10 @@ window.loadPayments = loadPayments;
 window.loadTransactions = loadTransactions;
 window.changeTransactionsPage = changeTransactionsPage;
 window.goToTransactionsPage = goToTransactionsPage;
+window.changePaymentPage = changePaymentPage;
+window.goToPaymentPage = goToPaymentPage;
+window.changeStickersPage = changeStickersPage;
+window.goToStickersPage = goToStickersPage;
 window.exportTransactionsToCSV = exportTransactionsToCSV;
 window.showBatchVehicles = showBatchVehicles;
 window.closeBatchViewModal = closeBatchViewModal;
@@ -1770,6 +2025,242 @@ window.clearTransactionsSearch = clearTransactionsSearch;
 window.toggleActionDropdown = toggleActionDropdown;
 window.toggleBatchActionDropdown = toggleBatchActionDropdown;
 window.cancelRequest = cancelRequest;
+
+// ===== STICKERS TAB FUNCTIONS =====
+
+// Load stickers with filters
+function loadStickers() {
+    const fromDate = document.getElementById('stickersFromDate').value;
+    const toDate = document.getElementById('stickersToDate').value;
+    const search = document.getElementById('stickersSearch').value;
+    
+    const params = new URLSearchParams();
+    if (fromDate) params.append('from_date', fromDate);
+    if (toDate) params.append('to_date', toDate);
+    if (search) params.append('search', search);
+    
+    fetch(`/stickers/issued?${params.toString()}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        stickersData = data;
+        stickersCurrentPage = 1; // Reset to first page when loading
+        applyStickersPagination();
+    })
+    .catch(error => {
+        console.error('Error loading stickers:', error);
+        showNotification('Error', 'Failed to load stickers', 'error');
+    });
+}
+
+// Apply pagination to stickers
+function applyStickersPagination() {
+    const totalCount = stickersData.length;
+    const totalPages = Math.ceil(totalCount / stickersItemsPerPage);
+    const startIndex = (stickersCurrentPage - 1) * stickersItemsPerPage;
+    const endIndex = Math.min(startIndex + stickersItemsPerPage, totalCount);
+    
+    const paginatedStickers = stickersData.slice(startIndex, endIndex);
+    
+    renderStickers(paginatedStickers);
+    updateStickersPaginationControls(startIndex + 1, endIndex, totalCount, totalPages);
+}
+
+function updateStickersPaginationControls(start, end, total, totalPages) {
+    const showingStart = document.getElementById('stickersShowingStart');
+    const showingEnd = document.getElementById('stickersShowingEnd');
+    const totalCount = document.getElementById('stickersTotalCount');
+    
+    if (showingStart) showingStart.textContent = total === 0 ? 0 : start;
+    if (showingEnd) showingEnd.textContent = end;
+    if (totalCount) totalCount.textContent = total;
+
+    const prevButton = document.getElementById('stickersPrevPage');
+    const nextButton = document.getElementById('stickersNextPage');
+    const pageNumbersDiv = document.getElementById('stickersPageNumbers');
+    
+    if (!prevButton || !nextButton || !pageNumbersDiv) return;
+
+    prevButton.disabled = stickersCurrentPage === 1;
+    prevButton.className = stickersCurrentPage === 1 ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+
+    nextButton.disabled = stickersCurrentPage >= totalPages;
+    nextButton.className = stickersCurrentPage >= totalPages ? 'btn-pagination btn-paginationDisable' : 'btn-pagination btn-paginationArrow';
+
+    pageNumbersDiv.innerHTML = '';
+    if (totalPages > 0) {
+        const maxPagesToShow = 3;
+        let startPage = Math.max(1, stickersCurrentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.className = i === stickersCurrentPage 
+                ? 'btn-pagination btn-paginationActive' 
+                : 'btn-pagination btn-paginationNumber';
+            pageButton.onclick = () => goToStickersPage(i);
+            pageNumbersDiv.appendChild(pageButton);
+        }
+    }
+}
+
+function changeStickersPage(direction) {
+    const totalPages = Math.ceil(stickersData.length / stickersItemsPerPage);
+    const newPage = stickersCurrentPage + direction;
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        stickersCurrentPage = newPage;
+        applyStickersPagination();
+    }
+}
+
+function goToStickersPage(page) {
+    stickersCurrentPage = page;
+    applyStickersPagination();
+}
+
+// Render stickers grid
+function renderStickers(stickers) {
+    const grid = document.getElementById('stickersGrid');
+    const emptyState = document.getElementById('stickersEmptyState');
+    const countSpan = document.getElementById('stickersCount');
+    
+    countSpan.textContent = stickersData.length; // Show total count
+    
+    if (stickersData.length === 0) {
+        grid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    
+    grid.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    
+    grid.innerHTML = stickers.map(sticker => `
+        <div class="bg-white dark:bg-[#2a2a2a] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] overflow-hidden hover:shadow-md transition-shadow">
+            <!-- Sticker Image -->
+            <div class="bg-gray-50 dark:bg-[#1a1a1a] flex items-center justify-center border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                ${sticker.sticker ? `
+                    <img src="${sticker.sticker}" 
+                         alt="Sticker" 
+                         class="w-full h-auto object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <div class="w-full h-32 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs" style="display: none;">
+                        No Image
+                    </div>
+                ` : `
+                    <div class="w-full h-32 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs">
+                        No Sticker
+                    </div>
+                `}
+            </div>
+            
+            <!-- Vehicle Details -->
+            <div class="p-2 border-t border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="space-y-1 text-center">
+                    <!-- Owner Name -->
+                    <div>
+                        <span class="text-xs font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">${sticker.owner_name}</span>
+                    </div>
+                    
+                    <!-- Vehicle Type -->
+                    <div class="text-[#706f6c] dark:text-[#A1A09A]">
+                        <span class="text-xs">${sticker.vehicle_type}</span>
+                    </div>
+                    
+                    <!-- Download Button -->
+                    <div class="pt-1">
+                        <button onclick="downloadSingleSticker(${sticker.id})" class="w-full py-1 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center justify-center gap-1 transition-colors">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Download single sticker
+function downloadSingleSticker(vehicleId) {
+    window.location.href = `/stickers/vehicle/${vehicleId}/download`;
+}
+
+// Download all filtered stickers
+function downloadAllStickers() {
+    const fromDate = document.getElementById('stickersFromDate').value;
+    const toDate = document.getElementById('stickersToDate').value;
+    const search = document.getElementById('stickersSearch').value;
+    
+    const params = new URLSearchParams();
+    if (fromDate) params.append('from_date', fromDate);
+    if (toDate) params.append('to_date', toDate);
+    if (search) params.append('search', search);
+    
+    window.location.href = `/stickers/download-filtered?${params.toString()}`;
+}
+
+// Reset stickers filters
+function resetStickersFilters() {
+    document.getElementById('stickersFromDate').value = '';
+    document.getElementById('stickersToDate').value = '';
+    document.getElementById('stickersSearch').value = '';
+    loadStickers();
+}
+
+// Add event listeners for stickers filters
+document.addEventListener('DOMContentLoaded', function() {
+    const fromDate = document.getElementById('stickersFromDate');
+    const toDate = document.getElementById('stickersToDate');
+    const search = document.getElementById('stickersSearch');
+    
+    if (fromDate) {
+        fromDate.addEventListener('change', loadStickers);
+    }
+    
+    if (toDate) {
+        toDate.addEventListener('change', loadStickers);
+    }
+    
+    if (search) {
+        search.addEventListener('input', debounce(loadStickers, 500));
+    }
+    
+    // Load stickers on page load
+    if (window.currentTab === 'stickers') {
+        loadStickers();
+    }
+});
+
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Export functions
+window.loadStickers = loadStickers;
+window.downloadSingleSticker = downloadSingleSticker;
+window.downloadAllStickers = downloadAllStickers;
+window.resetStickersFilters = resetStickersFilters;
 
 // Real-time updates are handled by stickers-realtime.js module
 </script>

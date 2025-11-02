@@ -70,10 +70,12 @@ class MapLocationController extends Controller
         try {
             $data = $request->validated();
 
-            // Calculate center point from vertices
-            $centerPoint = $this->calculateCenterPoint($data['vertices']);
-            $data['center_x'] = $centerPoint['x'];
-            $data['center_y'] = $centerPoint['y'];
+            // Use provided center_x/center_y if available, otherwise calculate from vertices
+            if (! isset($data['center_x']) || ! isset($data['center_y'])) {
+                $centerPoint = $this->calculateCenterPoint($data['vertices'] ?? []);
+                $data['center_x'] = $centerPoint['x'];
+                $data['center_y'] = $centerPoint['y'];
+            }
 
             $location = MapLocation::create($data);
             $location->load('type');
@@ -112,10 +114,12 @@ class MapLocationController extends Controller
         try {
             $data = $request->validated();
 
-            // Calculate center point from vertices
-            $centerPoint = $this->calculateCenterPoint($data['vertices']);
-            $data['center_x'] = $centerPoint['x'];
-            $data['center_y'] = $centerPoint['y'];
+            // Use provided center_x/center_y if available, otherwise calculate from vertices
+            if (! isset($data['center_x']) || ! isset($data['center_y'])) {
+                $centerPoint = $this->calculateCenterPoint($data['vertices'] ?? []);
+                $data['center_x'] = $centerPoint['x'];
+                $data['center_y'] = $centerPoint['y'];
+            }
 
             $location->update($data);
             $location->load('type');

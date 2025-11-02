@@ -191,21 +191,40 @@ class StakeholdersController extends Controller
                         $pendingPayment = Payment::where('vehicle_id', $vehicle->id)
                             ->where('status', 'pending')
                             ->first();
-                        
+
                         if ($pendingPayment) {
-                            $pendingPayment->load(['user', 'vehicle.type', 'batchVehicles']);
-                            
-                            // Broadcast payment deletion BEFORE deleting
-                            broadcast(new PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            
-                            // If it's part of a batch, delete all batch payments
+                            // Check if this payment is part of a batch
                             if ($pendingPayment->batch_id) {
-                                Payment::where('batch_id', $pendingPayment->batch_id)->delete();
-                            } else {
+                                // Get all payments in this batch
+                                $batchPayments = Payment::where('batch_id', $pendingPayment->batch_id)
+                                    ->where('status', 'pending')
+                                    ->where('id', '!=', $pendingPayment->id)
+                                    ->get();
+
+                                // Delete the payment for this specific vehicle
                                 $pendingPayment->delete();
+
+                                // Update vehicle_count for remaining payments in the batch
+                                if ($batchPayments->isNotEmpty()) {
+                                    $newVehicleCount = $batchPayments->count();
+
+                                    Payment::where('batch_id', $pendingPayment->batch_id)
+                                        ->where('status', 'pending')
+                                        ->update(['vehicle_count' => $newVehicleCount]);
+
+                                    // Broadcast payment update for real-time updates
+                                    $updatedPayment = $batchPayments->first()->fresh(['user', 'vehicle.type']);
+                                    broadcast(new PaymentUpdated($updatedPayment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
+                                }
+                            } else {
+                                // Single vehicle payment - delete the entire payment
+                                $pendingPayment->delete();
+
+                                // Broadcast payment deletion
+                                broadcast(new PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
                             }
                         }
-                        
+
                         // Broadcast vehicle deletion before deleting
                         $vehicle->load(['user', 'type']);
                         broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
@@ -259,7 +278,7 @@ class StakeholdersController extends Controller
                     // Broadcast vehicle creation
                     $vehicle->load(['user', 'type']);
                     broadcast(new VehicleUpdated($vehicle, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
-                    
+
                     // Create pending payment for the new vehicle
                     $payment = Payment::create([
                         'user_id' => $stakeholder->user_id,
@@ -269,7 +288,7 @@ class StakeholdersController extends Controller
                         'amount' => 15.00,
                         'reference' => 'STK-'.strtoupper(uniqid()),
                     ]);
-                    
+
                     // Broadcast payment creation
                     $payment->load(['user', 'vehicle.type', 'batchVehicles']);
                     broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
