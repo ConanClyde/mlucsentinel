@@ -20,9 +20,13 @@ class StaticDataCacheService
      * Cache keys
      */
     const VEHICLE_TYPES_KEY = 'static_data.vehicle_types';
+
     const COLLEGES_KEY = 'static_data.colleges';
+
     const VIOLATION_TYPES_KEY = 'static_data.violation_types';
+
     const ADMIN_ROLES_KEY = 'static_data.admin_roles';
+
     const STAKEHOLDER_TYPES_KEY = 'static_data.stakeholder_types';
 
     /**
@@ -80,7 +84,7 @@ class StaticDataCacheService
      */
     public static function getVehicleTypesForSelect(): array
     {
-        return Cache::remember(self::VEHICLE_TYPES_KEY . '.select', self::CACHE_DURATION, function () {
+        return Cache::remember(self::VEHICLE_TYPES_KEY.'.select', self::CACHE_DURATION, function () {
             return VehicleType::orderBy('name')->pluck('name', 'id')->toArray();
         });
     }
@@ -90,7 +94,7 @@ class StaticDataCacheService
      */
     public static function getCollegesForSelect(): array
     {
-        return Cache::remember(self::COLLEGES_KEY . '.select', self::CACHE_DURATION, function () {
+        return Cache::remember(self::COLLEGES_KEY.'.select', self::CACHE_DURATION, function () {
             return College::orderBy('name')->pluck('name', 'id')->toArray();
         });
     }
@@ -100,7 +104,7 @@ class StaticDataCacheService
      */
     public static function getViolationTypesForSelect(): array
     {
-        return Cache::remember(self::VIOLATION_TYPES_KEY . '.select', self::CACHE_DURATION, function () {
+        return Cache::remember(self::VIOLATION_TYPES_KEY.'.select', self::CACHE_DURATION, function () {
             return ViolationType::orderBy('name')->pluck('name', 'id')->toArray();
         });
     }
@@ -110,7 +114,7 @@ class StaticDataCacheService
      */
     public static function getAdminRolesForSelect(): array
     {
-        return Cache::remember(self::ADMIN_ROLES_KEY . '.select', self::CACHE_DURATION, function () {
+        return Cache::remember(self::ADMIN_ROLES_KEY.'.select', self::CACHE_DURATION, function () {
             return AdminRole::orderBy('name')->pluck('name', 'id')->toArray();
         });
     }
@@ -120,7 +124,7 @@ class StaticDataCacheService
      */
     public static function getStakeholderTypesForSelect(): array
     {
-        return Cache::remember(self::STAKEHOLDER_TYPES_KEY . '.select', self::CACHE_DURATION, function () {
+        return Cache::remember(self::STAKEHOLDER_TYPES_KEY.'.select', self::CACHE_DURATION, function () {
             return StakeholderType::orderBy('name')->pluck('name', 'id')->toArray();
         });
     }
@@ -135,13 +139,13 @@ class StaticDataCacheService
         Cache::forget(self::VIOLATION_TYPES_KEY);
         Cache::forget(self::ADMIN_ROLES_KEY);
         Cache::forget(self::STAKEHOLDER_TYPES_KEY);
-        
+
         // Clear select option caches
-        Cache::forget(self::VEHICLE_TYPES_KEY . '.select');
-        Cache::forget(self::COLLEGES_KEY . '.select');
-        Cache::forget(self::VIOLATION_TYPES_KEY . '.select');
-        Cache::forget(self::ADMIN_ROLES_KEY . '.select');
-        Cache::forget(self::STAKEHOLDER_TYPES_KEY . '.select');
+        Cache::forget(self::VEHICLE_TYPES_KEY.'.select');
+        Cache::forget(self::COLLEGES_KEY.'.select');
+        Cache::forget(self::VIOLATION_TYPES_KEY.'.select');
+        Cache::forget(self::ADMIN_ROLES_KEY.'.select');
+        Cache::forget(self::STAKEHOLDER_TYPES_KEY.'.select');
     }
 
     /**
@@ -152,23 +156,23 @@ class StaticDataCacheService
         switch ($model) {
             case 'VehicleType':
                 Cache::forget(self::VEHICLE_TYPES_KEY);
-                Cache::forget(self::VEHICLE_TYPES_KEY . '.select');
+                Cache::forget(self::VEHICLE_TYPES_KEY.'.select');
                 break;
             case 'College':
                 Cache::forget(self::COLLEGES_KEY);
-                Cache::forget(self::COLLEGES_KEY . '.select');
+                Cache::forget(self::COLLEGES_KEY.'.select');
                 break;
             case 'ViolationType':
                 Cache::forget(self::VIOLATION_TYPES_KEY);
-                Cache::forget(self::VIOLATION_TYPES_KEY . '.select');
+                Cache::forget(self::VIOLATION_TYPES_KEY.'.select');
                 break;
             case 'AdminRole':
                 Cache::forget(self::ADMIN_ROLES_KEY);
-                Cache::forget(self::ADMIN_ROLES_KEY . '.select');
+                Cache::forget(self::ADMIN_ROLES_KEY.'.select');
                 break;
             case 'StakeholderType':
                 Cache::forget(self::STAKEHOLDER_TYPES_KEY);
-                Cache::forget(self::STAKEHOLDER_TYPES_KEY . '.select');
+                Cache::forget(self::STAKEHOLDER_TYPES_KEY.'.select');
                 break;
         }
     }
@@ -183,7 +187,7 @@ class StaticDataCacheService
         self::getViolationTypes();
         self::getAdminRoles();
         self::getStakeholderTypes();
-        
+
         self::getVehicleTypesForSelect();
         self::getCollegesForSelect();
         self::getViolationTypesForSelect();

@@ -55,7 +55,8 @@ class Payment extends Model
      */
     public function getReceiptUrl(): string
     {
-        $receiptService = new \App\Services\PaymentReceiptService();
+        $receiptService = new \App\Services\PaymentReceiptService;
+
         return $receiptService->getReceiptUrl($this);
     }
 
@@ -64,7 +65,8 @@ class Payment extends Model
      */
     public function hasReceipt(): bool
     {
-        $receiptService = new \App\Services\PaymentReceiptService();
+        $receiptService = new \App\Services\PaymentReceiptService;
+
         return $receiptService->receiptExists($this);
     }
 

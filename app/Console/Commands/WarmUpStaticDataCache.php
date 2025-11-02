@@ -30,7 +30,7 @@ class WarmUpStaticDataCache extends Command
 
         try {
             StaticDataCacheService::warmUpCache();
-            
+
             $this->info('✅ Static data cache warmed up successfully!');
             $this->line('Cached data:');
             $this->line('- Vehicle Types');
@@ -38,10 +38,11 @@ class WarmUpStaticDataCache extends Command
             $this->line('- Violation Types');
             $this->line('- Admin Roles');
             $this->line('- Stakeholder Types');
-            
+
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('❌ Failed to warm up cache: ' . $e->getMessage());
+            $this->error('❌ Failed to warm up cache: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }

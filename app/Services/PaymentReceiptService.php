@@ -3,9 +3,8 @@
 namespace App\Services;
 
 use App\Models\Payment;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentReceiptService
 {
@@ -16,20 +15,20 @@ class PaymentReceiptService
     {
         // Load necessary relationships
         $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-        
+
         // Generate receipt data
         $receiptData = $this->prepareReceiptData($payment);
-        
+
         // Generate PDF
         $pdf = Pdf::loadView('receipts.payment', $receiptData);
-        
+
         // Generate filename
         $filename = $this->generateReceiptFilename($payment);
-        
+
         // Store the PDF
         $path = "receipts/{$filename}";
         Storage::disk('public')->put($path, $pdf->output());
-        
+
         return $path;
     }
 
@@ -39,10 +38,10 @@ class PaymentReceiptService
     protected function prepareReceiptData(Payment $payment): array
     {
         $user = $payment->user;
-        $vehicles = $payment->batchVehicles->count() > 0 
-            ? $payment->batchVehicles 
+        $vehicles = $payment->batchVehicles->count() > 0
+            ? $payment->batchVehicles
             : collect([$payment->vehicle]);
-        
+
         return [
             'payment' => $payment,
             'user' => $user,
@@ -73,7 +72,7 @@ class PaymentReceiptService
     {
         $date = now()->format('Ymd');
         $paymentId = str_pad($payment->id, 6, '0', STR_PAD_LEFT);
-        
+
         return "RCP-{$date}-{$paymentId}";
     }
 
@@ -83,8 +82,8 @@ class PaymentReceiptService
     protected function generateReceiptFilename(Payment $payment): string
     {
         $receiptNumber = $this->generateReceiptNumber($payment);
-        $userName = str_replace(' ', '_', strtolower($payment->user->first_name . '_' . $payment->user->last_name));
-        
+        $userName = str_replace(' ', '_', strtolower($payment->user->first_name.'_'.$payment->user->last_name));
+
         return "{$receiptNumber}_{$userName}.pdf";
     }
 
@@ -95,13 +94,14 @@ class PaymentReceiptService
     {
         $filename = $this->generateReceiptFilename($payment);
         $path = "receipts/{$filename}";
-        
+
         if (Storage::disk('public')->exists($path)) {
             return Storage::disk('public')->url($path);
         }
-        
+
         // Generate receipt if it doesn't exist
         $generatedPath = $this->generateReceipt($payment);
+
         return Storage::disk('public')->url($generatedPath);
     }
 
@@ -114,9 +114,9 @@ class PaymentReceiptService
         $batchPayments = Payment::where('batch_id', $payment->batch_id)
             ->with(['user', 'vehicle.type'])
             ->get();
-        
+
         $payment->load(['user']);
-        
+
         $receiptData = [
             'payment' => $payment,
             'user' => $payment->user,
@@ -139,17 +139,17 @@ class PaymentReceiptService
                 'email' => 'sentinel@mmsu.edu.ph',
             ],
         ];
-        
+
         // Generate PDF
         $pdf = Pdf::loadView('receipts.batch-payment', $receiptData);
-        
+
         // Generate filename
         $filename = $this->generateReceiptFilename($payment);
-        
+
         // Store the PDF
         $path = "receipts/{$filename}";
         Storage::disk('public')->put($path, $pdf->output());
-        
+
         return $path;
     }
 
@@ -160,7 +160,7 @@ class PaymentReceiptService
     {
         $filename = $this->generateReceiptFilename($payment);
         $path = "receipts/{$filename}";
-        
+
         return Storage::disk('public')->delete($path);
     }
 
@@ -171,7 +171,7 @@ class PaymentReceiptService
     {
         $filename = $this->generateReceiptFilename($payment);
         $path = "receipts/{$filename}";
-        
+
         return Storage::disk('public')->exists($path);
     }
 }

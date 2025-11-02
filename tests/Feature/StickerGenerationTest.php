@@ -27,7 +27,7 @@ class StickerGenerationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->stickerGenerator = new StickerGenerator();
+        $this->stickerGenerator = new StickerGenerator;
         Storage::fake('public');
     }
 

@@ -9,8 +9,11 @@ use Illuminate\Http\UploadedFile;
 class SecureFileUpload implements ValidationRule
 {
     protected array $allowedMimes;
+
     protected int $maxSize;
+
     protected array $allowedExtensions;
+
     protected bool $scanForMalware;
 
     public function __construct(
@@ -30,45 +33,52 @@ class SecureFileUpload implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$value instanceof UploadedFile) {
+        if (! $value instanceof UploadedFile) {
             $fail('The :attribute must be a valid file.');
+
             return;
         }
 
         // Check file size
         if ($value->getSize() > ($this->maxSize * 1024)) {
-            $fail("The :attribute must not be larger than " . ($this->maxSize / 1024) . "MB.");
+            $fail('The :attribute must not be larger than '.($this->maxSize / 1024).'MB.');
+
             return;
         }
 
         // Check MIME type
-        if (!in_array($value->getMimeType(), $this->allowedMimes)) {
-            $fail('The :attribute must be a file of type: ' . implode(', ', $this->allowedExtensions) . '.');
+        if (! in_array($value->getMimeType(), $this->allowedMimes)) {
+            $fail('The :attribute must be a file of type: '.implode(', ', $this->allowedExtensions).'.');
+
             return;
         }
 
         // Check file extension
         $extension = strtolower($value->getClientOriginalExtension());
-        if (!in_array($extension, $this->allowedExtensions)) {
-            $fail('The :attribute must have one of the following extensions: ' . implode(', ', $this->allowedExtensions) . '.');
+        if (! in_array($extension, $this->allowedExtensions)) {
+            $fail('The :attribute must have one of the following extensions: '.implode(', ', $this->allowedExtensions).'.');
+
             return;
         }
 
         // Verify file content matches extension
-        if (!$this->verifyFileContent($value, $extension)) {
+        if (! $this->verifyFileContent($value, $extension)) {
             $fail('The :attribute file content does not match its extension.');
+
             return;
         }
 
         // Check for suspicious file names
         if ($this->hasSuspiciousFileName($value->getClientOriginalName())) {
             $fail('The :attribute has an invalid filename.');
+
             return;
         }
 
         // Basic malware scanning (if enabled)
         if ($this->scanForMalware && $this->containsSuspiciousContent($value)) {
             $fail('The :attribute contains suspicious content.');
+
             return;
         }
 
@@ -84,7 +94,7 @@ class SecureFileUpload implements ValidationRule
     protected function verifyFileContent(UploadedFile $file, string $extension): bool
     {
         $handle = fopen($file->getPathname(), 'rb');
-        if (!$handle) {
+        if (! $handle) {
             return false;
         }
 
@@ -106,6 +116,7 @@ class SecureFileUpload implements ValidationRule
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -142,7 +153,7 @@ class SecureFileUpload implements ValidationRule
     protected function containsSuspiciousContent(UploadedFile $file): bool
     {
         $content = file_get_contents($file->getPathname());
-        
+
         // Check for suspicious strings
         $suspiciousStrings = [
             'eval(',
@@ -176,8 +187,9 @@ class SecureFileUpload implements ValidationRule
     {
         try {
             $imageInfo = getimagesize($file->getPathname());
-            if (!$imageInfo) {
+            if (! $imageInfo) {
                 $fail('The :attribute is not a valid image.');
+
                 return;
             }
 
@@ -187,12 +199,14 @@ class SecureFileUpload implements ValidationRule
             // Minimum dimensions
             if ($width < 100 || $height < 100) {
                 $fail('The :attribute image must be at least 100x100 pixels.');
+
                 return;
             }
 
             // Maximum dimensions
             if ($width > 4000 || $height > 4000) {
                 $fail('The :attribute image must not exceed 4000x4000 pixels.');
+
                 return;
             }
 
@@ -200,6 +214,7 @@ class SecureFileUpload implements ValidationRule
             $aspectRatio = $width / $height;
             if ($aspectRatio > 10 || $aspectRatio < 0.1) {
                 $fail('The :attribute image has an invalid aspect ratio.');
+
                 return;
             }
 

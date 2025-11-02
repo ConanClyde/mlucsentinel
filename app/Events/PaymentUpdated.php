@@ -3,9 +3,8 @@
 namespace App\Events;
 
 use App\Models\Payment;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -36,13 +35,13 @@ class PaymentUpdated implements ShouldBroadcastNow
     {
         // Load relationships
         $this->payment->load(['user', 'vehicle.type']);
-        
+
         // Get vehicle count for this user
         $vehicleCount = 0;
         if ($this->payment->user) {
             $vehicleCount = \App\Models\Vehicle::where('user_id', $this->payment->user_id)->count();
         }
-        
+
         return [
             'payment' => [
                 'id' => $this->payment->id,

@@ -29,7 +29,7 @@ class FileUploadSecurity
     protected function validateFileUploads(Request $request): void
     {
         $files = $request->allFiles();
-        
+
         foreach ($files as $fieldName => $file) {
             if (is_array($file)) {
                 foreach ($file as $singleFile) {
@@ -46,7 +46,7 @@ class FileUploadSecurity
      */
     protected function validateSingleFile($file, string $fieldName): void
     {
-        if (!$file) {
+        if (! $file) {
             return;
         }
 
@@ -62,12 +62,12 @@ class FileUploadSecurity
 
         // Check MIME type
         $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/heic', 'image/heif'];
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (! in_array($file->getMimeType(), $allowedMimes)) {
             abort(400, "File {$fieldName} must be a JPEG, PNG, HEIC, or HEIF image.");
         }
 
         // Verify file content
-        if (!$this->verifyFileContent($file)) {
+        if (! $this->verifyFileContent($file)) {
             abort(400, "File {$fieldName} content is invalid.");
         }
     }
@@ -102,7 +102,7 @@ class FileUploadSecurity
     protected function verifyFileContent($file): bool
     {
         $handle = fopen($file->getPathname(), 'rb');
-        if (!$handle) {
+        if (! $handle) {
             return false;
         }
 
@@ -110,20 +110,20 @@ class FileUploadSecurity
         fclose($handle);
 
         $mimeType = $file->getMimeType();
-        
+
         // Check file signatures based on MIME type
         if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
             return strpos($header, "\xFF\xD8\xFF") === 0;
         }
-        
+
         if ($mimeType === 'image/png') {
             return strpos($header, "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A") === 0;
         }
-        
+
         if ($mimeType === 'image/heic') {
             return strpos($header, "\x00\x00\x00\x20\x66\x74\x79\x70\x68\x65\x69\x63") === 0;
         }
-        
+
         if ($mimeType === 'image/heif') {
             return strpos($header, "\x00\x00\x00\x20\x66\x74\x79\x70\x68\x65\x69\x66") === 0;
         }

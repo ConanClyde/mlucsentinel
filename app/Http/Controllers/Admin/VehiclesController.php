@@ -88,47 +88,28 @@ class VehiclesController extends Controller
                         $newVehicleCount = $otherBatchPayments->count();
                         $newAmount = $newVehicleCount * 15.00;
 
-                        // Find the current representative (the one with the lowest ID or vehicle_count > 1)
-                        $currentRepresentative = Payment::where('batch_id', $pendingPayment->batch_id)
-                            ->where('status', 'pending')
-                            ->orderBy('id', 'asc')
-                            ->first();
-
-                        // Check if we're deleting the representative payment
-                        $isRepresentative = ($currentRepresentative && $currentRepresentative->id === $pendingPayment->id);
+                        // Store the batch_id before deleting
+                        $batchId = $pendingPayment->batch_id;
 
                         // Delete the current payment
                         $pendingPayment->delete();
 
-                        if ($isRepresentative) {
-                            // Transfer representative role to the next payment (lowest ID among remaining)
-                            $newRepresentative = Payment::where('batch_id', $pendingPayment->batch_id)
-                                ->where('status', 'pending')
-                                ->orderBy('id', 'asc')
-                                ->first();
+                        // After deletion, find the representative (lowest ID among remaining)
+                        $representative = Payment::where('batch_id', $batchId)
+                            ->where('status', 'pending')
+                            ->orderBy('id', 'asc')
+                            ->first();
 
-                            if ($newRepresentative) {
-                                $newRepresentative->update([
-                                    'vehicle_count' => $newVehicleCount,
-                                    'amount' => $newAmount,
-                                ]);
+                        if ($representative) {
+                            // Update the representative with new count and amount
+                            $representative->update([
+                                'vehicle_count' => $newVehicleCount,
+                                'amount' => $newAmount,
+                            ]);
 
-                                // Broadcast update with the new representative
-                                $newRepresentative->load(['user', 'vehicle.type', 'batchVehicles']);
-                                broadcast(new PaymentUpdated($newRepresentative, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            }
-                        } else {
-                            // Update the existing representative
-                            if ($currentRepresentative) {
-                                $currentRepresentative->update([
-                                    'vehicle_count' => $newVehicleCount,
-                                    'amount' => $newAmount,
-                                ]);
-
-                                // Broadcast update
-                                $currentRepresentative->load(['user', 'vehicle.type', 'batchVehicles']);
-                                broadcast(new PaymentUpdated($currentRepresentative, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            }
+                            // Broadcast update
+                            $representative->load(['user', 'vehicle.type', 'batchVehicles']);
+                            broadcast(new PaymentUpdated($representative, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
                         }
                     }
                 } else {

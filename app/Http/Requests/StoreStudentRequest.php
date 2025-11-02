@@ -15,6 +15,7 @@ class StoreStudentRequest extends FormRequest
         // Only global administrators and administrators can register students
         // user_type is an Enum, so we need to get its value
         $userType = $this->user()->user_type->value ?? $this->user()->user_type;
+
         return in_array($userType, ['global_administrator', 'administrator']);
     }
 
