@@ -212,7 +212,7 @@ class StickersController extends Controller
             $vehicleCount = count($validated['vehicle_ids']);
             $totalAmount = $vehicleCount * 15.00;
 
-            // Create main payment record
+            // Create main payment record (representative)
             $payment = Payment::create([
                 'user_id' => $validated['user_id'],
                 'vehicle_id' => $validated['vehicle_ids'][0], // First vehicle as representative
@@ -222,6 +222,7 @@ class StickersController extends Controller
                 'reference' => 'STK-'.strtoupper(uniqid()),
                 'batch_id' => $vehicleCount > 1 ? $batchId : null,
                 'vehicle_count' => $vehicleCount,
+                'is_representative' => true,
             ]);
 
             // Create child payment records for other vehicles (if multiple)
@@ -236,6 +237,7 @@ class StickersController extends Controller
                         'reference' => 'STK-'.strtoupper(uniqid()),
                         'batch_id' => $batchId,
                         'vehicle_count' => 1,
+                        'is_representative' => false,
                     ]);
                 }
             }

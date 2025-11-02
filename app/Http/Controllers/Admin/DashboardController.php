@@ -97,6 +97,20 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Get top violators this month (NEW WIDGET)
+        $topViolatorsThisMonth = User::withCount(['vehicles' => function ($query) {
+            $query->whereHas('violatorReports', function ($q) {
+                $q->where('created_at', '>=', now()->startOfMonth());
+            });
+        }])
+            ->whereHas('vehicles.violatorReports', function ($q) {
+                $q->where('created_at', '>=', now()->startOfMonth());
+            })
+            ->having('vehicles_count', '>', 0)
+            ->orderBy('vehicles_count', 'desc')
+            ->limit(10)
+            ->get();
+
         // Get top violation locations
         $topLocations = Report::select('location', DB::raw('count(*) as count'))
             ->whereNotNull('location')
@@ -195,6 +209,19 @@ class DashboardController extends Controller
         // Get patrol statistics (last 24 hours)
         $patrolStats = $this->getPatrolStats();
 
+        // Get sticker issuance trends (last 12 months) - Marketing Admin only
+        $stickerIssuanceTrends = Payment::where('created_at', '>=', now()->subMonths(12))
+            ->whereIn('status', ['pending', 'paid'])
+            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('count(*) as total'))
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get()
+            ->pluck('total', 'month')
+            ->toArray();
+
+        // Get patrol coverage data (Security/Global Admin only)
+        $patrolCoverageData = $this->getPatrolCoverageData();
+
         return view('admin.dashboard', [
             'pageTitle' => 'Dashboard & Analytics',
             'stats' => $stats,
@@ -216,6 +243,9 @@ class DashboardController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'violationsByType' => $violationsByType,
             'patrolStats' => $patrolStats,
+            'topViolatorsThisMonth' => $topViolatorsThisMonth,
+            'stickerIssuanceTrends' => $stickerIssuanceTrends,
+            'patrolCoverageData' => $patrolCoverageData,
         ]);
     }
 
@@ -300,6 +330,47 @@ class DashboardController extends Controller
             'unique_guards' => $uniqueGuards,
             'unique_locations' => $uniqueLocations,
             'most_visited_location' => $mostVisitedLocation,
+        ];
+    }
+
+    /**
+     * Get patrol coverage data for heatmap
+     */
+    private function getPatrolCoverageData(): array
+    {
+        // Get all patrol check-ins with their map locations from last 7 days
+        $patrols = PatrolLog::with(['mapLocation', 'securityUser'])
+            ->where('checked_in_at', '>=', now()->subDays(7))
+            ->get();
+
+        // Group by location to show frequency
+        $locationCoverage = [];
+        foreach ($patrols as $patrol) {
+            if ($patrol->mapLocation) {
+                $locationId = $patrol->mapLocation->id;
+                if (! isset($locationCoverage[$locationId])) {
+                    $locationCoverage[$locationId] = [
+                        'location' => $patrol->mapLocation,
+                        'checkins' => 0,
+                        'guards' => [],
+                    ];
+                }
+                $locationCoverage[$locationId]['checkins']++;
+                $locationCoverage[$locationId]['guards'][$patrol->security_user_id] = true;
+            }
+        }
+
+        // Calculate coverage percentage
+        $totalLocations = MapLocation::where('is_active', true)->count();
+        $coveredLocations = count($locationCoverage);
+        $coveragePercentage = $totalLocations > 0 ? round(($coveredLocations / $totalLocations) * 100, 1) : 0;
+
+        return [
+            'locations' => array_values($locationCoverage),
+            'coverage_percentage' => $coveragePercentage,
+            'total_patrols' => $patrols->count(),
+            'total_locations' => $totalLocations,
+            'covered_locations' => $coveredLocations,
         ];
     }
 }

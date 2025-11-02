@@ -20,6 +20,7 @@ class Payment extends Model
         'reference',
         'batch_id',
         'vehicle_count',
+        'is_representative',
         'paid_at',
     ];
 
@@ -72,10 +73,9 @@ class Payment extends Model
 
     /**
      * Scope to get only batch representative payments (main payment per batch)
-     * For batches, returns the payment with the minimum ID (the first created payment)
      */
     public function scopeBatchRepresentative($query)
     {
-        return $query->whereRaw('(batch_id IS NULL OR id = (SELECT MIN(id) FROM payments p2 WHERE p2.batch_id = payments.batch_id AND p2.status = payments.status))');
+        return $query->where('is_representative', true);
     }
 }

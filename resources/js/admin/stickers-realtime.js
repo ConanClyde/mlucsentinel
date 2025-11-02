@@ -326,15 +326,26 @@ class StickersRealtime {
     }
 
     updatePaymentInTable(payment) {
+        console.log('updatePaymentInTable called with payment:', payment);
+        
         const tbody = document.getElementById('paymentTableBody');
-        if (!tbody) return;
+        if (!tbody) {
+            console.log('Payment table body not found');
+            return;
+        }
         
         const row = tbody.querySelector(`tr[data-payment-id="${payment.id}"]`);
         if (!row) {
-            console.log('Payment row not found, adding it');
-            this.addPaymentToTable(payment);
+            console.log(`Payment row not found for ID ${payment.id}, checking if we need to reload`);
+            // The representative might have changed, reload the payments
+            if (typeof window.loadPayments === 'function') {
+                console.log('Reloading payments to reflect changes');
+                window.loadPayments();
+            }
             return;
         }
+        
+        console.log(`Found payment row for ID ${payment.id}, updating...`);
         
         // Update vehicle info cell
         const vehicleCell = row.cells[2]; // 3rd column (0-indexed)
@@ -345,12 +356,14 @@ class StickersRealtime {
                 : `<p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.type?.name || 'N/A'}</p>
                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.plate_no || payment.vehicle?.color + '-' + payment.vehicle?.number || ''}</p>`;
             vehicleCell.innerHTML = vehicleInfo;
+            console.log(`Updated vehicle cell to: ${payment.vehicle_count} vehicles`);
         }
         
         // Update amount cell
         const amountCell = row.cells[3]; // 4th column (0-indexed)
         if (amountCell) {
             amountCell.innerHTML = `<span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">₱${parseFloat(payment.amount).toFixed(2)}</span>`;
+            console.log(`Updated amount cell to: ₱${parseFloat(payment.amount).toFixed(2)}`);
         }
         
         // Add highlight animation to show it was updated
@@ -359,7 +372,7 @@ class StickersRealtime {
             row.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
         }, 2000);
         
-        console.log('Payment row updated in table');
+        console.log('Payment row updated successfully');
     }
 
     removePaymentFromTable(paymentId) {

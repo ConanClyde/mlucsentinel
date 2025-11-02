@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Global middleware - applies to all requests
+        $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+
+        // Route middleware aliases
         $middleware->alias([
             'user.type' => \App\Http\Middleware\CheckUserType::class,
             'marketing.admin' => \App\Http\Middleware\MarketingAdminMiddleware::class,

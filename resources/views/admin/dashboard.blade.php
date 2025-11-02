@@ -214,6 +214,175 @@
     </div>
     @endif
 
+    <!-- Top Violators This Month Widget (All Admins) -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">
+                🚨 Top Violators This Month
+            </h2>
+            <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ now()->format('F Y') }}</span>
+        </div>
+        <div class="space-y-3">
+            @forelse($topViolatorsThisMonth as $index => $violator)
+                <div class="flex items-center justify-between p-3 rounded-lg {{ $index < 3 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800/50' }}">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 {{ $index == 0 ? 'bg-red-600' : ($index == 1 ? 'bg-orange-500' : ($index == 2 ? 'bg-yellow-500' : 'bg-gray-400')) }} rounded-full flex items-center justify-center">
+                            <span class="text-lg font-bold text-white">{{ $index + 1 }}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $violator->first_name }} {{ $violator->last_name }}</p>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $violator->user_type->label() }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-red-600 dark:text-red-400">{{ $violator->vehicles_count }}</p>
+                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">violations</p>
+                    </div>
+                </div>
+            @empty
+                <p class="text-center text-[#706f6c] dark:text-[#A1A09A] py-8">No violations this month 🎉</p>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- Most Common Violations Widget (All Admins) -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">📊 Most Common Violations</h2>
+        <div class="space-y-3">
+            @php
+                $sortedViolations = collect($violationsByType)->sortDesc()->take(8);
+                $maxCount = $sortedViolations->max() ?: 1;
+            @endphp
+            @forelse($sortedViolations as $type => $count)
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $type }}</span>
+                        <span class="text-sm font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500" 
+                             style="width: {{ ($count / $maxCount) * 100 }}%"></div>
+                    </div>
+                </div>
+            @empty
+                <p class="text-center text-[#706f6c] dark:text-[#A1A09A] py-8">No violations recorded yet</p>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- Sticker Issuance Trends (Marketing Admin & Global Admin Only) -->
+    @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator || 
+        (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->isMarketingAdmin()))
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">🎫 Sticker Issuance Trends</h2>
+        <div class="h-64">
+            <canvas id="stickerIssuanceTrendsChart"></canvas>
+        </div>
+        <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+            <div>
+                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ number_format(array_sum($stickerIssuanceTrends)) }}</p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Total Issued</p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ number_format(end($stickerIssuanceTrends) ?: 0) }}</p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">This Month</p>
+            </div>
+            <div>
+                @php
+                    $values = array_values($stickerIssuanceTrends);
+                    $thisMonth = end($values) ?: 0;
+                    $lastMonth = prev($values) ?: 0;
+                    $trend = $lastMonth > 0 ? round((($thisMonth - $lastMonth) / $lastMonth) * 100, 1) : 0;
+                @endphp
+                <p class="text-2xl font-bold {{ $trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                    {{ $trend >= 0 ? '+' : '' }}{{ $trend }}%
+                </p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">vs Last Month</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Patrol Coverage Widget (Global Admin & Security Admin only) -->
+    @if($canViewPatrolStats)
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">🛡️ Patrol Coverage (Last 7 Days)</h2>
+            <a href="{{ route('admin.patrol-history') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                View Details →
+            </a>
+        </div>
+        
+        <!-- Coverage Progress Circle -->
+        <div class="flex items-center justify-center mb-6">
+            <div class="relative w-40 h-40">
+                <svg class="w-40 h-40 transform -rotate-90">
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-gray-200 dark:text-gray-700"/>
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" 
+                            class="{{ $patrolCoverageData['coverage_percentage'] >= 80 ? 'text-green-500' : ($patrolCoverageData['coverage_percentage'] >= 50 ? 'text-yellow-500' : 'text-red-500') }}"
+                            stroke-dasharray="{{ 2 * pi() * 70 }}" 
+                            stroke-dashoffset="{{ 2 * pi() * 70 * (1 - $patrolCoverageData['coverage_percentage'] / 100) }}"
+                            stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $patrolCoverageData['coverage_percentage'] }}%</span>
+                    <span class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Covered</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coverage Stats -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $patrolCoverageData['covered_locations'] }}/{{ $patrolCoverageData['total_locations'] }}</p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Locations</p>
+            </div>
+            <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $patrolCoverageData['total_patrols'] }}</p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Check-ins</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Active Users by Type Widget (All Admins) -->
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">👥 Active Users by Type</h2>
+        <div class="space-y-3">
+            @php
+                $userTypeColors = [
+                    'global_administrator' => ['bg' => 'bg-purple-500', 'label' => 'Global Admin'],
+                    'administrator' => ['bg' => 'bg-blue-500', 'label' => 'Admin'],
+                    'student' => ['bg' => 'bg-green-500', 'label' => 'Student'],
+                    'staff' => ['bg' => 'bg-indigo-500', 'label' => 'Staff'],
+                    'security' => ['bg' => 'bg-red-500', 'label' => 'Security'],
+                    'reporter' => ['bg' => 'bg-orange-500', 'label' => 'Reporter'],
+                    'stakeholder' => ['bg' => 'bg-gray-500', 'label' => 'Stakeholder'],
+                ];
+                $totalUsers = array_sum($userTypes);
+            @endphp
+            @foreach($userTypes as $type => $count)
+                @php
+                    $typeConfig = $userTypeColors[$type] ?? ['bg' => 'bg-gray-500', 'label' => $type];
+                    $percentage = $totalUsers > 0 ? round(($count / $totalUsers) * 100, 1) : 0;
+                @endphp
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full {{ $typeConfig['bg'] }}"></span>
+                            <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $typeConfig['label'] }}</span>
+                        </div>
+                        <span class="text-sm font-bold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $count }} ({{ $percentage }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="{{ $typeConfig['bg'] }} h-2 rounded-full transition-all duration-500" 
+                             style="width: {{ $percentage }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Violations Per Day Chart -->
@@ -888,8 +1057,58 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeHeatmapDimensions();
     });
 
+    // Sticker Issuance Trends Chart (Marketing Admin only)
+    @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator || 
+        (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->isMarketingAdmin()))
+    const stickerTrendsCtx = document.getElementById('stickerIssuanceTrendsChart');
+    if (stickerTrendsCtx) {
+        const stickerTrendsData = @json($stickerIssuanceTrends ?? []);
+        const stickerTrendsLabels = Object.keys(stickerTrendsData).map(month => {
+            const [year, m] = month.split('-');
+            const date = new Date(year, m - 1);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        });
+        const stickerTrendsValues = Object.values(stickerTrendsData);
+        
+        const stickerTrendsChart = new Chart(stickerTrendsCtx, {
+            type: 'line',
+            data: {
+                labels: stickerTrendsLabels.length > 0 ? stickerTrendsLabels : ['No Data'],
+                datasets: [{
+                    label: 'Stickers Issued',
+                    data: stickerTrendsValues.length > 0 ? stickerTrendsValues : [0],
+                    borderColor: '#8B5CF6', // Purple
+                    backgroundColor: '#8B5CF6' + '20', // 20% opacity
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#8B5CF6',
+                    pointBorderColor: colors.background,
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                ...baseOptions,
+                plugins: {
+                    ...baseOptions.plugins,
+                    legend: {
+                        ...baseOptions.plugins.legend,
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        window.dashboardCharts = [violationsPerDayChart, reportStatusChart, vehicleTypesChart, stickerTrendsChart];
+    } else {
+        window.dashboardCharts = [violationsPerDayChart, reportStatusChart, vehicleTypesChart];
+    }
+    @else
     // Store chart references for theme updates
     window.dashboardCharts = [violationsPerDayChart, reportStatusChart, vehicleTypesChart];
+    @endif
     
     // Listen for real-time report updates
     if (window.Echo) {
