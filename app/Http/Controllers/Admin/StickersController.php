@@ -94,8 +94,13 @@ class StickersController extends Controller
             $batchVehicles = [];
             if ($payment->batch_id) {
                 $batchVehicles = Payment::where('batch_id', $payment->batch_id)
+                    ->where('status', 'pending')
+                    ->whereHas('vehicle')
                     ->with('vehicle.type')
                     ->get()
+                    ->filter(function ($p) {
+                        return $p->vehicle !== null;
+                    })
                     ->map(function ($p) {
                         return [
                             'id' => $p->vehicle->id,
@@ -105,7 +110,8 @@ class StickersController extends Controller
                             'sticker' => $p->vehicle->sticker,
                             'type_name' => $p->vehicle->type ? $p->vehicle->type->name : null,
                         ];
-                    });
+                    })
+                    ->values();
             }
 
             return [

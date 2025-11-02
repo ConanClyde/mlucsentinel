@@ -15,12 +15,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
+        // Seed reference data first
+        $this->call([
+            AdminRoleSeeder::class,
+            CollegeSeeder::class,
+            VehicleTypeSeeder::class,
+            ViolationTypeSeeder::class,
+            MapLocationTypeSeeder::class,
+            StakeholderTypeSeeder::class,
+            ReporterTypeSeeder::class,
+            StickerCounterSeeder::class,
         ]);
+
+        // Optional: Uncomment to create test user
+        // User::factory()->create([
+        //     'first_name' => 'Test',
+        //     'last_name' => 'User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }
