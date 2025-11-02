@@ -214,40 +214,9 @@
     </div>
     @endif
 
-    <!-- Top Violators This Month Widget (All Admins) -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">
-                🚨 Top Violators This Month
-            </h2>
-            <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ now()->format('F Y') }}</span>
-        </div>
-        <div class="space-y-3">
-            @forelse($topViolatorsThisMonth as $index => $violator)
-                <div class="flex items-center justify-between p-3 rounded-lg {{ $index < 3 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800/50' }}">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 {{ $index == 0 ? 'bg-red-600' : ($index == 1 ? 'bg-orange-500' : ($index == 2 ? 'bg-yellow-500' : 'bg-gray-400')) }} rounded-full flex items-center justify-center">
-                            <span class="text-lg font-bold text-white">{{ $index + 1 }}</span>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">{{ $violator->first_name }} {{ $violator->last_name }}</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $violator->user_type->label() }}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-lg font-bold text-red-600 dark:text-red-400">{{ $violator->vehicles_count }}</p>
-                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">violations</p>
-                    </div>
-                </div>
-            @empty
-                <p class="text-center text-[#706f6c] dark:text-[#A1A09A] py-8">No violations this month 🎉</p>
-            @endforelse
-        </div>
-    </div>
-
     <!-- Most Common Violations Widget (All Admins) -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">📊 Most Common Violations</h2>
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Most Common Violations</h2>
         <div class="space-y-3">
             @php
                 $sortedViolations = collect($violationsByType)->sortDesc()->take(8);
@@ -274,7 +243,7 @@
     @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator || 
         (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->isMarketingAdmin()))
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">🎫 Sticker Issuance Trends</h2>
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Sticker Issuance Trends</h2>
         <div class="h-64">
             <canvas id="stickerIssuanceTrendsChart"></canvas>
         </div>
@@ -307,7 +276,7 @@
     @if($canViewPatrolStats)
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">🛡️ Patrol Coverage (Last 7 Days)</h2>
+            <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Patrol Coverage (Last 7 Days)</h2>
             <a href="{{ route('admin.patrol-history') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                 View Details →
             </a>
@@ -347,7 +316,7 @@
 
     <!-- Active Users by Type Widget (All Admins) -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">👥 Active Users by Type</h2>
+        <h2 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Active Users by Type</h2>
         <div class="space-y-3">
             @php
                 $userTypeColors = [
