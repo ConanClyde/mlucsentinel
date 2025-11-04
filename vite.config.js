@@ -22,5 +22,11 @@ export default defineConfig({
             'laravel-echo',
             'pusher-js'
         ]
-    }
+    },
+    server: {
+        https: false,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

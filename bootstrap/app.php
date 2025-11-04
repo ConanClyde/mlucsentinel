@@ -12,6 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies for Railway/Sevalla deployment
+        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR | 
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST | 
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT | 
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+        );
+
         // Global middleware - applies to all requests
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
         $middleware->append(\App\Http\Middleware\PerformanceMonitoring::class);
