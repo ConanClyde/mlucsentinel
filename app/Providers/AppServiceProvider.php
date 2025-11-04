@@ -33,6 +33,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS in production
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
+
         // Register model observers for cache invalidation
         VehicleType::observe(VehicleTypeObserver::class);
         College::observe(CollegeObserver::class);
