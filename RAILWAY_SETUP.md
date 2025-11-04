@@ -12,14 +12,14 @@ APP_URL=https://mluc-sentinel.com
 ASSET_URL=https://mluc-sentinel.com
 ```
 
-### Database (Auto-configured by Railway MySQL)
+### Database (Use Railway MySQL Service Variables)
 ```env
 DB_CONNECTION=mysql
-DB_HOST=${{MYSQLHOST}}
-DB_PORT=${{MYSQLPORT}}
-DB_DATABASE=${{MYSQLDATABASE}}
-DB_USERNAME=${{MYSQLUSER}}
-DB_PASSWORD=${{MYSQLPASSWORD}}
+DB_HOST=${{RAILWAY_PRIVATE_DOMAIN}}
+DB_PORT=3306
+DB_DATABASE=railway
+DB_USERNAME=root
+DB_PASSWORD=${{MYSQL_ROOT_PASSWORD}}
 ```
 
 ### Session & Cache
