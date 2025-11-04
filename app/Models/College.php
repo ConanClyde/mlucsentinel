@@ -21,4 +21,12 @@ class College extends Model
     {
         return $this->hasMany(Student::class);
     }
+
+    /**
+     * Get the programs for the college.
+     */
+    public function programs(): HasMany
+    {
+        return $this->hasMany(Program::class);
+    }
 }

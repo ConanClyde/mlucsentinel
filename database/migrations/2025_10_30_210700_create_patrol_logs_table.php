@@ -17,8 +17,6 @@ return new class extends Migration
             $table->foreignId('map_location_id')->constrained('map_locations')->onDelete('cascade');
             $table->timestamp('checked_in_at');
             $table->text('notes')->nullable();
-            $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
 
             // Indexes for common queries

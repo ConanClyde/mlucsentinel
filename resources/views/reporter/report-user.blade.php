@@ -3,9 +3,9 @@
 @section('page-title', 'Report User')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Page Header - Simple -->
-    <div class="mb-6">
+    <div class="mb-4 md:mb-6">
         <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
             Report Violation
         </h2>
@@ -177,6 +177,13 @@
 @push('scripts')
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 <script>
+// Check for session error on page load
+document.addEventListener('DOMContentLoaded', function() {
+    @if(session('error'))
+        showErrorModal('{{ session('error') }}');
+    @endif
+});
+
 let qrCodeReader = null;
 let qrStream = null;
 let qrFacingMode = 'environment'; // 'environment' for back camera, 'user' for front camera

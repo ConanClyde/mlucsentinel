@@ -90,14 +90,21 @@ class StickersRealtime {
                     payment.id,
                     'created'
                 );
-                // Add to payments table if on payment tab
-                if (window.currentTab === 'payment' && payment.status === 'pending') {
-                    this.addPaymentToTable(payment);
+                if (payment.status === 'pending') {
                     this.updatePaymentBadge(1);
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 }
                 break;
 
             case 'updated':
+                console.log('Payment updated event received:', {
+                    id: payment.id,
+                    status: payment.status,
+                    vehicle_count: payment.vehicle_count,
+                    amount: payment.amount,
+                    currentTab: window.currentTab
+                });
+                
                 if (payment.status === 'paid') {
                     this.showBrowserNotification(
                         'Payment Confirmed',
@@ -105,12 +112,9 @@ class StickersRealtime {
                         payment.id,
                         'updated'
                     );
-                    // Remove from payments table and update transactions
-                    this.removePaymentFromTable(payment.id);
                     this.updatePaymentBadge(-1);
-                    if (window.currentTab === 'transactions') {
-                        this.addTransactionToTable(payment);
-                    }
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
+                    if (typeof window.loadTransactions === 'function') window.loadTransactions();
                 } else if (payment.status === 'cancelled') {
                     this.showBrowserNotification(
                         'Payment Cancelled',
@@ -118,21 +122,16 @@ class StickersRealtime {
                         payment.id,
                         'cancelled'
                     );
-                    // Remove from payments table
-                    this.removePaymentFromTable(payment.id);
                     this.updatePaymentBadge(-1);
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 } else if (payment.status === 'pending') {
-                    // Payment is still pending but was updated (e.g., vehicle count changed)
                     this.showBrowserNotification(
                         'Payment Updated',
                         `${editor} updated payment request for ${payment.user?.first_name} ${payment.user?.last_name}`,
                         payment.id,
                         'updated'
                     );
-                    // Update the payment row in the table
-                    if (window.currentTab === 'payment') {
-                        this.updatePaymentInTable(payment);
-                    }
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 }
                 break;
                 
@@ -143,43 +142,38 @@ class StickersRealtime {
                     payment.id,
                     'deleted'
                 );
-                // Remove from payments table
-                this.removePaymentFromTable(payment.id);
                 this.updatePaymentBadge(-1);
+                if (typeof window.loadPayments === 'function') window.loadPayments();
                 break;
         }
     }
 
     updateUIWithoutNotification(payment, action) {
-        // Update UI without showing notifications (for current user's own actions)
+        // For own actions, avoid direct DOM edits; refresh lists to prevent duplicates
         switch (action) {
             case 'created':
-                if (window.currentTab === 'payment' && payment.status === 'pending') {
-                    this.addPaymentToTable(payment);
+                if (payment.status === 'pending') {
                     this.updatePaymentBadge(1);
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 }
                 break;
 
             case 'updated':
                 if (payment.status === 'paid') {
-                    this.removePaymentFromTable(payment.id);
                     this.updatePaymentBadge(-1);
-                    if (window.currentTab === 'transactions') {
-                        this.addTransactionToTable(payment);
-                    }
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
+                    if (typeof window.loadTransactions === 'function') window.loadTransactions();
                 } else if (payment.status === 'cancelled') {
-                    this.removePaymentFromTable(payment.id);
                     this.updatePaymentBadge(-1);
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 } else if (payment.status === 'pending') {
-                    if (window.currentTab === 'payment') {
-                        this.updatePaymentInTable(payment);
-                    }
+                    if (typeof window.loadPayments === 'function') window.loadPayments();
                 }
                 break;
-                
+
             case 'deleted':
-                this.removePaymentFromTable(payment.id);
                 this.updatePaymentBadge(-1);
+                if (typeof window.loadPayments === 'function') window.loadPayments();
                 break;
         }
     }
@@ -326,44 +320,51 @@ class StickersRealtime {
     }
 
     updatePaymentInTable(payment) {
-        console.log('updatePaymentInTable called with payment:', payment);
-        
         const tbody = document.getElementById('paymentTableBody');
-        if (!tbody) {
-            console.log('Payment table body not found');
-            return;
-        }
+        if (!tbody) return;
         
         const row = tbody.querySelector(`tr[data-payment-id="${payment.id}"]`);
         if (!row) {
-            console.log(`Payment row not found for ID ${payment.id}, checking if we need to reload`);
+            console.log(`Payment row not found for ID ${payment.id}, reloading table`);
             // The representative might have changed, reload the payments
             if (typeof window.loadPayments === 'function') {
-                console.log('Reloading payments to reflect changes');
                 window.loadPayments();
             }
             return;
         }
         
-        console.log(`Found payment row for ID ${payment.id}, updating...`);
+        console.log('Found row, updating cells. Payment amount:', payment.amount);
+        console.log('Row has', row.cells.length, 'cells');
         
-        // Update vehicle info cell
-        const vehicleCell = row.cells[2]; // 3rd column (0-indexed)
+        // Update vehicle info cell (column 2)
+        const vehicleCell = row.cells[2];
         if (vehicleCell) {
             const vehicleInfo = payment.vehicle_count > 1 
                 ? `<p class="text-sm font-medium text-blue-600 dark:text-blue-400">${payment.vehicle_count} Vehicles</p>
-                   <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Batch payment</p>`
+                   <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Click view to see all</p>`
                 : `<p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.type?.name || 'N/A'}</p>
                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">${payment.vehicle?.plate_no || payment.vehicle?.color + '-' + payment.vehicle?.number || ''}</p>`;
             vehicleCell.innerHTML = vehicleInfo;
-            console.log(`Updated vehicle cell to: ${payment.vehicle_count} vehicles`);
+            console.log('Updated vehicle cell');
         }
         
-        // Update amount cell
-        const amountCell = row.cells[3]; // 4th column (0-indexed)
+        // Update amount cell (column 3)
+        const amountCell = row.cells[3];
+        console.log('Amount cell:', amountCell);
+        console.log('Amount cell current HTML:', amountCell ? amountCell.innerHTML : 'null');
+        
         if (amountCell) {
-            amountCell.innerHTML = `<span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">₱${parseFloat(payment.amount).toFixed(2)}</span>`;
-            console.log(`Updated amount cell to: ₱${parseFloat(payment.amount).toFixed(2)}`);
+            // Note: Fee comes from backend via window.stickerFee or defaults to 15.00
+            const unitFee = window.stickerFee || 15.00;
+            const calculated = (payment && payment.type === 'sticker_fee' && payment.status === 'pending')
+                ? (Number(payment.vehicle_count) || 1) * unitFee
+                : parseFloat(payment.amount);
+            const newAmount = Number(calculated).toFixed(2);
+            console.log('Setting amount to:', newAmount, '(type:', payment.type, 'vehicle_count:', payment.vehicle_count, ')');
+            amountCell.innerHTML = `<span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">₱${newAmount}</span>`;
+            console.log('Amount cell new HTML:', amountCell.innerHTML);
+        } else {
+            console.error('Amount cell not found!');
         }
         
         // Add highlight animation to show it was updated
@@ -371,8 +372,6 @@ class StickersRealtime {
         setTimeout(() => {
             row.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
         }, 2000);
-        
-        console.log('Payment row updated successfully');
     }
 
     removePaymentFromTable(paymentId) {

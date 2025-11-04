@@ -3,9 +3,9 @@
 @section('page-title', 'My Patrol History')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Page Header - Simple -->
-    <div class="mb-6">
+    <div class="mb-4 md:mb-6">
         <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
             My Patrol History
         </h2>
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 sm:p-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <form method="GET" action="{{ route('security.patrol-history') }}" id="filter-form" class="flex flex-col sm:flex-row gap-4 items-end">
             <div class="flex-1 w-full">
                 <label class="form-label">Start Date</label>
@@ -55,9 +55,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">
                                 Notes
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">
-                                GPS
-                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-[#1a1a1a] divide-y divide-gray-200 dark:divide-gray-700">
@@ -88,13 +85,6 @@
                                     <div class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] max-w-xs truncate">
                                         {{ $log->notes ?? '-' }}
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    @if($log->latitude && $log->longitude)
-                                        <span class="text-green-600 dark:text-green-400 font-medium">✓ Yes</span>
-                                    @else
-                                        <span class="text-[#706f6c] dark:text-[#A1A09A]">-</span>
-                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -139,14 +129,6 @@
                                     <p class="text-[#1b1b18] dark:text-[#EDEDEC] mt-1">{{ $log->notes }}</p>
                                 </div>
                             @endif
-                            <div class="col-span-2 flex items-center gap-2 mt-1">
-                                @if($log->latitude && $log->longitude)
-                                    <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    </svg>
-                                    <span class="text-green-600 dark:text-green-400 text-xs font-medium">GPS Verified</span>
-                                @endif
-                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -154,7 +136,7 @@
 
             <!-- Pagination -->
             @if($logs->hasPages())
-                <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="px-4 md:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                     {{ $logs->links() }}
                 </div>
             @endif

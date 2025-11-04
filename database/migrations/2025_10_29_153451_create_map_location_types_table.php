@@ -12,21 +12,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('map_location_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique(); // Parking, Building, Emergency, Service, etc.
-            $table->string('icon')->nullable(); // Icon class or emoji
-            $table->string('default_color')->default('#3B82F6'); // Default color for this type
-            $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->integer('display_order')->default(0);
-            $table->timestamps();
+        if (! Schema::hasTable('map_location_types')) {
+            Schema::create('map_location_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique(); // Parking, Building, Emergency, Service, etc.
+                $table->string('icon')->nullable(); // Icon class or emoji
+                $table->string('default_color')->default('#3B82F6'); // Default color for this type
+                $table->text('description')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->integer('display_order')->default(0);
+                $table->timestamps();
 
-            $table->index('is_active');
-        });
+                $table->index('is_active');
+            });
+        }
 
-        // Insert default location types
-        DB::table('map_location_types')->insert([
+        // Insert or update default location types
+        DB::table('map_location_types')->upsert([
             [
                 'name' => 'Parking Zone',
                 'icon' => 'P',
@@ -77,7 +79,7 @@ return new class extends Migration
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ], ['name'], ['icon', 'default_color', 'description', 'is_active', 'display_order', 'updated_at']);
     }
 
     /**

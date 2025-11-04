@@ -33,8 +33,6 @@ class PatrolCheckinTest extends TestCase
         $response = $this->post(route('security.patrol-checkin.store'), [
             'map_location_id' => $location->id,
             'notes' => 'All clear',
-            'latitude' => 10.3157,
-            'longitude' => 123.8854,
         ]);
 
         $response->assertRedirect();
@@ -46,7 +44,7 @@ class PatrolCheckinTest extends TestCase
     }
 
     /** @test */
-    public function patrol_log_stores_gps_coordinates(): void
+    public function patrol_log_records_location_information(): void
     {
         $security = User::factory()->create(['user_type' => UserType::Security]);
         Security::factory()->create(['user_id' => $security->id]);
@@ -54,6 +52,7 @@ class PatrolCheckinTest extends TestCase
         $locationType = MapLocationType::factory()->create();
         $location = MapLocation::factory()->create([
             'type_id' => $locationType->id,
+            'name' => 'Main Gate',
             'is_active' => true,
         ]);
 
@@ -62,12 +61,11 @@ class PatrolCheckinTest extends TestCase
             'map_location_id' => $location->id,
             'checked_in_at' => now(),
             'notes' => 'Regular patrol',
-            'latitude' => 10.3157,
-            'longitude' => 123.8854,
         ]);
 
-        $this->assertEquals('10.3157', $patrolLog->latitude);
-        $this->assertEquals('123.8854', $patrolLog->longitude);
+        $this->assertNotNull($patrolLog->mapLocation);
+        $this->assertEquals('Main Gate', $patrolLog->mapLocation->name);
+        $this->assertEquals($location->id, $patrolLog->map_location_id);
     }
 
     /** @test */
@@ -279,28 +277,6 @@ class PatrolCheckinTest extends TestCase
             'security_user_id' => $security->id,
             'map_location_id' => $location->id,
         ]);
-    }
-
-    /** @test */
-    public function patrol_log_can_be_created_without_gps_coordinates(): void
-    {
-        $security = User::factory()->create(['user_type' => UserType::Security]);
-        Security::factory()->create(['user_id' => $security->id]);
-
-        $locationType = MapLocationType::factory()->create();
-        $location = MapLocation::factory()->create([
-            'type_id' => $locationType->id,
-            'is_active' => true,
-        ]);
-
-        $patrolLog = PatrolLog::create([
-            'security_user_id' => $security->id,
-            'map_location_id' => $location->id,
-            'checked_in_at' => now(),
-        ]);
-
-        $this->assertNull($patrolLog->latitude);
-        $this->assertNull($patrolLog->longitude);
     }
 
     /** @test */

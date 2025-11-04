@@ -154,11 +154,18 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-group">
                                 <label class="form-label">Vehicle Type</label>
-                                <select name="vehicles[0][type]" class="form-input" required>
+                                <select name="vehicles[0][type_id]" class="form-input" required>
                                     <option value="">Select Vehicle Type</option>
-                                    <option value="1">Motorcycle</option>
-                                    <option value="2">Car</option>
-                                    <option value="3">Electric Vehicle</option>
+                                    @if(isset($vehicleTypes))
+                                        @foreach($vehicleTypes as $type)
+                                            <option value="{{ $type->id }}" data-requires-plate="{{ $type->requires_plate ? '1' : '0' }}">{{ $type->name }}</option>
+                                        @endforeach
+                                    @else
+                                        {{-- Fallback to hardcoded if vehicleTypes not available --}}
+                                        <option value="1" data-requires-plate="1">Motorcycle</option>
+                                        <option value="2" data-requires-plate="1">Car</option>
+                                        <option value="3" data-requires-plate="0">Electric Vehicle</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="form-group">

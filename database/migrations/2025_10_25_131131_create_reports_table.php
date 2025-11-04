@@ -51,6 +51,7 @@ return new class extends Migration
             $table->index(['location', 'created_at'], 'reports_location_created_at_index');
             $table->index(['violation_type_id', 'status'], 'reports_violation_type_status_index');
             $table->index(['pin_x', 'pin_y'], 'reports_pin_coordinates_index');
+            $table->index('reported_by', 'reports_reported_by_index');
         });
     }
 

@@ -31,6 +31,12 @@ class ReporterController extends Controller
      */
     public function store(Request $request)
     {
+        // Check authorization: Only Global Admin, SAS Admin, or DRRM Admin can register reporters
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSasOrDrrmAdmin()) {
+            abort(403, 'Access denied. Global Administrator, SAS Administrator, or DRRM Administrator access required.');
+        }
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],

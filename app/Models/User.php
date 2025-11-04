@@ -27,6 +27,10 @@ class User extends Authenticatable
         'password',
         'user_type',
         'is_active',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -37,6 +41,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -51,6 +57,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'user_type' => UserType::class,
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -127,6 +135,53 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if the user is a Global Administrator.
+     */
+    public function isGlobalAdministrator(): bool
+    {
+        return $this->user_type === UserType::GlobalAdministrator;
+    }
+
+    /**
+     * Check if the user is a Security Administrator.
+     */
+    public function isSecurityAdmin(): bool
+    {
+        // Global administrators can access everything
+        if ($this->user_type === UserType::GlobalAdministrator) {
+            return true;
+        }
+
+        // Check if user is an administrator with Security role
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            return $this->administrator->adminRole &&
+                   $this->administrator->adminRole->name === 'Security';
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user is a SAS or DRRM Administrator.
+     */
+    public function isSasOrDrrmAdmin(): bool
+    {
+        // Global administrators can access everything
+        if ($this->user_type === UserType::GlobalAdministrator) {
+            return true;
+        }
+
+        // Check if user is an administrator with SAS or DRRM role
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            $adminRole = $this->administrator->adminRole->name ?? '';
+
+            return in_array($adminRole, ['SAS (Student Affairs & Services)', 'DRRM']);
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the user is a Marketing administrator.
      */
     public function isMarketingAdmin(): bool
@@ -159,5 +214,13 @@ class User extends Authenticatable
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class, 'reported_by');
+    }
+
+    /**
+     * Get the activity logs for the user.
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
     }
 }

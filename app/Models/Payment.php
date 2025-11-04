@@ -29,6 +29,8 @@ class Payment extends Model
         return [
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'is_representative' => 'boolean',
+            'vehicle_count' => 'integer',
         ];
     }
 

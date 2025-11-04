@@ -3,12 +3,12 @@
 @section('page-title', 'Reporters Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col lg:flex-row gap-3 md:gap-4">
             <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
+            <div class="flex-1">
                 <label class="form-label">Search</label>
                 <input type="text" id="search-input" class="form-input w-full" placeholder="Search by name or email...">
             </div>
@@ -36,19 +36,20 @@
 
             <!-- Reset Button -->
             <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+                <label class="form-label opacity-0 hidden sm:block">Reset</label>
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] w-full lg:w-auto px-6">Reset</button>
             </div>
         </div>
     </div>
 
     <!-- Reporters Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Reporters List</h3>
-            <div class="flex items-center gap-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Reporters List</h3>
+            <div class="flex flex-wrap items-center gap-3 md:gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-xs md:text-sm">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -56,10 +57,10 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
                     <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                 </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+                <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
             </div>
         </div>
 
@@ -107,12 +108,14 @@
                                 <button onclick="viewReporter({{ $reporter->id }})" class="btn-view" title="View">
                                     <x-heroicon-s-eye class="w-4 h-4" />
                                 </button>
-                                <button onclick="openEditModal({{ $reporter->id }})" class="btn-edit" title="Edit">
-                                    <x-heroicon-s-pencil class="w-4 h-4" />
-                                </button>
-                                <button onclick="deleteReporter({{ $reporter->id }})" class="btn-delete" title="Delete">
-                                    <x-heroicon-s-trash class="w-4 h-4" />
-                                </button>
+                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSasOrDrrmAdmin())
+                                    <button onclick="openEditModal({{ $reporter->id }})" class="btn-edit" title="Edit">
+                                        <x-heroicon-s-pencil class="w-4 h-4" />
+                                    </button>
+                                    <button onclick="deleteReporter({{ $reporter->id }})" class="btn-delete" title="Delete">
+                                        <x-heroicon-s-trash class="w-4 h-4" />
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>

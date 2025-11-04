@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\MapLocationUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMapLocationRequest;
 use App\Models\MapLocation;
 use App\Models\MapLocationType;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class MapLocationController extends Controller
 {
@@ -80,6 +83,9 @@ class MapLocationController extends Controller
             $location = MapLocation::create($data);
             $location->load('type');
 
+            // Broadcast the event for real-time updates
+            broadcast(new MapLocationUpdated($location, 'created'))->toOthers();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Location added successfully',
@@ -124,6 +130,9 @@ class MapLocationController extends Controller
             $location->update($data);
             $location->load('type');
 
+            // Broadcast the event for real-time updates
+            broadcast(new MapLocationUpdated($location->fresh(), 'updated'))->toOthers();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Location updated successfully',
@@ -143,6 +152,9 @@ class MapLocationController extends Controller
     public function destroy(MapLocation $location): JsonResponse
     {
         try {
+            // Broadcast the event before deletion
+            broadcast(new MapLocationUpdated($location, 'deleted'))->toOthers();
+
             $location->delete();
 
             return response()->json([
@@ -165,6 +177,10 @@ class MapLocationController extends Controller
         try {
             $location->is_active = ! $location->is_active;
             $location->save();
+            $location->load('type');
+
+            // Broadcast the event for real-time updates
+            broadcast(new MapLocationUpdated($location, 'updated'))->toOthers();
 
             return response()->json([
                 'success' => true,
@@ -175,6 +191,71 @@ class MapLocationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to toggle status: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Download all map location stickers as a ZIP file
+     */
+    public function downloadAllStickers()
+    {
+        try {
+            $locations = MapLocation::with('type')
+                ->active()
+                ->whereNotNull('sticker_path')
+                ->ordered()
+                ->get();
+
+            if ($locations->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No stickers available for download',
+                ], 404);
+            }
+
+            // Create a temporary zip file
+            $zipFileName = 'map-location-stickers-'.date('Y-m-d-His').'.zip';
+            $zipFilePath = storage_path('app/temp/'.$zipFileName);
+
+            // Ensure temp directory exists
+            if (! file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            $zip = new ZipArchive;
+            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                foreach ($locations as $location) {
+                    if ($location->sticker_path) {
+                        // Convert /storage/ path to actual file path
+                        $stickerPath = str_replace('/storage/', '', $location->sticker_path);
+                        $fullPath = Storage::disk('public')->path($stickerPath);
+
+                        if (file_exists($fullPath)) {
+                            // Add file to zip with a descriptive name
+                            $fileName = $location->short_code.'_'.$location->name.'.svg';
+                            // Sanitize filename
+                            $fileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
+                            $zip->addFile($fullPath, $fileName);
+                        }
+                    }
+                }
+                $zip->close();
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create zip file',
+                ], 500);
+            }
+
+            // Download and then delete the temp file
+            return response()->download($zipFilePath)->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            \Log::error('Failed to download map stickers: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to download stickers: '.$e->getMessage(),
             ], 500);
         }
     }

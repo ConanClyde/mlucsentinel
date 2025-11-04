@@ -34,6 +34,12 @@ class ReportersController extends Controller
      */
     public function update(Request $request, Reporter $reporter)
     {
+        // Check authorization: Only Global Admin, SAS Admin, or DRRM Admin can update reporters
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSasOrDrrmAdmin()) {
+            abort(403, 'Access denied. Global Administrator, SAS Administrator, or DRRM Administrator access required.');
+        }
+
         $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -51,6 +57,9 @@ class ReportersController extends Controller
         $validated = $request->validate($rules);
 
         DB::transaction(function () use ($reporter, $validated, $request) {
+            // Store old is_active status
+            $oldIsActive = $reporter->user->is_active;
+
             // Prepare user update data
             $userData = [
                 'first_name' => $validated['first_name'],
@@ -75,6 +84,11 @@ class ReportersController extends Controller
 
             // Broadcast the event with fresh relationships
             broadcast(new ReporterUpdated($reporter->fresh(['user', 'reporterType']), 'updated'));
+
+            // Broadcast status change directly to the user if is_active changed
+            if ($oldIsActive !== $validated['is_active']) {
+                broadcast(new \App\Events\UserStatusChanged($reporter->user, $validated['is_active']));
+            }
 
             // Create notification for all other administrators
             $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
@@ -113,6 +127,12 @@ class ReportersController extends Controller
      */
     public function destroy(Reporter $reporter)
     {
+        // Check authorization: Only Global Admin, SAS Admin, or DRRM Admin can delete reporters
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSasOrDrrmAdmin()) {
+            abort(403, 'Access denied. Global Administrator, SAS Administrator, or DRRM Administrator access required.');
+        }
+
         $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
         $reporterName = $reporter->user->first_name.' '.$reporter->user->last_name;
 

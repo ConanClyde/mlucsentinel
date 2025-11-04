@@ -49,7 +49,8 @@ class SecureHeaders
         }
 
         // Permissions Policy (formerly Feature Policy)
-        $response->headers->set('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
+        // Allow camera and microphone for license capture, QR scanning, and patrol features
+        $response->headers->set('Permissions-Policy', 'geolocation=(self), camera=(self), microphone=(self)');
 
         return $response;
     }

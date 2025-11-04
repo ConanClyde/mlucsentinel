@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Reporter;
 
 use App\Enums\UserType;
+use App\Events\NotificationCreated;
 use App\Events\ReportCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReportRequest;
@@ -38,7 +39,9 @@ class ReportUserController extends Controller
             $reporterType = $user->reporter->reporterType->name ?? '';
 
             if ($reporterType === 'SBO' && $vehicle->user->user_type !== UserType::Student) {
-                abort(403, 'SBO can only report student vehicles.');
+                return redirect()
+                    ->route('reporter.report-user')
+                    ->with('error', 'SBO can only report student vehicles.');
             }
         }
 
@@ -177,7 +180,7 @@ class ReportUserController extends Controller
 
             // Notify Global Admin
             if ($globalAdmin) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $globalAdmin->id,
                     'type' => 'report_created',
                     'title' => 'New Student Violation Report',
@@ -191,11 +194,12 @@ class ReportUserController extends Controller
                     ],
                     'is_read' => false,
                 ]);
+                broadcast(new NotificationCreated($notification));
             }
 
             // Notify SAS Admin
             if ($sasAdmin) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $sasAdmin->id,
                     'type' => 'report_created',
                     'title' => 'New Student Violation Report',
@@ -209,6 +213,7 @@ class ReportUserController extends Controller
                     ],
                     'is_read' => false,
                 ]);
+                broadcast(new NotificationCreated($notification));
             }
         } else {
             // Get Chancellor Administrator for non-student violations
@@ -227,7 +232,7 @@ class ReportUserController extends Controller
 
             // Notify Global Admin
             if ($globalAdmin) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $globalAdmin->id,
                     'type' => 'report_created',
                     'title' => 'New Violation Report',
@@ -241,11 +246,12 @@ class ReportUserController extends Controller
                     ],
                     'is_read' => false,
                 ]);
+                broadcast(new NotificationCreated($notification));
             }
 
             // Notify Chancellor Admin
             if ($chancellorAdmin) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $chancellorAdmin->id,
                     'type' => 'report_created',
                     'title' => 'New Violation Report',
@@ -259,11 +265,12 @@ class ReportUserController extends Controller
                     ],
                     'is_read' => false,
                 ]);
+                broadcast(new NotificationCreated($notification));
             }
 
             // Notify Security Admin
             if ($securityAdmin) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $securityAdmin->id,
                     'type' => 'report_created',
                     'title' => 'New Violation Report',
@@ -277,6 +284,7 @@ class ReportUserController extends Controller
                     ],
                     'is_read' => false,
                 ]);
+                broadcast(new NotificationCreated($notification));
             }
         }
 

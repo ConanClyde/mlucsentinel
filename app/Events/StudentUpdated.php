@@ -25,7 +25,7 @@ class StudentUpdated implements ShouldBroadcastNow
      */
     public function __construct(Student $student, string $action = 'updated', ?User $editor = null)
     {
-        $this->student = $student->load(['user', 'college', 'vehicles.type']);
+        $this->student = $student->load(['user', 'college', 'program', 'vehicles.type']);
         $this->action = $action;
         $this->editor = $editor ?? auth()->user();
     }
@@ -85,6 +85,7 @@ class StudentUpdated implements ShouldBroadcastNow
                 'id' => $this->student->id,
                 'user_id' => $this->student->user_id,
                 'college_id' => $this->student->college_id,
+                'program_id' => $this->student->program_id,
                 'student_id' => $this->student->student_id,
                 'license_no' => $this->student->license_no,
                 'license_image' => $licenseImage,
@@ -99,6 +100,10 @@ class StudentUpdated implements ShouldBroadcastNow
                 'college' => $this->student->college ? [
                     'id' => $this->student->college->id,
                     'name' => $this->student->college->name,
+                ] : null,
+                'program' => $this->student->program ? [
+                    'id' => $this->student->program->id,
+                    'name' => $this->student->program->name,
                 ] : null,
                 'vehicles' => $vehicles,
                 'created_at' => $this->student->created_at,

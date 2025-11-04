@@ -3,14 +3,7 @@
     <div class="flex flex-col h-full">
         <!-- Logo and Title -->
         <div class="flex items-center h-16 px-6 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <x-heroicon-o-shield-check class="w-5 h-5 text-white" />
-                </div>
-                <div class="flex flex-col justify-center">
-                    <h1 class="text-lg font-bold text-[#1b1b18] dark:text-[#EDEDEC] leading-tight">MLUC Sentinel</h1>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-[#1b1b18] dark:text-[#EDEDEC] leading-tight">MLUC Sentinel</h1>
         </div>
 
         <!-- Navigation Menu -->
@@ -68,38 +61,52 @@
                         </div>
                     </div>
 
-                    <!-- Registration Submenu -->
-                    <div class="space-y-1">
-                        <button onclick="toggleSubmenu('registration-submenu')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer">
-                            <div class="flex items-center">
-                                <x-heroicon-o-user-plus class="w-5 h-5 mr-3" />
-                                Registration
-                            </div>
-                            <x-heroicon-o-chevron-down class="w-4 h-4 transition-transform duration-200 {{ request()->routeIs('admin.registration.*') ? 'rotate-180' : '' }}" id="registration-chevron" />
-                        </button>
-                        
+                    @php
+                        $hasRegistrationAccess = Auth::user()->isGlobalAdministrator() 
+                            || Auth::user()->isSecurityAdmin() 
+                            || Auth::user()->isSasOrDrrmAdmin();
+                    @endphp
+
+                    @if($hasRegistrationAccess)
                         <!-- Registration Submenu -->
-                        <div id="registration-submenu" class="ml-6 space-y-1 {{ request()->routeIs('admin.registration.*') ? '' : 'hidden' }}">
-                            <a href="{{ route('admin.registration.student') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.student') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Student
-                            </a>
-                            <a href="{{ route('admin.registration.staff') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.staff') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Staff
-                            </a>
-                            <a href="{{ route('admin.registration.security') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.security') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Security
-                            </a>
-                            <a href="{{ route('admin.registration.reporter') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.reporter') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Reporter
-                            </a>
-                            <a href="{{ route('admin.registration.stakeholder') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.stakeholder') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Stakeholder
-                            </a>
-                            <a href="{{ route('admin.registration.administrator') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.administrator') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Administrator
-                            </a>
+                        <div class="space-y-1">
+                            <button onclick="toggleSubmenu('registration-submenu')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer">
+                                <div class="flex items-center">
+                                    <x-heroicon-o-user-plus class="w-5 h-5 mr-3" />
+                                    Registration
+                                </div>
+                                <x-heroicon-o-chevron-down class="w-4 h-4 transition-transform duration-200 {{ request()->routeIs('admin.registration.*') ? 'rotate-180' : '' }}" id="registration-chevron" />
+                            </button>
+                            
+                            <!-- Registration Submenu -->
+                            <div id="registration-submenu" class="ml-6 space-y-1 {{ request()->routeIs('admin.registration.*') ? '' : 'hidden' }}">
+                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSecurityAdmin())
+                                    <a href="{{ route('admin.registration.student') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.student') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Student
+                                    </a>
+                                    <a href="{{ route('admin.registration.staff') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.staff') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Staff
+                                    </a>
+                                    <a href="{{ route('admin.registration.security') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.security') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Security
+                                    </a>
+                                    <a href="{{ route('admin.registration.stakeholder') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.stakeholder') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Stakeholder
+                                    </a>
+                                @endif
+                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSasOrDrrmAdmin())
+                                    <a href="{{ route('admin.registration.reporter') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.reporter') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Reporter
+                                    </a>
+                                @endif
+                                @if(Auth::user()->isGlobalAdministrator())
+                                    <a href="{{ route('admin.registration.administrator') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.administrator') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Administrator
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
 
                     <a href="{{ route('admin.vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-truck class="w-5 h-5 mr-3" />

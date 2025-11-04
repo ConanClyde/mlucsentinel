@@ -14,10 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Global middleware - applies to all requests
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+        $middleware->append(\App\Http\Middleware\PerformanceMonitoring::class);
+        $middleware->append(\App\Http\Middleware\CheckUserActive::class);
 
         // Route middleware aliases
         $middleware->alias([
             'user.type' => \App\Http\Middleware\CheckUserType::class,
+            'global.admin' => \App\Http\Middleware\GlobalAdminMiddleware::class,
+            'security.admin' => \App\Http\Middleware\SecurityAdminMiddleware::class,
+            'sas.drrm.admin' => \App\Http\Middleware\SasOrDrrmAdminMiddleware::class,
             'marketing.admin' => \App\Http\Middleware\MarketingAdminMiddleware::class,
             'file.upload.security' => \App\Http\Middleware\FileUploadSecurity::class,
             'patrol.monitor' => \App\Http\Middleware\CheckPatrolMonitorAccess::class,

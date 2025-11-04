@@ -100,4 +100,14 @@ class CollegeController extends Controller
             'message' => 'College deleted successfully',
         ]);
     }
+
+    /**
+     * Get programs for a specific college.
+     */
+    public function programs(College $college): JsonResponse
+    {
+        $programs = $college->programs()->orderBy('name')->get();
+
+        return response()->json($programs);
+    }
 }

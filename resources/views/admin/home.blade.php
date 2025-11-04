@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-6">
     <!-- Clock, Calendar & Weather Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <!-- Clock -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
             <div class="text-center">
@@ -46,41 +46,59 @@
 
 
     <!-- Quick Actions -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Quick Actions</h3>
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('admin.users.students') }}" class="btn bg-blue-600 hover:bg-blue-700 text-white border-blue-600">Manage Users</a>
-            <a href="{{ route('admin.vehicles') }}" class="btn bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">View Vehicles</a>
-            <a href="{{ route('admin.reports') }}" class="btn bg-yellow-100 dark:bg-yellow-900 hover:bg-yellow-200 dark:hover:bg-yellow-800 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700">Check Reports</a>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-users class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Manage Users</h3>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">View and manage all users</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.users.students') }}" class="btn bg-blue-600 hover:bg-blue-700 text-white border-blue-600 w-full text-center">
+                Go to Users
+            </a>
+        </div>
+
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-truck class="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">View Vehicles</h3>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage registered vehicles</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.vehicles') }}" class="btn bg-green-600 hover:bg-green-700 text-white border-green-600 w-full text-center">
+                Go to Vehicles
+            </a>
+        </div>
+
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                    <x-heroicon-o-document-text class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Check Reports</h3>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Review violation reports</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.reports') }}" class="btn bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600 w-full text-center">
+                Go to Reports
+            </a>
         </div>
     </div>
 
-    <!-- Recent Section: Activity | Reports | Users -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Recent Activity -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Activity</h3>
-            <div class="space-y-4" id="recent-activity-container">
-                @forelse($recentActivity as $activity)
-                    <div class="flex items-center space-x-4">
-                        <div class="w-2 h-2 rounded-full"
-                             style="background-color: {{ $activity['color'] === 'green' ? '#22c55e' : ($activity['color'] === 'yellow' ? '#eab308' : ($activity['color'] === 'blue' ? '#3b82f6' : '#9ca3af')) }}">
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">{{ $activity['message'] }}</p>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ \Carbon\Carbon::parse($activity['time'])->diffForHumans() }}</p>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-center py-4">No recent activity</p>
-                @endforelse
-            </div>
-        </div>
-
+    <!-- Recent Section: Reports | Users -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Recent Reports -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
             <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Reports</h3>
-            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
+            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A] max-h-96 overflow-y-auto">
                 @forelse($recentReports as $report)
                     <div class="py-3 flex items-start justify-between">
                         <div class="min-w-0">
@@ -104,7 +122,7 @@
         <!-- Recent Users -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
             <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Users</h3>
-            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
+            <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A] max-h-96 overflow-y-auto">
                 @forelse($recentUsers as $user)
                     <div class="py-3 flex items-center justify-between">
                         <div class="min-w-0">

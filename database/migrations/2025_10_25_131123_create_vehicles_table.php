@@ -33,6 +33,9 @@ return new class extends Migration
             $table->index(['user_id', 'is_active'], 'vehicles_user_id_is_active_index');
             $table->index(['plate_no', 'is_active'], 'vehicles_plate_no_is_active_index');
             $table->index(['color', 'number'], 'vehicles_color_number_index');
+            $table->index('plate_no', 'vehicles_plate_no_index');
+            $table->index('type_id', 'vehicles_type_id_index');
+            $table->index(['type_id', 'is_active'], 'vehicles_type_id_is_active_index');
         });
     }
 

@@ -254,13 +254,18 @@ class VehicleTypesRealtime {
         row.setAttribute('data-id', vehicleType.id);
 
         const createdDate = new Date(vehicleType.created_at).toLocaleDateString();
+        const requiresPlate = vehicleType.requires_plate !== undefined ? vehicleType.requires_plate : true;
+        const requiresPlateBadge = requiresPlate 
+            ? '<span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 rounded-full">Yes</span>'
+            : '<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-400 rounded-full">No</span>';
 
         row.innerHTML = `
             <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(vehicleType.name)}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${requiresPlateBadge}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button onclick="editVehicleType(${vehicleType.id}, '${vehicleType.name.replace(/'/g, "\\'")}')" class="btn-edit" title="Edit">
+                    <button onclick="editVehicleType(${vehicleType.id}, '${vehicleType.name.replace(/'/g, "\\'")}', ${requiresPlate})" class="btn-edit" title="Edit">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
                         </svg>
@@ -283,7 +288,7 @@ class VehicleTypesRealtime {
     showEmptyState() {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 No vehicle types found. Click Add button to create one.
             </td>
         `;

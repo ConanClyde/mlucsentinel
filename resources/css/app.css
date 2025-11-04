@@ -30,7 +30,7 @@ body {
 
 /* Button Styles - Laravel Welcome Page Style */
 .btn {
-    @apply inline-block px-5 py-1.5 rounded-sm text-sm leading-normal border transition-all;
+    @apply inline-block px-5 py-1.5 rounded-sm text-sm leading-normal border transition-all touch-manipulation;
     cursor: pointer;
 }
 
@@ -112,7 +112,7 @@ body {
 
 /* Wide Modal for Edit Student */
 .modal-container-wide {
-    @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-4xl w-full mx-4 transform transition-all;
+    @apply bg-white dark:bg-[#161615] rounded-lg shadow-xl max-w-6xl w-full mx-4 transform transition-all;
 }
 
 /* Mobile responsive modals */

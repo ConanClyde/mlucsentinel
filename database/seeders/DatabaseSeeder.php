@@ -17,13 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seed reference data first
         $this->call([
-            AdminRoleSeeder::class,
-            CollegeSeeder::class,
-            VehicleTypeSeeder::class,
-            ViolationTypeSeeder::class,
             MapLocationTypeSeeder::class,
-            StakeholderTypeSeeder::class,
-            ReporterTypeSeeder::class,
             StickerCounterSeeder::class,
         ]);
 

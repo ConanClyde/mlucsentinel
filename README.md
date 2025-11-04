@@ -1,13 +1,13 @@
-# 🚗 MLUC Sentinel
+# MLUC Sentinel
 
-> Campus Vehicle Tracking & Violation Management System for Maria Luisa University of Cebu
+> Campus Parking and Reporting Management System for Don Mariano Marcos Memorial State University - Mid La Union Campus
 
-![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel)
-![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=flat-square&logo=php)
+![Laravel](https://img.shields.io/badge/Laravel-12.35-FF2D20?style=flat-square&logo=laravel)
+![PHP](https://img.shields.io/badge/PHP-8.2.12-777BB4?style=flat-square&logo=php)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.x-38B2AC?style=flat-square&logo=tailwind-css)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.16-38B2AC?style=flat-square&logo=tailwind-css)
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -17,105 +17,165 @@
 - [Usage](#usage)
 - [User Roles](#user-roles)
 - [Architecture](#architecture)
+- [Progressive Web App](#progressive-web-app)
 - [Development](#development)
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Overview
+## Overview
 
-MLUC Sentinel is a comprehensive campus management system designed to streamline vehicle registration, parking violation reporting, and security patrol monitoring at Maria Luisa University of Cebu. The system provides:
+MLUC Sentinel is a comprehensive digital platform for campus parking management, violation reporting, and security patrol monitoring. The system replaces traditional paper-based parking permits with QR-enabled digital stickers and provides real-time violation reporting with evidence-based enforcement.
 
-- **Automated vehicle sticker generation** with QR codes
-- **Real-time violation reporting** with evidence upload
-- **Interactive campus map** with location management
-- **Security patrol tracking** with check-in system
-- **Role-based access control** for 7 user types
-- **Real-time notifications** via WebSockets
+### Key Capabilities
 
-## ✨ Features
+- **Digital Parking Permits**: Automated vehicle registration with QR-enabled color-coded stickers
+- **Smart Violation Reporting**: QR-based reporting with photo evidence and interactive map pinning
+- **Security Patrol Tracking**: QR check-in system at strategic campus locations
+- **Role-Based Access Control**: 8 administrator types with specific permissions
+- **Real-Time Notifications**: WebSocket-powered instant updates for report status changes
+- **Progressive Web App**: Installable app for mobile and desktop use
+- **Payment Processing**: Sticker fee tracking and receipt generation
 
-### 🚗 Vehicle Management
-- Vehicle registration with automatic sticker assignment
-- Color-coded stickers based on user type and plate numbers
-- QR-enabled stickers linking to reporting page
-- Batch sticker generation and printing
-- Vehicle ownership tracking and history
+## Features
 
-### 📍 Interactive Campus Map
-- SVG-based interactive campus map
-- Polygon-based location marking
-- QR stickers for patrol check-in points
-- Real-time violation pin plotting
-- Location type management (parking, buildings, zones)
+### Vehicle Management
 
-### 🚨 Violation Reporting
-- QR code-based quick reporting
-- Evidence upload (photos)
-- Automatic admin assignment by violator type
-- Status workflow (Pending → Approved/Rejected)
-- Report history and audit trail
-- Rate limiting protection (10 reports/min per user)
+- Vehicle registration for students, staff, security personnel, and stakeholders
+- Automatic color-coded sticker assignment based on user type and plate number:
+  - **Students**: Blue, Green, Yellow, Pink, or Orange (based on plate number last digit)
+  - **Staff & Security**: Maroon
+  - **Stakeholders**: White or Black (Guardian/Visitor vs Service Provider)
+- QR-enabled SVG stickers linking to reporting page
+- Batch sticker generation and download
+- Vehicle limit enforcement (max 3 per user)
+- Duplicate plate number validation
 
-### 🛡️ Security Patrol System
-- QR-based location check-ins
+### Parking Sticker System
+
+- Payment status tracking (Pending, Paid, Cancelled)
+- PDF receipt generation with batch support
+- Sticker request management for lost/damaged stickers
+- Marketing admin-only sticker processing interface
+- Transaction history and audit trail
+
+### Violation Reporting
+
+- QR code scanning for instant vehicle identification
+- Manual entry option with sticker number search
+- Photo evidence upload with file validation
+- Interactive campus map with pin-drop location marking
+- Violation type selection (multiple categories)
+- Automatic administrator assignment:
+  - Student violations: SAS (Student Affairs & Services) Admin
+  - Non-student violations: Chancellor, Security, and Global Admins
+- Status workflow: Pending → Approved/Rejected
+- Real-time notifications for status changes
+- Role-based reporter access:
+  - SBO reporters can only report student violations
+  - Faculty reporters can report all violations
+  - VHE reporters can report all violations
+
+### Security Patrol System
+
+- QR-based location check-ins at patrol points
 - GPS coordinate logging
-- Patrol history tracking
-- Real-time monitoring dashboard
-- Export functionality for reports
+- Patrol history with timestamps
+- Security Admin monitoring dashboard
+- Export functionality for patrol reports
 
-### 🎫 Sticker Management
-- Payment tracking (Pending/Paid/Cancelled)
-- Receipt generation (PDF)
-- Batch payment processing
-- Downloadable SVG stickers
-- Marketing admin-only access
+### Interactive Campus Map
 
-### 📊 Dashboard & Analytics
-- Real-time statistics
-- User and vehicle counts
-- Violation trend analysis
-- Chart.js visualizations
-- Export functionality
+- SVG-based map with polygon location marking
+- Drawing mode for adding new locations
+- Short code assignment (max 5 characters)
+- Location type categorization
+- Map legend display
+- QR sticker generation for patrol points
+- Touch-enabled controls (pan, pinch-to-zoom)
+- Responsive design with aspect-ratio based sizing
 
-### 🔔 Real-time Notifications
-- WebSocket-based updates (Laravel Reverb)
-- Violation status notifications
-- In-app notification center
-- Email notifications for critical events
+### User Management
 
-## 💻 System Requirements
+- Comprehensive user management for 7 user types
+- Role-based registration permissions:
+  - Global Admin: Can register all user types including administrators
+  - Security Admin: Can register students, staff, security, and stakeholders
+  - SAS/DRRM Admin: Can register reporters only
+- Role-based editing/deletion permissions (matching registration rules)
+- Active/Inactive status management with real-time enforcement
+- Automatic logout for deactivated users with modal notification
+- Filter and search capabilities for all user lists
+- CSV export functionality
 
-### Minimum Requirements
-- **PHP**: 8.2 or higher
+### Administrator Dashboard
+
+- Real-time statistics (users, vehicles, violations)
+- Interactive heatmap of violation locations
+- Violation trend visualization
+- Report management interface
+- User registration and management
+- System configuration access
+
+### Real-Time Features
+
+- WebSocket-based notifications via Laravel Reverb
+- Instant report status updates
+- User status change notifications
+- Broadcast channels for different data types
+- Actor filtering (users don't see their own action notifications)
+- Clickable notifications navigating to relevant pages
+
+### Progressive Web App (PWA)
+
+- Installable on mobile and desktop devices
+- Offline fallback page
+- Service worker for asset caching
+- Custom app icon and splash screen
+- Settings tab installation interface
+- Works with existing Heroicons (inline SVG)
+
+## System Requirements
+
+### Server Requirements
+
+- **PHP**: 8.2.12 or higher
 - **MySQL**: 8.0 or higher
 - **Node.js**: 18.x or higher
 - **Composer**: 2.x
 - **NPM**: 9.x or higher
 
 ### PHP Extensions
-- BCMath
-- Ctype
-- Fileinfo
-- JSON
-- Mbstring
-- OpenSSL
-- PDO
-- Tokenizer
-- XML
-- GD or Imagick (for image processing)
 
-## 🚀 Installation
+- BCMath PHP Extension
+- Ctype PHP Extension
+- Fileinfo PHP Extension
+- JSON PHP Extension
+- Mbstring PHP Extension
+- OpenSSL PHP Extension
+- PDO PHP Extension
+- Tokenizer PHP Extension
+- XML PHP Extension
+- GD Extension (optional, for server-side icon generation)
+
+### Browser Requirements
+
+- Modern browsers with WebSocket support (Chrome, Firefox, Safari, Edge)
+- JavaScript enabled
+- LocalStorage enabled for PWA features
+
+## Installation
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/your-org/mluc-sentinel.git
 cd mluc-sentinel
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 # Install PHP dependencies
 composer install
@@ -125,6 +185,7 @@ npm install
 ```
 
 ### 3. Environment Setup
+
 ```bash
 # Copy environment file
 cp .env.example .env
@@ -134,7 +195,9 @@ php artisan key:generate
 ```
 
 ### 4. Configure Database
+
 Edit `.env` file:
+
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -145,394 +208,726 @@ DB_PASSWORD=your_password
 ```
 
 Create the database:
+
 ```bash
 mysql -u root -p
-CREATE DATABASE mluc_sentinel;
+CREATE DATABASE mluc_sentinel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 EXIT;
 ```
 
-### 5. Run Migrations
+### 5. Run Migrations and Seeders
+
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
 
-### 6. Seed Database (Optional)
-```bash
-php artisan db:seed
-```
+This will create all database tables and seed:
+- One Global Administrator (Alvin de Mesa / ademesa.dev@gmail.com / admin123)
+- Admin roles (Chancellor, DRRM, Planning, Security, Auxiliary Services, SAS, Marketing)
+- Reporter types (Faculty, SBO, VHE)
+- Stakeholder types (Guardian, Visitor, Service Provider)
+- Colleges and programs
+- Vehicle types
+- Violation types
+- Map location types
+- Sticker counters
 
-### 7. Link Storage
+### 6. Link Storage
+
 ```bash
 php artisan storage:link
 ```
 
-### 8. Build Assets
+### 7. Build Assets
+
 ```bash
+# Development build
+npm run dev
+
+# Production build
 npm run build
 ```
 
-### 9. Start Development Server
+### 8. Start Development Services
+
 ```bash
 # Option 1: All services at once (recommended)
 composer run dev
 
-# Option 2: Individual services
-php artisan serve           # Web server
+# Option 2: Individual services in separate terminals
+php artisan serve           # Web server (http://localhost:8000)
 php artisan queue:work      # Queue worker
-php artisan reverb:start    # WebSocket server
-npm run dev                 # Vite dev server
+php artisan reverb:start    # WebSocket server (port 8080)
+npm run dev                 # Vite dev server (port 5173)
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Broadcasting (WebSocket)
+
 Configure Laravel Reverb in `.env`:
+
 ```env
 BROADCAST_CONNECTION=reverb
-REVERB_APP_ID=your_app_id
-REVERB_APP_KEY=your_app_key
-REVERB_APP_SECRET=your_app_secret
+REVERB_APP_ID=338257
+REVERB_APP_KEY=xjybg4ttpkkoazcqudlb
+REVERB_APP_SECRET=wz3y3d82d2g8s9ygz74z
 REVERB_HOST=localhost
 REVERB_PORT=8080
 REVERB_SCHEME=http
+
+# Vite Configuration
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST="${REVERB_HOST}"
+VITE_REVERB_PORT="${REVERB_PORT}"
+VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 ```
 
 ### Queue Configuration
+
 ```env
-QUEUE_CONNECTION=database  # or redis for production
+QUEUE_CONNECTION=database  # Use 'redis' for production
 ```
 
 ### Mail Configuration
+
 ```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
-MAIL_USERNAME=your_email@gmail.com
+MAIL_USERNAME=mlucsentinel@gmail.com
 MAIL_PASSWORD=your_app_password
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@mlucsentinel.edu
+MAIL_FROM_ADDRESS="${MAIL_USERNAME}"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
+### Session Configuration
+
+```env
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+SESSION_SECURE_COOKIE=false
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=lax
+```
+
 ### File Storage
+
+```env
+FILESYSTEM_DISK=public
+```
+
 Ensure proper permissions:
+
 ```bash
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
 ```
 
-## 📖 Usage
+## Usage
 
-### Creating Your First Admin User
-```bash
-php artisan tinker
-```
+### Default Login Credentials
 
-```php
-use App\Models\User;
-use App\Models\GlobalAdministrator;
-use App\Enums\UserType;
+After running the seeder, you can log in with:
 
-$user = User::create([
-    'first_name' => 'Admin',
-    'last_name' => 'User',
-    'email' => 'admin@mluc.edu.ph',
-    'password' => bcrypt('password'),
-    'user_type' => UserType::GlobalAdministrator,
-    'is_active' => true,
-]);
+- **Email**: ademesa.dev@gmail.com
+- **Password**: admin123
+- **Role**: Global Administrator
 
-GlobalAdministrator::create(['user_id' => $user->id]);
-```
+### Registering Users and Vehicles
 
-### Registering Vehicles
-1. Navigate to **Users** → Select user type
-2. Register user with required details
-3. Add vehicle information with plate number
-4. System automatically generates colored sticker
-5. Download and print sticker
+1. Navigate to **Registration** menu (role-based visibility)
+2. Select user type (Student, Staff, Security, Stakeholder, Reporter, Administrator)
+3. Fill in required information:
+   - Personal details (name, email)
+   - User-specific details (student ID, staff ID, license number, etc.)
+   - Vehicle information (up to 3 vehicles with plate numbers)
+4. System automatically generates colored stickers with QR codes
+5. Download and print stickers from the Stickers page (Marketing Admin only)
+
+### Processing Sticker Payments
+
+1. Marketing Admin navigates to **Stickers** page
+2. View pending payment requests
+3. Update payment status to "Paid" when payment is received
+4. Generate and download receipt (PDF)
+5. Provide sticker to user
 
 ### Reporting Violations
-1. Scan vehicle QR code or search by sticker number
-2. Fill report form with violation details
-3. Upload evidence photo
-4. Pin location on campus map
+
+**Option 1: QR Code Scanning**
+1. Security/Reporter navigates to **Report User** page
+2. Scan vehicle parking sticker QR code
+3. System auto-fills vehicle and user information
+4. Add violation details, photo evidence, and map location
 5. Submit report (auto-assigned to appropriate admin)
 
-### Security Patrol
-1. Access patrol scanner from security dashboard
-2. Scan location QR code
-3. Confirm check-in with optional notes
-4. System logs GPS coordinates and timestamp
-5. View patrol history and coverage
+**Option 2: Manual Entry**
+1. Security/Reporter navigates to **Report User** page
+2. Enter sticker number in search field
+3. Continue with step 3-5 from Option 1
 
-## 👥 User Roles
+### Managing Violations (Admin)
+
+1. Navigate to **Reports** page (visible to Global, SAS, and Chancellor admins)
+2. View list of reported violations
+3. Click "View" to see details, evidence, and map location
+4. Update status to "Approved" or "Rejected"
+5. Status change triggers:
+   - Real-time notification to reporter
+   - Email notification to violator
+   - Update in violation history
+
+### Security Patrol Check-ins
+
+1. Security personnel navigates to **Scan Patrol Point** page
+2. Scan location QR code at patrol checkpoint
+3. Optional: Add notes about patrol observation
+4. Submit check-in (logs timestamp and GPS coordinates)
+5. View patrol history to track coverage
+
+### Managing Campus Map
+
+1. Global Admin navigates to **Campus Map** page
+2. Click "Add Location" button
+3. Use drawing mode to mark polygons on map
+4. Enter location details:
+   - Name (e.g., "Engineering Building Parking")
+   - Short code (max 5 characters, e.g., "ENGPK")
+   - Location type (Parking, Building, Zone, etc.)
+5. Save location
+6. Download QR stickers for patrol check-in points
+
+### Two-Factor Authentication (2FA)
+
+1. Navigate to **Settings** → **Security** tab
+2. Click "Enable Two-Factor Authentication"
+3. Scan QR code with authenticator app (Google Authenticator, Authy, etc.)
+4. Enter verification code to confirm
+5. Save recovery codes in secure location
+6. Future logins will require authenticator code
+
+### Progressive Web App Installation
+
+**Desktop (Chrome/Edge):**
+1. Navigate to Settings → Appearance tab
+2. Click "Install App" button
+3. Confirm installation in browser prompt
+4. Access app from desktop/start menu
+
+**Mobile (Chrome/Safari):**
+1. Visit the site in mobile browser
+2. Tap browser menu (three dots or share icon)
+3. Select "Install App" or "Add to Home Screen"
+4. Access app from home screen like native app
+
+## User Roles
 
 ### Global Administrator
-- Full system access
-- User management across all types
-- System configuration
-- Audit log access
 
-### Administrator (Role-Based)
-- **SAS Admin**: Student Affairs & Services
-- **Chancellor Admin**: Administrative oversight
-- **Marketing Admin**: Sticker management only
-- **Security Admin**: Patrol monitoring access
+- Full system access without restrictions
+- Can register, edit, and delete all user types
+- Access to all pages and features
+- System configuration and settings management
+- Audit trail visibility
+
+### Administrator Roles
+
+The system includes 7 administrator types with specific permissions:
+
+#### Security Administrator
+- **Registration**: Students, Staff, Security, Stakeholders
+- **Editing**: Students, Staff, Security, Stakeholders
+- **Deletion**: Students, Staff, Security, Stakeholders
+- **Special Access**: Patrol Monitor page
+- **Cannot Access**: Reports page, Stickers page
+
+#### SAS (Student Affairs & Services) Administrator
+- **Registration**: Reporters only
+- **Editing**: Reporters only
+- **Deletion**: Reporters only
+- **Special Access**: Reports page (student violations)
+- **Cannot Access**: Patrol Monitor, Stickers page
+
+#### DRRM Administrator
+- **Registration**: Reporters only
+- **Editing**: Reporters only
+- **Deletion**: Reporters only
+- **Cannot Access**: Reports, Patrol Monitor, Stickers pages
+
+#### Chancellor Administrator
+- **View-Only Access**: All user lists
+- **Special Access**: Reports page
+- **No Registration**: Cannot register any users
+- **No Editing/Deletion**: Cannot modify users
+
+#### Marketing Administrator
+- **View-Only Access**: All user lists
+- **Special Access**: Stickers page (exclusive access)
+- **No Registration**: Cannot register any users
+- **No Editing/Deletion**: Cannot modify users
+
+#### Planning Administrator
+- **View-Only Access**: Dashboard, Users, Vehicles, Campus Map
+- **No Special Access**: No exclusive features
+- **No Registration**: Cannot register any users
+- **No Editing/Deletion**: Cannot modify users
+
+#### Auxiliary Services Administrator
+- **View-Only Access**: Dashboard, Users, Vehicles, Campus Map
+- **No Special Access**: No exclusive features
+- **No Registration**: Cannot register any users
+- **No Editing/Deletion**: Cannot modify users
 
 ### Student
-- Campus students with vehicles
-- Color-coded stickers based on plate number
+
+- Campus students enrolled in various colleges
+- Can register up to 3 vehicles
+- Sticker colors based on plate number last digit:
+  - 1, 2: Blue
+  - 3, 4: Green
+  - 5, 6: Yellow
+  - 7, 8: Pink
+  - 9, 0: Orange
+- No direct system access (registration done by admins)
 
 ### Staff
+
 - University staff members
-- Maroon stickers
+- Can register up to 3 vehicles
+- Maroon stickers for all vehicles
+- No direct system access
 
 ### Security
+
 - Security personnel
-- Can report violations
-- Patrol check-in access
-- Maroon stickers
+- Can register up to 3 vehicles (Maroon stickers)
+- Can report parking violations
+- Can perform patrol check-ins
+- Access to patrol scanner and history
 
 ### Reporter
-- External reporters
-- Can report violations
-- No vehicle registration
+
+Three types of reporters with different permissions:
+
+#### Faculty Reporter
+- Can report violations for all user types
+- Access to My Reports page
+- Cannot register vehicles
+
+#### SBO (Student Body Organization) Reporter
+- Can only report student violations
+- Receives error modal when trying to report non-students
+- Access to My Reports page
+
+#### VHE (Volunteer for Higher Education) Reporter
+- Can report violations for all user types
+- Temporary role with expiration date (1 year)
+- Access to My Reports page
 
 ### Stakeholder
-- Visitors, Guardians, Service Providers
-- White or black stickers based on type
 
-## 🏗️ Architecture
+Three types with different sticker colors:
 
-### Tech Stack
-- **Backend**: Laravel 12 (PHP 8.2)
+#### Guardian
+- Parents/guardians of students
+- White stickers
+- Up to 3 vehicles
+
+#### Visitor
+- Campus visitors
+- White stickers
+- Up to 3 vehicles
+
+#### Service Provider
+- Maintenance, delivery, contractors
+- Black stickers
+- Up to 3 vehicles
+
+## Architecture
+
+### Technology Stack
+
+- **Backend Framework**: Laravel 12.35.1
+- **PHP Version**: 8.2.12
 - **Database**: MySQL 8.0
-- **Frontend**: Blade Templates + Tailwind CSS 4
+- **Frontend**: Blade Templates
+- **CSS Framework**: Tailwind CSS 4.1.16
+- **JavaScript Bundler**: Vite 7
 - **Real-time**: Laravel Reverb + Echo
-- **Queue**: Database/Redis
-- **Assets**: Vite 7
+- **Queue System**: Database (configurable to Redis)
+- **Mail**: SMTP (Gmail)
+- **Code Formatter**: Laravel Pint 1.x
+- **Testing**: PHPUnit 11.x
 
-### Key Design Patterns
-- **Repository Pattern**: Service classes for business logic
-- **Observer Pattern**: Model observers for cache invalidation
-- **Factory Pattern**: Database factories for testing
-- **Event-Driven**: Events and listeners for notifications
+### Key Laravel Packages
 
-### Directory Structure
-```
-app/
-├── Console/Commands/       # Artisan commands
-├── Enums/                  # Enum classes (UserType, ReportStatus, etc.)
-├── Events/                 # Event classes
-├── Http/
-│   ├── Controllers/        # Request handlers
-│   ├── Middleware/         # Custom middleware
-│   └── Requests/          # Form request validation
-├── Jobs/                   # Queue jobs
-├── Models/                 # Eloquent models
-├── Notifications/          # Notification classes
-├── Observers/              # Model observers
-├── Policies/               # Authorization policies
-├── Services/               # Business logic services
-└── Rules/                  # Custom validation rules
+- **laravel/reverb**: WebSocket broadcasting
+- **laravel/sanctum**: API authentication
+- **laravel/pint**: Code formatting
+- **pragmarx/google2fa-qrcode**: Two-factor authentication
+- **bacon/bacon-qr-code**: QR code generation
+- **simplesoftwareio/simple-qrcode**: Additional QR utilities
 
-database/
-├── factories/              # Model factories
-├── migrations/             # Database migrations
-└── seeders/               # Database seeders
+### Database Schema
 
-resources/
-├── css/                    # Stylesheets
-├── js/                     # JavaScript
-└── views/                 # Blade templates
+#### Core Tables
+- `users`: Base user table with user_type enum
+- `global_administrators`: Global admin records
+- `administrators`: Role-based admins with role_id
+- `students`: Student-specific data (student_id, college_id, program_id)
+- `staff`: Staff-specific data (staff_id)
+- `security`: Security personnel data (security_id)
+- `reporters`: Reporter data with type_id
+- `stakeholders`: Stakeholder data with type_id
 
-routes/
-├── channels.php            # Broadcasting channels
-├── console.php            # Console routes
-└── web.php                # Web routes
+#### Supporting Tables
+- `vehicles`: Vehicle registrations linked to users
+- `reports`: Violation reports with evidence and location
+- `patrol_logs`: Security check-in records
+- `map_locations`: Campus map polygon data
+- `admin_roles`: Administrator role definitions
+- `reporter_types`: Reporter type definitions
+- `stakeholder_types`: Stakeholder type definitions
+- `colleges`: Academic colleges
+- `programs`: Academic programs per college
+- `vehicle_types`: Vehicle type definitions
+- `violation_types`: Violation category definitions
+- `sticker_counters`: Auto-increment counters per color
+- `payment_batches`: Sticker payment tracking
+- `notifications`: In-app notification storage
+- `sessions`: User session management
 
-tests/
-├── Feature/               # Feature tests
-└── Unit/                  # Unit tests
-```
+### Security Features
 
-## 🔧 Development
+- **Authentication**: Laravel Sanctum with session-based auth
+- **Two-Factor Authentication**: TOTP-based 2FA with recovery codes
+- **Authorization**: Role-based access control with middleware
+- **Password Hashing**: Bcrypt algorithm
+- **CSRF Protection**: Built-in Laravel CSRF tokens
+- **XSS Protection**: Blade template escaping
+- **SQL Injection Protection**: Eloquent ORM and parameter binding
+- **File Upload Security**: File type and size validation
+- **Rate Limiting**: API and form submission throttling
+- **Secure Headers Middleware**: Custom security headers
+- **Active Status Enforcement**: Real-time user deactivation with auto-logout
+
+### Real-Time Architecture
+
+- **Broadcasting Driver**: Reverb (Laravel's built-in WebSocket server)
+- **Client Library**: Laravel Echo with Pusher
+- **Channels**:
+  - `users`: User creation events
+  - `vehicles`: Vehicle updates
+  - `reports`: Violation report updates
+  - `student-reports.{userId}`: Student-specific report updates
+  - `non-student-reports.{userId}`: Non-student report updates
+  - `user.{userId}`: User-specific status changes
+- **Events**:
+  - `UserStatusChanged`: User active/inactive status
+  - `ReportStatusUpdated`: Report approval/rejection
+  - `NotificationCreated`: New notifications
+- **Actor Filtering**: Users don't receive notifications for their own actions
+
+## Progressive Web App
+
+### Features
+
+- **Installable**: Add to home screen on mobile and desktop
+- **Offline Support**: Service worker with cache-first strategy
+- **App-Like Experience**: Fullscreen mode, custom splash screen
+- **Push Notifications**: (Not yet implemented, infrastructure ready)
+- **Background Sync**: (Not yet implemented, infrastructure ready)
+
+### Files
+
+- `public/manifest.json`: PWA manifest with app metadata
+- `public/sw.js`: Service worker for caching and offline support
+- `public/pwa-register.js`: Service worker registration script
+- `resources/views/offline.blade.php`: Offline fallback page
+- `public/images/icons/`: App icons (72x72 to 512x512)
+
+### Installation Instructions
+
+The PWA can be installed on:
+- **Desktop**: Chrome, Edge, Opera
+- **Android**: Chrome, Edge, Samsung Internet
+- **iOS**: Safari (limited PWA support)
+
+Users will see an "Install App" button in Settings → Appearance tab when the app is installable.
+
+### Development Notes
+
+- Icon generation: Use `public/generate-icons.html` to create icons from logo
+- Service worker updates automatically on new deployments
+- Cache version is incremented in `sw.js` for cache invalidation
+
+## Development
 
 ### Code Style
-This project uses Laravel Pint for code formatting:
+
+This project uses Laravel Pint with default Laravel preset:
+
 ```bash
 # Format all files
 ./vendor/bin/pint
 
-# Check for style issues
+# Format specific files
+./vendor/bin/pint app/Http/Controllers
+
+# Check for style issues without fixing
 ./vendor/bin/pint --test
+
+# Format only changed files (Git)
+./vendor/bin/pint --dirty
 ```
 
-### Running Tests
+### Development Commands
+
 ```bash
-# Run all tests
-php artisan test
+# Start all development services
+composer run dev
 
-# Run specific test
-php artisan test --filter=MapLocationStickerTest
+# Individual services
+php artisan serve           # Development web server
+php artisan queue:work      # Process queue jobs
+php artisan reverb:start    # WebSocket server
+npm run dev                 # Frontend dev server with HMR
 
-# Run with coverage
-php artisan test --coverage
+# Restart services
+php artisan queue:restart
+php artisan reverb:restart
+
+# View routes
+php artisan route:list
+
+# View registered commands
+php artisan list
 ```
 
 ### Database Management
-```bash
-# Fresh migration
-php artisan migrate:fresh
 
-# With seeding
+```bash
+# Fresh migration with seeding
 php artisan migrate:fresh --seed
 
 # Rollback last migration
 php artisan migrate:rollback
 
-# Reset database
+# Check migration status
+php artisan migrate:status
+
+# Reset and re-run all migrations
 php artisan migrate:reset
-```
+php artisan migrate
 
-### Queue Management
-```bash
-# Process queue jobs
-php artisan queue:work
-
-# Process specific queue
-php artisan queue:work --queue=high,default
-
-# Clear failed jobs
-php artisan queue:flush
+# Seed specific seeder
+php artisan db:seed --class=UsersSeeder
 ```
 
 ### Cache Management
+
 ```bash
-# Clear all cache
+# Clear all caches
+php artisan optimize:clear
+
+# Individual cache clear
 php artisan cache:clear
-
-# Clear config cache
 php artisan config:clear
-
-# Clear route cache
 php artisan route:clear
-
-# Clear view cache
 php artisan view:clear
+
+# Cache for performance
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 ```
 
-## 🧪 Testing
+### Debugging Tools
 
-### Test Coverage Areas
-- Vehicle sticker generation
-- Report auto-assignment logic
-- Patrol check-in validation
-- Map location sticker generation
-- User authentication and authorization
+```bash
+# Interactive PHP shell with Laravel
+php artisan tinker
+
+# View application configuration
+php artisan about
+
+# View environment
+php artisan env
+
+# Tail log files
+tail -f storage/logs/laravel.log
+
+# View failed queue jobs
+php artisan queue:failed
+
+# Retry failed jobs
+php artisan queue:retry all
+```
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test file
+php artisan test tests/Feature/MapLocationStickerTest.php
+
+# Run specific test method
+php artisan test --filter=test_generates_sticker_with_correct_qr_code
+
+# Run with coverage
+php artisan test --coverage
+
+# Run parallel tests
+php artisan test --parallel
+```
+
+### Test Structure
+
+```
+tests/
+├── Feature/                    # Integration tests
+│   ├── MapLocationStickerTest.php
+│   ├── ReportAssignmentTest.php
+│   └── StickerGenerationTest.php
+└── Unit/                       # Unit tests
+    ├── EnumTest.php
+    └── ServiceTest.php
+```
 
 ### Writing Tests
+
 ```php
-// Example: tests/Feature/StickerGenerationTest.php
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use App\Models\User;
 use App\Models\Vehicle;
-use App\Services\StickerGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class StickerGenerationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_student_vehicle_gets_correct_color(): void
+    public function test_student_vehicle_generates_correct_color(): void
     {
+        $user = User::factory()->create(['user_type' => 'student']);
         $vehicle = Vehicle::factory()->create([
-            'plate_no' => 'ABC-1234',
+            'user_id' => $user->id,
+            'plate_no' => 'ABC-1234', // Last digit 4 = Green
         ]);
 
-        $service = new StickerGenerator();
-        $color = $service->determineStickerColor('student', null, 'ABC-1234');
-
-        $this->assertEquals('yellow', $color);
+        $this->assertEquals('green', $vehicle->color);
     }
 }
 ```
 
-## 🚢 Deployment
+## Deployment
 
-### Production Checklist
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://sentinel.mluc.edu.ph
+### Production Environment Setup
 
-# Security
-SESSION_SECURE_COOKIE=true
-SANCTUM_STATEFUL_DOMAINS=sentinel.mluc.edu.ph
+See `deploy.txt` for comprehensive deployment guide to Sevalla or similar platforms.
 
-# Performance
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-QUEUE_CONNECTION=redis
+### Quick Deployment Steps
 
-# Broadcasting
-BROADCAST_CONNECTION=reverb
-```
-
-### Deployment Steps
-1. **Update dependencies**
+1. **Prepare Repository**
    ```bash
+   git add .
+   git commit -m "Production release"
+   git push origin main
+   ```
+
+2. **Server Setup**
+   ```bash
+   # Clone repository
+   git clone https://github.com/your-org/mluc-sentinel.git
+   cd mluc-sentinel
+
+   # Install dependencies
    composer install --optimize-autoloader --no-dev
    npm ci --production
-   ```
 
-2. **Build assets**
-   ```bash
+   # Build assets
    npm run build
-   ```
 
-3. **Optimize application**
-   ```bash
+   # Setup environment
+   cp .env.example .env
+   php artisan key:generate
+   # Edit .env with production values
+
+   # Run migrations and seeders
+   php artisan migrate --seed --force
+
+   # Link storage
+   php artisan storage:link
+
+   # Optimize application
    php artisan config:cache
    php artisan route:cache
    php artisan view:cache
-   ```
 
-4. **Run migrations**
-   ```bash
-   php artisan migrate --force
-   ```
-
-5. **Set permissions**
-   ```bash
+   # Set permissions
    chmod -R 755 storage bootstrap/cache
    chown -R www-data:www-data storage bootstrap/cache
    ```
 
-6. **Start services**
-   ```bash
-   # Queue worker
-   php artisan queue:work --daemon
+3. **Configure Services**
+   - Queue Worker: `php artisan queue:work --daemon`
+   - WebSocket: `php artisan reverb:start --host=0.0.0.0 --port=8080`
+   - Use Supervisor or similar for process management
 
-   # WebSocket server
-   php artisan reverb:start --host=0.0.0.0 --port=8080
+4. **Production Environment Variables**
+   ```env
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-domain.com
+
+   # Database
+   DB_CONNECTION=mysql
+   DB_HOST=production-host
+   DB_PORT=3306
+   DB_DATABASE=mluc_sentinel
+   DB_USERNAME=production_user
+   DB_PASSWORD=secure_password
+
+   # Cache & Session
+   CACHE_DRIVER=redis
+   SESSION_DRIVER=redis
+   QUEUE_CONNECTION=redis
+
+   # Broadcasting (adjust host for production)
+   REVERB_HOST=your-domain.com
+   REVERB_SCHEME=https
+   VITE_REVERB_HOST=your-domain.com
+   VITE_REVERB_SCHEME=https
+
+   # Security
+   SESSION_SECURE_COOKIE=true
    ```
 
-### Server Requirements
-- **Web Server**: Nginx or Apache
-- **Process Manager**: Supervisor (for queue workers)
-- **SSL Certificate**: Let's Encrypt or commercial
-- **Reverse Proxy**: For Reverb WebSocket server
+### SSL Configuration
 
-## 🐛 Troubleshooting
+Ensure your reverse proxy (Nginx/Apache) handles SSL and forwards WebSocket connections to Reverb port 8080.
+
+## Troubleshooting
 
 ### Common Issues
 
 #### Stickers Not Generating
+
 ```bash
 # Check storage permissions
+ls -la storage/app/public
+
+# Fix permissions
 chmod -R 775 storage/app/public
 
 # Re-link storage
@@ -542,90 +937,119 @@ php artisan storage:link
 tail -f storage/logs/laravel.log
 ```
 
-#### WebSocket Not Connecting
-```bash
-# Check Reverb is running
-php artisan reverb:start
+#### WebSocket Connection Failed
 
-# Verify environment variables
+```bash
+# Verify Reverb is running
+ps aux | grep reverb
+
+# Check environment configuration
 php artisan config:clear
 php artisan config:cache
 
-# Check firewall rules (port 8080)
+# Verify VITE variables match REVERB variables
+grep REVERB .env
+grep VITE_REVERB .env
+
+# Check firewall (port 8080 must be open)
+# For production, ensure reverse proxy forwards WebSocket connections
 ```
 
 #### Queue Jobs Not Processing
-```bash
-# Restart queue worker
-php artisan queue:restart
 
-# Check failed jobs
+```bash
+# Check if queue worker is running
+ps aux | grep "queue:work"
+
+# View failed jobs
 php artisan queue:failed
 
 # Retry failed jobs
 php artisan queue:retry all
+
+# Restart queue worker
+php artisan queue:restart
+
+# Check queue connection
+php artisan tinker
+>>> Queue::connection()->size();
 ```
 
-#### Database Connection Issues
+#### Real-Time Notifications Not Appearing
+
+- Verify Reverb server is running
+- Check browser console for WebSocket errors
+- Confirm user is authenticated
+- Verify channel authorization in `routes/channels.php`
+- Check that events implement `ShouldBroadcastNow`
+
+#### Database Connection Error
+
 ```bash
 # Test database connection
 php artisan tinker
 >>> DB::connection()->getPdo();
 
-# Check credentials in .env
-# Verify database exists
+# Check database exists
+mysql -u root -p -e "SHOW DATABASES;"
+
+# Verify credentials in .env
+# Ensure database user has proper permissions
 ```
 
+#### PWA Not Installing
+
+- Ensure HTTPS is enabled (required for PWA)
+- Check that all icon files exist in `public/images/icons/`
+- Verify `manifest.json` is accessible
+- Clear browser cache and service worker
+- Check browser console for manifest errors
+
+#### Session Issues / Logged Out Unexpectedly
+
+- Check `SESSION_DRIVER` in `.env`
+- Ensure `sessions` table exists (if using database driver)
+- Verify `SESSION_LIFETIME` is set appropriately
+- Check for active status changes (inactive users are auto-logged out)
+
 ### Debug Mode
-Enable debug mode temporarily (NEVER in production):
+
+For development only (NEVER enable in production):
+
 ```env
 APP_DEBUG=true
 APP_ENV=local
+LOG_LEVEL=debug
 ```
 
-## 🤝 Contributing
+### Getting Help
 
-### Development Workflow
-1. Create feature branch from `main`
-2. Make changes with descriptive commits
-3. Write/update tests
-4. Run code formatter: `./vendor/bin/pint`
-5. Run tests: `php artisan test`
-6. Submit pull request
+- Check `storage/logs/laravel.log` for detailed error messages
+- Enable query logging for database issues
+- Use `php artisan about` to view system information
+- Review `.env` configuration
+- Check file and directory permissions
 
-### Commit Message Format
-```
-type(scope): description
+## License
 
-[optional body]
+This project is proprietary software developed for Don Mariano Marcos Memorial State University - Mid La Union Campus.
 
-[optional footer]
-```
+Copyright 2025 Don Mariano Marcos Memorial State University - Mid La Union Campus. All rights reserved.
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+## Project Information
 
-Example:
-```
-feat(patrol): add GPS coordinate logging
+**Capstone Project**
 
-- Add latitude/longitude fields to patrol_logs
-- Update check-in controller to capture coordinates
-- Add map visualization for patrol coverage
-```
+A Digital Parking System developed by:
+- Dulay, S.A.C.
+- De Mesa, A.P.
+- Marzan, J.V.R.
+- Paz, D.G.F.
+- Saltivan, G.A.A.
 
-## 📄 License
+College of Information Technology
+Don Mariano Marcos Memorial State University
+Mid La Union Campus
+2025
 
-This project is proprietary software developed for Maria Luisa University of Cebu.
-
-© 2025 Maria Luisa University of Cebu. All rights reserved.
-
-## 📞 Support
-
-For technical support or questions:
-- **Email**: support@mluc.edu.ph
-- **Issue Tracker**: [GitHub Issues](https://github.com/your-org/mluc-sentinel/issues)
-- **Documentation**: [Wiki](https://github.com/your-org/mluc-sentinel/wiki)
-
----
-
-Built with ❤️ by the MLUC IT Team
+For technical inquiries, contact: ademesa.dev@gmail.com

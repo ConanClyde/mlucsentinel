@@ -7,8 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\AuditLogService;
+use App\Services\CacheInvalidationService;
+use App\Services\PaymentBatchService;
 use App\Services\PaymentReceiptService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use ZipArchive;
 
@@ -19,33 +23,33 @@ class StickersController extends Controller
      */
     public function index(Request $request)
     {
-        // Get pending payments
-        $payments = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
-            ->batchRepresentative()
-            ->where('status', 'pending')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Get transactions with default filter (paid)
         $statusFilter = $request->get('status', 'paid');
-        $transactionsQuery = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
-            ->batchRepresentative();
+        $pendingPaymentsCount = Cache::remember('payments.pending.count', 30, function () {
+            return Payment::batchRepresentative()
+                ->where('status', 'pending')
+                ->count();
+        });
 
-        if ($statusFilter === 'all') {
-            $transactionsQuery->whereIn('status', ['paid', 'failed', 'cancelled']);
-        } else {
-            $transactionsQuery->where('status', $statusFilter);
-        }
+        // Load first page of payments for instant display (default 10 items)
+        $payments = Payment::batchRepresentative()
+            ->with(['user', 'vehicle.type'])
+            ->where('status', 'pending')
+            ->latest()
+            ->paginate(10);
 
-        $transactions = $transactionsQuery->orderBy('paid_at', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Load first page of transactions for instant display (default 10 items)
+        $transactions = Payment::batchRepresentative()
+            ->with(['user', 'vehicle.type'])
+            ->whereIn('status', ['paid', 'cancelled'])
+            ->latest()
+            ->paginate(10);
 
         return view('admin.stickers', [
             'pageTitle' => 'Stickers Management',
             'payments' => $payments,
             'transactions' => $transactions,
             'statusFilter' => $statusFilter,
+            'pendingPaymentsCount' => $pendingPaymentsCount,
         ]);
     }
 
@@ -56,16 +60,16 @@ class StickersController extends Controller
     {
         $tab = $request->get('tab', 'payment');
         $search = $request->get('search', '');
-        $statusFilter = $request->get('status', 'paid'); // Default to 'paid'
+        $statusFilter = $request->get('status', 'paid');
+        $perPage = max(1, (int) $request->get('per_page', 10));
+        $page = max(1, (int) $request->get('page', 1));
 
-        $query = Payment::with(['user', 'vehicle.type', 'batchVehicles'])
-            ->batchRepresentative(); // Only get one payment per batch
+        $query = Payment::with(['user', 'vehicle.type'])
+            ->batchRepresentative();
 
-        // Filter by tab
         if ($tab === 'payment') {
             $query->where('status', 'pending');
         } elseif ($tab === 'transactions') {
-            // Apply status filter for transactions
             if ($statusFilter === 'all') {
                 $query->whereIn('status', ['paid', 'failed', 'cancelled']);
             } else {
@@ -73,7 +77,6 @@ class StickersController extends Controller
             }
         }
 
-        // Apply search filter
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('reference', 'like', "%{$search}%")
@@ -90,17 +93,65 @@ class StickersController extends Controller
             });
         }
 
-        $payments = $query->latest()->get()->map(function ($payment) {
-            $batchVehicles = [];
-            if ($payment->batch_id) {
-                $batchVehicles = Payment::where('batch_id', $payment->batch_id)
-                    ->where('status', 'pending')
-                    ->whereHas('vehicle')
-                    ->with('vehicle.type')
-                    ->get()
-                    ->filter(function ($p) {
-                        return $p->vehicle !== null;
-                    })
+        // Advanced filters
+        if ($request->filled('from_date')) {
+            $column = $tab === 'transactions' ? 'paid_at' : 'created_at';
+            $query->whereDate($column, '>=', $request->get('from_date'));
+        }
+
+        if ($request->filled('to_date')) {
+            $column = $tab === 'transactions' ? 'paid_at' : 'created_at';
+            $query->whereDate($column, '<=', $request->get('to_date'));
+        }
+
+        if ($request->filled('vehicle_type_id')) {
+            $vt = (int) $request->get('vehicle_type_id');
+            $query->whereHas('vehicle', function ($q) use ($vt) {
+                $q->where('type_id', $vt);
+            });
+        }
+
+        if ($request->filled('user_type') && $request->get('user_type') !== 'all') {
+            $ut = $request->get('user_type');
+            $query->whereHas('user', function ($q) use ($ut) {
+                $q->where('user_type', $ut);
+            });
+        }
+
+        if ($request->filled('batch_id')) {
+            $query->where('batch_id', $request->get('batch_id'));
+        }
+
+        if ($request->filled('min_amount')) {
+            $query->where('amount', '>=', (float) $request->get('min_amount'));
+        }
+
+        if ($request->filled('max_amount')) {
+            $query->where('amount', '<=', (float) $request->get('max_amount'));
+        }
+
+        $paginator = $query->orderByDesc($tab === 'transactions' ? 'paid_at' : 'created_at')
+            ->orderByDesc('created_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $items = collect($paginator->items());
+
+        // Preload batch vehicles for all batch_ids to avoid N+1
+        $batchVehicles = collect();
+        $batchIds = $items->pluck('batch_id')->filter()->unique();
+        if ($batchIds->isNotEmpty()) {
+            $batchVehicles = Payment::whereIn('batch_id', $batchIds)
+                ->whereHas('vehicle')
+                ->with('vehicle.type')
+                ->get()
+                ->groupBy('batch_id');
+        }
+
+        $fee = \App\Models\Fee::getAmount('sticker_fee', 15.00);
+        $data = $items->map(function ($payment) use ($batchVehicles, $fee) {
+            $batchList = [];
+            if ($payment->batch_id && $batchVehicles->has($payment->batch_id)) {
+                $batchList = $batchVehicles[$payment->batch_id]->filter(fn ($p) => $p->vehicle !== null)
                     ->map(function ($p) {
                         return [
                             'id' => $p->vehicle->id,
@@ -109,10 +160,17 @@ class StickersController extends Controller
                             'number' => $p->vehicle->number,
                             'sticker' => $p->vehicle->sticker,
                             'type_name' => $p->vehicle->type ? $p->vehicle->type->name : null,
+                            'type' => $p->vehicle->type ? [
+                                'id' => $p->vehicle->type->id,
+                                'name' => $p->vehicle->type->name,
+                            ] : null,
                         ];
-                    })
-                    ->values();
+                    })->values();
             }
+
+            $computedAmount = ($payment->status === 'pending' && $payment->type === 'sticker_fee')
+                ? number_format(($payment->vehicle_count ?: 1) * $fee, 2, '.', '')
+                : $payment->amount;
 
             return [
                 'id' => $payment->id,
@@ -120,7 +178,7 @@ class StickersController extends Controller
                 'vehicle_id' => $payment->vehicle_id,
                 'type' => $payment->type,
                 'status' => $payment->status,
-                'amount' => $payment->amount,
+                'amount' => $computedAmount,
                 'reference' => $payment->reference,
                 'batch_id' => $payment->batch_id,
                 'vehicle_count' => $payment->vehicle_count,
@@ -144,11 +202,19 @@ class StickersController extends Controller
                         'name' => $payment->vehicle->type->name,
                     ] : null,
                 ] : null,
-                'batch_vehicles' => $batchVehicles,
+                'batch_vehicles' => $batchList,
             ];
-        });
+        })->values();
 
-        return response()->json($payments);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -207,46 +273,27 @@ class StickersController extends Controller
             'vehicle_ids.*' => 'required|exists:vehicles,id',
         ]);
 
-        $payment = DB::transaction(function () use ($validated) {
-            $batchId = 'BATCH-'.strtoupper(uniqid());
-            $vehicleCount = count($validated['vehicle_ids']);
-            $totalAmount = $vehicleCount * 15.00;
-
-            // Create main payment record (representative)
-            $payment = Payment::create([
-                'user_id' => $validated['user_id'],
-                'vehicle_id' => $validated['vehicle_ids'][0], // First vehicle as representative
-                'type' => 'sticker_fee',
-                'status' => 'pending',
-                'amount' => $totalAmount,
-                'reference' => 'STK-'.strtoupper(uniqid()),
-                'batch_id' => $vehicleCount > 1 ? $batchId : null,
-                'vehicle_count' => $vehicleCount,
-                'is_representative' => true,
-            ]);
-
-            // Create child payment records for other vehicles (if multiple)
-            if ($vehicleCount > 1) {
-                for ($i = 1; $i < $vehicleCount; $i++) {
-                    Payment::create([
-                        'user_id' => $validated['user_id'],
-                        'vehicle_id' => $validated['vehicle_ids'][$i],
-                        'type' => 'sticker_fee',
-                        'status' => 'pending',
-                        'amount' => 15.00,
-                        'reference' => 'STK-'.strtoupper(uniqid()),
-                        'batch_id' => $batchId,
-                        'vehicle_count' => 1,
-                        'is_representative' => false,
-                    ]);
-                }
+        // Idempotency: if key already used, treat as duplicate and return success
+        $key = $request->header('Idempotency-Key');
+        if ($key) {
+            $routeName = $request->route() ? $request->route()->getName() : 'admin.stickers.request';
+            $ok = app(\App\Services\IdempotencyService::class)->ensure(
+                $key,
+                auth()->id(),
+                $routeName,
+                ['user_id' => $validated['user_id'], 'vehicle_ids' => $validated['vehicle_ids']]
+            );
+            if (! $ok) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Duplicate request ignored.',
+                ], 200);
             }
+        }
 
-            $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-            broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
-
-            return $payment;
-        });
+        $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
+        $payment = app(PaymentBatchService::class)
+            ->addVehiclesToBatch((int) $validated['user_id'], array_map('intval', $validated['vehicle_ids']), $editorName);
 
         return response()->json([
             'success' => true,
@@ -281,11 +328,29 @@ class StickersController extends Controller
 
             // Generate receipt
             $receiptService = new PaymentReceiptService;
-            if ($payment->batch_id) {
-                $receiptService->generateBatchReceipt($payment);
-            } else {
-                $receiptService->generateReceipt($payment);
-            }
+            $receiptPath = $payment->batch_id
+                ? $receiptService->generateBatchReceipt($payment)
+                : $receiptService->generateReceipt($payment);
+
+            // Log payment confirmation
+            \Log::channel('payments')->info('Payment confirmed', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'amount' => $payment->amount,
+                'vehicle_count' => $payment->vehicle_count,
+                'batch_id' => $payment->batch_id,
+                'confirmed_by' => auth()->id(),
+                'confirmed_by_name' => auth()->user()->first_name.' '.auth()->user()->last_name,
+            ]);
+
+            // Audit log payment confirmation
+            AuditLogService::log('payment_confirmed', $payment, ['status' => 'pending'], ['status' => 'paid', 'paid_at' => now()]);
+
+            // Clear analytics cache as revenue calculations depend on payments
+            CacheInvalidationService::clearAllAnalyticsCache();
+
+            // Dispatch email job to send receipt to user
+            \App\Jobs\SendPaymentReceiptEmail::dispatch($payment, $receiptPath);
 
             $payment->load(['user', 'vehicle.type', 'batchVehicles']);
             broadcast(new PaymentUpdated($payment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
@@ -303,6 +368,17 @@ class StickersController extends Controller
     public function cancel(Payment $payment)
     {
         DB::transaction(function () use ($payment) {
+            // Log payment cancellation
+            \Log::channel('payments')->warning('Payment cancelled', [
+                'payment_id' => $payment->id,
+                'user_id' => $payment->user_id,
+                'amount' => $payment->amount,
+                'vehicle_count' => $payment->vehicle_count,
+                'batch_id' => $payment->batch_id,
+                'cancelled_by' => auth()->id(),
+                'cancelled_by_name' => auth()->user()->first_name.' '.auth()->user()->last_name,
+            ]);
+
             // Update main payment to cancelled status
             $payment->update([
                 'status' => 'cancelled',
@@ -380,20 +456,21 @@ class StickersController extends Controller
      */
     public function getIssuedStickers(Request $request)
     {
+        $perPage = max(1, (int) $request->get('per_page', 24));
+        $page = max(1, (int) $request->get('page', 1));
+
         $query = Vehicle::with(['user', 'type'])
             ->whereNotNull('sticker');
 
-        // Filter by date range
-        if ($request->has('from_date') && $request->from_date) {
+        if ($request->filled('from_date')) {
             $query->whereDate('created_at', '>=', $request->from_date);
         }
 
-        if ($request->has('to_date') && $request->to_date) {
+        if ($request->filled('to_date')) {
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        // Search filter
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('plate_no', 'like', "%{$search}%")
@@ -404,7 +481,10 @@ class StickersController extends Controller
             });
         }
 
-        $stickers = $query->orderBy('created_at', 'desc')->get()->map(function ($vehicle) {
+        $paginator = $query->orderByDesc('created_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $data = collect($paginator->items())->map(function ($vehicle) {
             return [
                 'id' => $vehicle->id,
                 'plate_no' => $vehicle->plate_no,
@@ -420,9 +500,17 @@ class StickersController extends Controller
                     'last_name' => $vehicle->user->last_name,
                 ] : null,
             ];
-        });
+        })->values();
 
-        return response()->json($stickers);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ]);
     }
 
     /**

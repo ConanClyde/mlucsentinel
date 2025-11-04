@@ -1,46 +1,47 @@
 @extends('layouts.app')
 
 @section('title', 'Student Registration')
+@section('page-title', 'Student Registration')
 
 @section('content')
-<div class="min-h-screen py-8">
+<div class="min-h-screen py-4 md:py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="mb-8 text-center">
-            <h1 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Student Registration</h1>
-            <p class="text-[#706f6c] dark:text-[#A1A09A]">Register new student users with vehicle information</p>
+        <div class="mb-6 md:mb-8 text-center">
+            <h1 class="text-xl md:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Student Registration</h1>
+            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register new student users with vehicle information</p>
             </div>
 
         <!-- Progress Steps -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 mb-6">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center space-x-4">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6 overflow-x-auto">
+            <div class="flex items-center justify-center min-w-max">
+                <div class="flex items-center space-x-2 md:space-x-4">
                     <!-- Step 1 -->
                     <div class="flex items-center">
-                        <div id="step-1-indicator" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
+                        <div id="step-1-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-medium">
                             1
             </div>
-                        <span id="step-1-label" class="ml-2 text-sm font-medium text-blue-600 dark:text-blue-400">Basic Information</span>
+                        <span id="step-1-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline">Basic Information</span>
     </div>
 
-                    <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 2 -->
                     <div class="flex items-center">
-                        <div id="step-2-indicator" class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium">
+                        <div id="step-2-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
                             2
                         </div>
-                        <span id="step-2-label" class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">License Information</span>
+                        <span id="step-2-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">License Information</span>
                     </div>
 
-                    <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 3 -->
                     <div class="flex items-center">
-                        <div id="step-3-indicator" class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium">
+                        <div id="step-3-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
                             3
                     </div>
-                        <span id="step-3-label" class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Vehicle Information</span>
+                        <span id="step-3-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Vehicle Information</span>
                 </div>
                     </div>
                 </div>
@@ -52,10 +53,10 @@
                 @csrf
                 
                 <!-- Step 1: Basic Information -->
-                <div id="step-1" class="step-content p-6">
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Basic Information</h3>
+                <div id="step-1" class="step-content p-4 md:p-6">
+                    <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4 md:mb-6">Basic Information</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                                 First Name <span class="text-red-500">*</span>
@@ -73,18 +74,22 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="college_id" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                                College <span class="text-red-500">*</span>
-                            </label>
-                        <select id="college_id" name="college_id" class="form-input" required>
-                            <option value="">Select College</option>
+                    <div class="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                        <label for="program_id" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                            Program <span class="text-red-500">*</span>
+                        </label>
+                        <select id="program_id" name="program_id" class="form-input" required>
+                            <option value="">Select Program</option>
                             @foreach($colleges as $college)
-                                <option value="{{ $college->id }}">{{ $college->name }}</option>
+                                <optgroup label="{{ $college->name }}">
+                                    @foreach($college->programs as $program)
+                                        <option value="{{ $program->id }}">{{ $program->name }}</option>
+                                    @endforeach
+                                </optgroup>
                             @endforeach
                         </select>
-                            <div id="college_id_error" class="text-red-500 text-sm mt-1 hidden"></div>
+                        <div id="program_id_error" class="text-red-500 text-sm mt-1 hidden"></div>
                     </div>
 
                         <div>
@@ -96,7 +101,7 @@
                     </div>
                 </div>
 
-                    <div class="mt-6">
+                    <div class="mt-4 md:mt-6">
                         <label for="email" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                             Email Address <span class="text-red-500">*</span>
                         </label>
@@ -110,7 +115,7 @@
                 <div id="step-2" class="step-content p-6 hidden">
                     <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">License Information</h3>
                     
-                    <div class="space-y-6">
+                    <div class="space-y-4 md:space-y-6">
                         <div>
                             <label for="license_no" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                                 License Number <span class="text-gray-400 text-xs">(Optional)</span>
@@ -184,7 +189,7 @@
                                 <select name="vehicles[0][type_id]" class="form-input" required>
                                     <option value="">Select Vehicle Type</option>
                                     @foreach($vehicleTypes as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                        <option value="{{ $type->id }}" data-requires-plate="{{ $type->requires_plate ? '1' : '0' }}">{{ $type->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -209,30 +214,30 @@
             </div>
 
                 <!-- Form Actions -->
-                <div class="flex items-center justify-end gap-3 pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-6 pb-6">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 md:pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-4 md:px-6 pb-4 md:pb-6">
                     <!-- Step 1 Buttons -->
-                    <div id="step-1-buttons">
-                        <button type="button" id="next-step" class="btn btn-primary" disabled>
+                    <div id="step-1-buttons" class="w-full sm:w-auto">
+                        <button type="button" id="next-step" class="btn btn-primary w-full sm:w-auto" disabled>
                             Next
                 </button>
                     </div>
                     
                     <!-- Step 2 Buttons -->
-                    <div id="step-2-buttons" class="hidden">
-                        <button type="button" id="prev-step" class="btn btn-secondary">
+                    <div id="step-2-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button type="button" id="prev-step" class="btn btn-secondary w-full sm:w-auto">
                             Previous
                         </button>
-                        <button type="button" id="next-step-2" class="btn btn-primary" disabled>
+                        <button type="button" id="next-step-2" class="btn btn-primary w-full sm:w-auto" disabled>
                             Next
                         </button>
                     </div>
                     
                     <!-- Step 3 Buttons -->
-                    <div id="step-3-buttons" class="hidden">
-                        <button type="button" id="prev-step-2" class="btn btn-secondary">
+                    <div id="step-3-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button type="button" id="prev-step-2" class="btn btn-secondary w-full sm:w-auto">
                             Previous
                         </button>
-                        <button type="submit" id="submit-form" class="btn btn-primary" disabled>
+                        <button type="submit" id="submit-form" class="btn btn-primary w-full sm:w-auto" disabled>
                             Register
                         </button>
                     </div>
@@ -301,6 +306,43 @@
 @endsection
 
 <script>
+// Override global modal functions from main.js immediately (before DOMContentLoaded)
+// The global showSuccessModal from main.js expects successTitle and successMessage elements
+// which don't exist in this page's modal, so we override it before any calls
+(function() {
+    'use strict';
+    window.showSuccessModal = function(title, message) {
+        // This page's modal doesn't have successTitle/successMessage, just show the modal
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    };
+    
+    window.closeSuccessModal = function() {
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    window.showErrorModal = function(message) {
+        const modal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+        if (modal && errorMessage) {
+            errorMessage.textContent = message || 'An error occurred while processing your request';
+            modal.classList.remove('hidden');
+        }
+    };
+    
+    window.closeErrorModal = function() {
+        const modal = document.getElementById('errorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+})();
+
 let currentStep = 1;
 
 // Track validation errors
@@ -382,16 +424,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             errorMessages.push(data.errors[field][0]);
                         }
                     }
+                    // Hide loading state on validation error
+                    if (window.FormLoader) {
+                        FormLoader.hideLoading(form);
+                    }
                     showErrorModal(errorMessages.join('<br>'));
                 } else if (data.success) {
+                    // Hide loading state first to re-enable inputs
+                    if (window.FormLoader) {
+                        FormLoader.hideLoading(form);
+                    }
                     showSuccessModal();
                     resetForm();
                 } else {
+                    // Hide loading state on error too
+                    if (window.FormLoader) {
+                        FormLoader.hideLoading(form);
+                    }
                     showErrorModal(data.message || 'An error occurred');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+                // Hide loading state on error
+                if (window.FormLoader) {
+                    FormLoader.hideLoading(form);
+                }
                 showErrorModal('An error occurred while processing your request');
             });
         });
@@ -400,7 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Delayed validation (1 second after user stops typing)
     let firstNameTimeout;
     let lastNameTimeout;
-    let collegeTimeout;
     let studentIdTimeout;
     let emailTimeout;
     let licenseNoTimeout;
@@ -408,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Step 1 validation
     const firstNameInput = document.getElementById('first_name');
     const lastNameInput = document.getElementById('last_name');
-    const collegeInput = document.getElementById('college_id');
+    const programInput = document.getElementById('program_id');
     const studentIdInput = document.getElementById('student_id');
     const emailInput = document.getElementById('email');
 
@@ -428,10 +485,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (collegeInput) {
-        collegeInput.addEventListener('change', function() {
-            clearTimeout(collegeTimeout);
-            collegeTimeout = setTimeout(validateCollege, 1000);
+    if (programInput) {
+        programInput.addEventListener('change', function() {
             updateButtonStates();
         });
     }
@@ -488,18 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         } else {
             clearFieldError('last_name');
-            return true;
-        }
-    }
-
-    function validateCollege() {
-        const collegeId = collegeInput.value;
-        
-        if (!collegeId) {
-            showFieldError('college_id', 'Please select a college');
-            return false;
-        } else {
-            clearFieldError('college_id');
             return true;
         }
     }
@@ -731,13 +774,13 @@ function isValidEmail(email) {
 function isStep1Valid() {
     const firstName = document.getElementById('first_name').value.trim();
     const lastName = document.getElementById('last_name').value.trim();
-    const collegeId = document.getElementById('college_id').value;
+    const programId = document.getElementById('program_id').value;
     const studentId = document.getElementById('student_id').value.trim();
     const email = document.getElementById('email').value.trim();
     
     const hasNoErrors = !availabilityErrors.email && !availabilityErrors.studentId;
     
-    return firstName && lastName && collegeId && studentId && email && isValidEmail(email) && isValidStudentId(studentId) && hasNoErrors;
+    return firstName && lastName && programId && studentId && email && isValidEmail(email) && isValidStudentId(studentId) && hasNoErrors;
 }
 
 // Function to check if all step 2 fields are valid
@@ -853,11 +896,11 @@ function validateCurrentStep() {
     if (currentStep === 1) {
         const firstName = document.getElementById('first_name').value.trim();
         const lastName = document.getElementById('last_name').value.trim();
-        const collegeId = document.getElementById('college_id').value;
+        const programId = document.getElementById('program_id').value;
         const studentId = document.getElementById('student_id').value.trim();
         const email = document.getElementById('email').value.trim();
         
-        if (!firstName || !lastName || !collegeId || !studentId || !email) {
+        if (!firstName || !lastName || !programId || !studentId || !email) {
             showErrorModal('Please fill in all required fields');
             return false;
         }
@@ -912,46 +955,53 @@ function validateCurrentStep() {
     return false;
 }
 
-// Show success modal
+// Show success modal - using window function
 function showSuccessModal() {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
+    window.showSuccessModal();
 }
 
-// Close success modal
+// Close success modal - using window function
 function closeSuccessModal() {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    window.closeSuccessModal();
 }
 
-// Show error modal
+// Show error modal - using window function
 function showErrorModal(message) {
-    const modal = document.getElementById('errorModal');
-    const errorMessage = document.getElementById('errorMessage');
-    if (modal && errorMessage) {
-        errorMessage.textContent = message;
-        modal.classList.remove('hidden');
-    }
+    window.showErrorModal(message);
 }
 
-// Close error modal
+// Close error modal - using window function
 function closeErrorModal() {
-    const modal = document.getElementById('errorModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    window.closeErrorModal();
 }
 
 // Reset form to initial state
 function resetForm() {
+    const form = document.getElementById('studentRegistrationForm');
+    
+    // Re-enable all form inputs (in case they were disabled during submission)
+    const allInputs = form.querySelectorAll('input, select, textarea, button');
+    allInputs.forEach(input => {
+        // Don't enable buttons that should be disabled based on form state
+        if (input.type === 'submit' || input.id === 'next-step' || input.id === 'submit-form') {
+            // Will be handled by updateButtonStates() or other logic
+            return;
+        }
+        input.disabled = false;
+        // Clear any loading state data attributes
+        delete input.dataset.originalDisabled;
+    });
+    
+    // Remove loading state from form if FormLoader was used
+    if (window.FormLoader && form) {
+        form.classList.remove('form-loading');
+        delete form.dataset.loading;
+    }
+    
     // Reset form fields
     document.getElementById('first_name').value = '';
     document.getElementById('last_name').value = '';
-    document.getElementById('college_id').value = '';
+    document.getElementById('program_id').value = '';
     document.getElementById('student_id').value = '';
     document.getElementById('email').value = '';
     document.getElementById('license_no').value = '';
@@ -976,7 +1026,8 @@ function resetForm() {
     if (existingSelect) {
         existingSelect.querySelectorAll('option').forEach(option => {
             if (option.value !== '') {
-                vehicleTypeOptions += '<option value="' + option.value + '">' + option.textContent + '</option>';
+                const requiresPlate = option.getAttribute('data-requires-plate');
+                vehicleTypeOptions += '<option value="' + option.value + '" data-requires-plate="' + (requiresPlate || '1') + '">' + option.textContent + '</option>';
             }
         });
     }
@@ -1096,7 +1147,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (existingSelect) {
                 existingSelect.querySelectorAll('option').forEach(option => {
                     if (option.value !== '') {
-                        vehicleTypeOptions += '<option value="' + option.value + '">' + option.textContent + '</option>';
+                        const requiresPlate = option.getAttribute('data-requires-plate');
+                        vehicleTypeOptions += '<option value="' + option.value + '" data-requires-plate="' + (requiresPlate || '1') + '">' + option.textContent + '</option>';
                     }
                 });
             }
@@ -1129,6 +1181,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const newVehicleSelect = vehiclesContainer.querySelector(`select[name="vehicles[${vehicleCount - 1}][type_id]"]`);
             if (newVehicleSelect) {
                 newVehicleSelect.addEventListener('change', handleVehicleTypeChange);
+                // Ensure plate number group is visible by default for new vehicles
+                const newVehicleItem = newVehicleSelect.closest('.vehicle-item');
+                const newPlateNumberGroup = newVehicleItem.querySelector('.plate-number-group');
+                if (newPlateNumberGroup) {
+                    newPlateNumberGroup.style.display = 'block';
+                    newPlateNumberGroup.classList.remove('hidden');
+                    newPlateNumberGroup.style.visibility = 'visible';
+                }
             }
             
             // Add event listener for the new plate number input
@@ -1239,13 +1299,23 @@ function handleVehicleTypeChange(e) {
     const plateNumberGroup = vehicleItem.querySelector('.plate-number-group');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
     
-    if (e.target.value === '3') { // Electric Vehicle
+    if (!plateNumberGroup || !plateNumberInput) {
+        return; // Safety check
+    }
+    
+    const selectedOption = e.target.options[e.target.selectedIndex];
+    const requiresPlate = selectedOption && selectedOption.getAttribute('data-requires-plate') === '1';
+    
+    if (!requiresPlate) {
         plateNumberGroup.style.display = 'none';
         plateNumberInput.removeAttribute('required');
         plateNumberInput.value = ''; // Clear the value
-            } else {
+    } else {
         plateNumberGroup.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
+        // Ensure it's visible (remove any hidden classes)
+        plateNumberGroup.classList.remove('hidden');
+        plateNumberGroup.style.visibility = 'visible';
     }
     
     updateButtonStates();

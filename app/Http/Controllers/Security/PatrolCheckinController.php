@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Security;
 
+use App\Events\PatrolLogCreated;
 use App\Http\Controllers\Controller;
 use App\Models\MapLocation;
 use App\Models\PatrolLog;
@@ -76,8 +77,6 @@ class PatrolCheckinController extends Controller
         $validated = $request->validate([
             'map_location_id' => 'required|exists:map_locations,id',
             'notes' => 'nullable|string|max:1000',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         try {
@@ -86,14 +85,26 @@ class PatrolCheckinController extends Controller
                 'map_location_id' => $validated['map_location_id'],
                 'checked_in_at' => now(),
                 'notes' => $validated['notes'] ?? null,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
             ]);
 
             $location = MapLocation::find($validated['map_location_id']);
 
+            // Log patrol check-in
+            \Log::channel('patrol')->info('Patrol check-in recorded', [
+                'patrol_log_id' => $patrolLog->id,
+                'security_user_id' => auth()->id(),
+                'security_user_name' => auth()->user()->first_name.' '.auth()->user()->last_name,
+                'location_id' => $location->id,
+                'location_name' => $location->name,
+                'location_code' => $location->short_code,
+                'has_notes' => ! empty($validated['notes']),
+            ]);
+
+            // Broadcast the patrol log creation to authorized administrators
+            broadcast(new PatrolLogCreated($patrolLog));
+
             return redirect()
-                ->route('security.patrol-checkin.show', ['location' => $validated['map_location_id']])
+                ->route('security.patrol-scanner')
                 ->with('success', "Successfully checked in at {$location->name} ({$location->short_code})");
         } catch (\Exception $e) {
             \Log::error('Patrol check-in failed: '.$e->getMessage());

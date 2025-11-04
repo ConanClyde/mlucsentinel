@@ -24,14 +24,25 @@ class ReportsRealtime {
             return;
         }
 
-        // Listen to reports channel
-        window.Echo.channel('reports')
+        // Listen to student-reports channel (SAS Admin and Global Admin)
+        window.Echo.channel('student-reports')
             .listen('.report.created', (e) => {
-                console.log('Report created event received:', e);
+                console.log('Student report created event received:', e);
                 this.handleReportCreated(e.report);
             })
             .listen('.report.status-updated', (e) => {
-                console.log('Report status updated event received:', e);
+                console.log('Student report status updated event received:', e);
+                this.handleReportStatusUpdated(e.report);
+            });
+
+        // Listen to non-student-reports channel (Security Admin, Chancellor Admin, and Global Admin)
+        window.Echo.channel('non-student-reports')
+            .listen('.report.created', (e) => {
+                console.log('Non-student report created event received:', e);
+                this.handleReportCreated(e.report);
+            })
+            .listen('.report.status-updated', (e) => {
+                console.log('Non-student report status updated event received:', e);
                 this.handleReportStatusUpdated(e.report);
             });
 

@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Enums\UserType;
 use App\Models\Report;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -37,9 +38,22 @@ class ReportStatusUpdated implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        return [
-            new Channel('reports'),
-        ];
+        // Determine which channel to broadcast to based on violator type
+        $violatorUserType = $this->report->violatorVehicle?->user?->user_type;
+
+        if ($violatorUserType === UserType::Student) {
+            // Student reports go to SAS Admin and Global Admin only
+            return [
+                new Channel('student-reports'),
+                new Channel('reports'), // General reports channel for reporters
+            ];
+        } else {
+            // Non-student reports go to Security Admin, Chancellor Admin, and Global Admin only
+            return [
+                new Channel('non-student-reports'),
+                new Channel('reports'), // General reports channel for reporters
+            ];
+        }
     }
 
     /**

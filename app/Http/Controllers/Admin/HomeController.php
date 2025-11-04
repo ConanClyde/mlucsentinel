@@ -35,8 +35,9 @@ class HomeController extends Controller
             ->limit(10)
             ->get();
 
-        // Recent Users (latest registrations)
-        $recentUsers = User::orderBy('created_at', 'desc')
+        // Recent Users (latest registrations) - eager load relationships to prevent N+1
+        $recentUsers = User::with(['student', 'staff', 'security', 'reporter', 'stakeholder', 'administrator.adminRole'])
+            ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 

@@ -9,17 +9,23 @@ class MapLocationType extends Model
 {
     protected $fillable = [
         'name',
-        'icon',
         'default_color',
+        'requires_polygon',
         'description',
         'is_active',
         'display_order',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'requires_polygon' => 'boolean',
             'display_order' => 'integer',
         ];
     }

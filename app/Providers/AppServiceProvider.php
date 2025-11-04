@@ -5,12 +5,14 @@ namespace App\Providers;
 use App\Models\AdminRole;
 use App\Models\College;
 use App\Models\MapLocation;
+use App\Models\Payment;
 use App\Models\StakeholderType;
 use App\Models\VehicleType;
 use App\Models\ViolationType;
 use App\Observers\AdminRoleObserver;
 use App\Observers\CollegeObserver;
 use App\Observers\MapLocationObserver;
+use App\Observers\PaymentObserver;
 use App\Observers\StakeholderTypeObserver;
 use App\Observers\VehicleTypeObserver;
 use App\Observers\ViolationTypeObserver;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         ViolationType::observe(ViolationTypeObserver::class);
         AdminRole::observe(AdminRoleObserver::class);
         StakeholderType::observe(StakeholderTypeObserver::class);
+        Payment::observe(PaymentObserver::class);
 
         // Register map location observer for sticker generation
         MapLocation::observe(MapLocationObserver::class);

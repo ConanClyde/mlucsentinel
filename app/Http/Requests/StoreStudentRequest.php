@@ -37,7 +37,7 @@ class StoreStudentRequest extends FormRequest
                 'unique:users',
                 'regex:/^[^\s@]+@(gmail\.com|student\.dmmmsu\.edu\.ph)$/',
             ],
-            'college_id' => ['required', 'exists:colleges,id'],
+            'program_id' => ['required', 'exists:programs,id'],
             'student_id' => [
                 'required',
                 'string',
@@ -94,16 +94,19 @@ class StoreStudentRequest extends FormRequest
                     $typeId = $vehicle['type_id'] ?? null;
                     $plateNo = $vehicle['plate_no'] ?? '';
 
-                    // Plate number is required for Motorcycle (1) and Car (2), but not for Electric Vehicle (3)
-                    if ($typeId != 3 && empty($plateNo)) {
+                    // Get vehicle type to check if it requires plate number
+                    $vehicleType = $typeId ? \App\Models\VehicleType::find($typeId) : null;
+
+                    // Plate number is required if vehicle type requires it
+                    if ($vehicleType && $vehicleType->requires_plate && empty($plateNo)) {
                         $validator->errors()->add(
                             "vehicles.{$index}.plate_no",
-                            'Plate number is required for Motorcycle and Car vehicles.'
+                            "Plate number is required for {$vehicleType->name} vehicles."
                         );
                     }
 
-                    // Validate plate number format for non-electric vehicles
-                    if ($typeId != 3 && ! empty($plateNo)) {
+                    // Validate plate number format for vehicles that require plates
+                    if ($vehicleType && $vehicleType->requires_plate && ! empty($plateNo)) {
                         if (! preg_match('/^[A-Z]{2,3}-[0-9]{3,4}$/', $plateNo)) {
                             $validator->errors()->add(
                                 "vehicles.{$index}.plate_no",

@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Blue background with rounded corners -->
+  <rect width="512" height="512" rx="90" fill="#2563eb"/>
+  
+  <!-- Big white "M" centered -->
+  <text x="256" y="325" font-family="Arial, sans-serif" font-size="320" font-weight="bold" fill="#FFFFFF" text-anchor="middle">M</text>
+</svg>
+

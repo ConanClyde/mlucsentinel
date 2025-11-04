@@ -3,61 +3,70 @@
 @section('page-title', 'Patrol Monitor')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col gap-3 md:gap-4">
             <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
+            <div class="w-full">
                 <label class="form-label">Search</label>
                 <input type="text" id="search-input" class="form-input w-full" placeholder="Search by guard name, email, location...">
             </div>
+            
+            <!-- Filters Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <!-- Location Filter -->
+                <div class="w-full">
+                    <label class="form-label">Location</label>
+                    <select id="location-filter" class="form-input w-full">
+                        <option value="">All Locations</option>
+                        @foreach($locations as $location)
+                            <option value="{{ $location->id }}">{{ $location->short_code }} - {{ $location->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Location Filter -->
-            <div class="flex-1">
-                <label class="form-label">Location</label>
-                <select id="location-filter" class="form-input w-full">
-                    <option value="">All Locations</option>
-                    @foreach($locations as $location)
-                        <option value="{{ $location->id }}">{{ $location->short_code }} - {{ $location->name }}</option>
-                    @endforeach
-                </select>
+                <!-- Start Date Filter -->
+                <div class="w-full">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="start-date-filter" class="form-input w-full">
+                </div>
+
+                <!-- End Date Filter -->
+                <div class="w-full">
+                    <label class="form-label">End Date</label>
+                    <input type="date" id="end-date-filter" class="form-input w-full">
+                </div>
             </div>
-
-            <!-- Start Date Filter -->
-            <div class="flex-1">
-                <label class="form-label">Start Date</label>
-                <input type="date" id="start-date-filter" class="form-input w-full">
-            </div>
-
-            <!-- End Date Filter -->
-            <div class="flex-1">
-                <label class="form-label">End Date</label>
-                <input type="date" id="end-date-filter" class="form-input w-full">
-            </div>
-
+            
             <!-- Reset Button -->
-            <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+            <div class="flex-shrink-0 w-full sm:w-auto">
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] w-full sm:w-auto px-6">Reset</button>
             </div>
         </div>
     </div>
 
     <!-- Patrol Logs Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Patrol History</h3>
-            <div class="flex items-center gap-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+            <div class="flex items-center gap-3 md:gap-4">
+                <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Patrol History</h3>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <div id="patrol-connectionStatus" class="w-3 h-3 rounded-full bg-red-500" title="Connecting..."></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 md:gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-xs md:text-sm">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
                 </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+                <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
             </div>
         </div>
 
@@ -70,10 +79,9 @@
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Location</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Code</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Notes</th>
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">GPS</th>
                     </tr>
                 </thead>
-                <tbody id="patrolLogsTableBody">
+                <tbody id="patrol-logs-table-body">
                     @forelse($logs as $log)
                         <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" 
                             data-id="{{ $log->id }}" 
@@ -110,19 +118,10 @@
                                 </span>
                             </td>
                             <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $log->notes ?? '-' }}</td>
-                            <td class="py-2 px-3">
-                                @if($log->latitude && $log->longitude)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                                        Yes
-                                    </span>
-                                @else
-                                    <span class="text-[#706f6c] dark:text-[#A1A09A]">No</span>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                            <td colspan="5" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
                                 No patrol logs found.
                             </td>
                         </tr>
@@ -132,8 +131,8 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div id="pagination-controls" class="flex items-center justify-between mt-6">
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+        <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 md:mt-6">
+            <p class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 Showing <span id="showing-start">1</span>-<span id="showing-end">10</span> of <span id="total-count">0</span> logs
             </p>
             <div class="flex space-x-2">
@@ -153,8 +152,15 @@
 @push('scripts')
 <script>
 let patrolLogs = @json($logs->items());
+let patrolLogsRealtime = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize real-time updates
+    if (window.PatrolLogsRealtime) {
+        patrolLogsRealtime = new window.PatrolLogsRealtime();
+        patrolLogsRealtime.init();
+    }
+    
     const searchInput = document.getElementById('search-input');
     const locationFilter = document.getElementById('location-filter');
     const startDateFilter = document.getElementById('start-date-filter');
@@ -202,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function applyPagination() {
-        const rows = document.querySelectorAll('#patrolLogsTableBody tr');
+        const rows = document.querySelectorAll('#patrol-logs-table-body tr');
         let visibleCount = 0;
         let totalFiltered = 0;
 
@@ -325,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Pagination navigation functions (global scope)
     window.changePage = function(direction) {
-        const rows = document.querySelectorAll('#patrolLogsTableBody tr');
+        const rows = document.querySelectorAll('#patrol-logs-table-body tr');
         let totalFiltered = 0;
 
         const searchTerm = searchInput.value.toLowerCase();
@@ -403,7 +409,7 @@ function exportToCSV() {
         return;
     }
 
-    const headers = ['Check-in Time', 'Guard Name', 'Guard Email', 'Location Name', 'Location Code', 'Notes', 'GPS'];
+    const headers = ['Check-in Time', 'Guard Name', 'Guard Email', 'Location Name', 'Location Code', 'Notes'];
     const rows = visibleLogs.map(log => {
         const checkinTime = new Date(log.checked_in_at).toLocaleString('en-US', {
             year: 'numeric', month: 'short', day: 'numeric',
@@ -414,9 +420,8 @@ function exportToCSV() {
         const locationName = log.map_location?.name || 'N/A';
         const locationCode = log.map_location?.short_code || 'N/A';
         const notes = log.notes || '';
-        const gps = (log.latitude && log.longitude) ? 'Yes' : 'No';
 
-        return [checkinTime, guardName, guardEmail, locationName, locationCode, notes, gps].map(field => {
+        return [checkinTime, guardName, guardEmail, locationName, locationCode, notes].map(field => {
             const escaped = String(field).replace(/"/g, '""');
             return `"${escaped}"`;
         }).join(',');

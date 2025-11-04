@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\ViolationType;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -28,24 +29,28 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Get dashboard statistics (including revenue)
-        $stats = [
-            'total_users' => User::where('is_active', true)->count(),
-            'total_vehicles' => Vehicle::where('is_active', true)->count(),
-            'pending_reports' => Report::where('status', 'pending')->count(),
-            'total_reports' => Report::count(),
-            'total_revenue' => Payment::where('status', 'paid')->sum('amount'),
-            'total_payments' => Payment::whereIn('status', ['pending', 'paid'])->count(),
-            'paid_payments' => Payment::where('status', 'paid')->count(),
-            'pending_payments' => Payment::where('status', 'pending')->count(),
-        ];
+        // Get dashboard statistics (including revenue) - cached for 5 minutes
+        $stats = Cache::remember('dashboard.stats', 300, function () {
+            return [
+                'total_users' => User::where('is_active', true)->count(),
+                'total_vehicles' => Vehicle::where('is_active', true)->count(),
+                'pending_reports' => Report::where('status', 'pending')->count(),
+                'total_reports' => Report::count(),
+                'total_revenue' => Payment::where('status', 'paid')->sum('amount'),
+                'total_payments' => Payment::whereIn('status', ['pending', 'paid'])->count(),
+                'paid_payments' => Payment::where('status', 'paid')->count(),
+                'pending_payments' => Payment::where('status', 'pending')->count(),
+            ];
+        });
 
-        // Get report status distribution (for pie chart using new Enum)
-        $reportsByStatus = Report::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status')
-            ->toArray();
+        // Get report status distribution (for pie chart using new Enum) - cached for 5 minutes
+        $reportsByStatus = Cache::remember('dashboard.reports_by_status', 300, function () {
+            return Report::selectRaw('status, count(*) as count')
+                ->groupBy('status')
+                ->get()
+                ->pluck('count', 'status')
+                ->toArray();
+        });
 
         // Get user type distribution
         $userTypes = User::where('is_active', true)
@@ -57,10 +62,12 @@ class DashboardController extends Controller
             })
             ->toArray();
 
-        // Get vehicle type distribution
-        $vehicleTypes = VehicleType::withCount(['vehicles' => function ($query) {
-            $query->where('is_active', true);
-        }])->get()->pluck('vehicles_count', 'name')->toArray();
+        // Get vehicle type distribution - cached for 5 minutes
+        $vehicleTypes = Cache::remember('dashboard.vehicle_types', 300, function () {
+            return VehicleType::withCount(['vehicles' => function ($query) {
+                $query->where('is_active', true);
+            }])->get()->pluck('vehicles_count', 'name')->toArray();
+        });
 
         // Get user registrations for the last 6 months
         $userRegistrations = User::where('created_at', '>=', now()->subMonths(6))
@@ -209,16 +216,6 @@ class DashboardController extends Controller
         // Get patrol statistics (last 24 hours)
         $patrolStats = $this->getPatrolStats();
 
-        // Get sticker issuance trends (last 12 months) - Marketing Admin only
-        $stickerIssuanceTrends = Payment::where('created_at', '>=', now()->subMonths(12))
-            ->whereIn('status', ['pending', 'paid'])
-            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('count(*) as total'))
-            ->groupBy('month')
-            ->orderBy('month', 'asc')
-            ->get()
-            ->pluck('total', 'month')
-            ->toArray();
-
         // Get patrol coverage data (Security/Global Admin only)
         $patrolCoverageData = $this->getPatrolCoverageData();
 
@@ -244,7 +241,6 @@ class DashboardController extends Controller
             'violationsByType' => $violationsByType,
             'patrolStats' => $patrolStats,
             'topViolatorsThisMonth' => $topViolatorsThisMonth,
-            'stickerIssuanceTrends' => $stickerIssuanceTrends,
             'patrolCoverageData' => $patrolCoverageData,
         ]);
     }
@@ -372,5 +368,155 @@ class DashboardController extends Controller
             'total_locations' => $totalLocations,
             'covered_locations' => $coveredLocations,
         ];
+    }
+
+    /**
+     * Export dashboard statistics to CSV
+     */
+    public function export()
+    {
+        $filename = 'dashboard_stats_'.now()->format('Y-m-d_His').'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+
+            // Overview Statistics
+            fputcsv($file, ['OVERVIEW STATISTICS']);
+            fputcsv($file, ['Metric', 'Value']);
+            fputcsv($file, ['Total Active Users', User::where('is_active', true)->count()]);
+            fputcsv($file, ['Total Active Vehicles', Vehicle::where('is_active', true)->count()]);
+            fputcsv($file, ['Pending Reports', Report::where('status', 'pending')->count()]);
+            fputcsv($file, ['Total Reports', Report::count()]);
+            fputcsv($file, ['Total Revenue (PHP)', number_format(Payment::where('status', 'paid')->sum('amount'), 2)]);
+            fputcsv($file, ['Paid Payments', Payment::where('status', 'paid')->count()]);
+            fputcsv($file, ['Pending Payments', Payment::where('status', 'pending')->count()]);
+            fputcsv($file, []);
+
+            // Report Status Distribution
+            fputcsv($file, ['REPORTS BY STATUS']);
+            fputcsv($file, ['Status', 'Count']);
+            $reportsByStatus = Report::selectRaw('status, count(*) as count')
+                ->groupBy('status')
+                ->get();
+            foreach ($reportsByStatus as $status) {
+                fputcsv($file, [ucfirst($status->status), $status->count]);
+            }
+            fputcsv($file, []);
+
+            // User Type Distribution
+            fputcsv($file, ['USERS BY TYPE']);
+            fputcsv($file, ['User Type', 'Count']);
+            $userTypes = User::where('is_active', true)
+                ->select('user_type', DB::raw('count(*) as count'))
+                ->groupBy('user_type')
+                ->get();
+            foreach ($userTypes as $type) {
+                fputcsv($file, [$type->user_type->label(), $type->count]);
+            }
+            fputcsv($file, []);
+
+            // Vehicle Type Distribution
+            fputcsv($file, ['VEHICLES BY TYPE']);
+            fputcsv($file, ['Vehicle Type', 'Count']);
+            $vehicleTypes = VehicleType::withCount(['vehicles' => function ($query) {
+                $query->where('is_active', true);
+            }])->get();
+            foreach ($vehicleTypes as $type) {
+                fputcsv($file, [$type->name, $type->vehicles_count]);
+            }
+            fputcsv($file, []);
+
+            // Violation Types Distribution
+            fputcsv($file, ['REPORTS BY VIOLATION TYPE']);
+            fputcsv($file, ['Violation Type', 'Count']);
+            $violationsByType = DB::table('reports')
+                ->join('violation_types', 'reports.violation_type_id', '=', 'violation_types.id')
+                ->select('violation_types.name', DB::raw('count(*) as count'))
+                ->groupBy('violation_types.name')
+                ->orderBy('count', 'desc')
+                ->get();
+            foreach ($violationsByType as $violation) {
+                fputcsv($file, [$violation->name, $violation->count]);
+            }
+            fputcsv($file, []);
+
+            // Top Violators
+            fputcsv($file, ['TOP 10 VIOLATORS (All Time)']);
+            fputcsv($file, ['Name', 'Email', 'User Type', 'Violation Count']);
+            $topViolators = User::withCount(['vehicles' => function ($query) {
+                $query->whereHas('violatorReports');
+            }])
+                ->whereHas('vehicles.violatorReports')
+                ->orderBy('vehicles_count', 'desc')
+                ->limit(10)
+                ->get();
+            foreach ($topViolators as $violator) {
+                fputcsv($file, [
+                    $violator->first_name.' '.$violator->last_name,
+                    $violator->email,
+                    $violator->user_type->label(),
+                    $violator->vehicles_count,
+                ]);
+            }
+            fputcsv($file, []);
+
+            // Top Reporters
+            fputcsv($file, ['TOP 10 REPORTERS (All Time)']);
+            fputcsv($file, ['Name', 'Email', 'User Type', 'Reports Submitted']);
+            $topReporters = User::withCount('reports')
+                ->whereHas('reports')
+                ->orderBy('reports_count', 'desc')
+                ->limit(10)
+                ->get();
+            foreach ($topReporters as $reporter) {
+                fputcsv($file, [
+                    $reporter->first_name.' '.$reporter->last_name,
+                    $reporter->email,
+                    $reporter->user_type->label(),
+                    $reporter->reports_count,
+                ]);
+            }
+            fputcsv($file, []);
+
+            // Top Violation Locations
+            fputcsv($file, ['TOP 10 VIOLATION LOCATIONS']);
+            fputcsv($file, ['Location', 'Violation Count']);
+            $topLocations = Report::select('location', DB::raw('count(*) as count'))
+                ->whereNotNull('location')
+                ->where('location', '!=', '')
+                ->groupBy('location')
+                ->orderBy('count', 'desc')
+                ->limit(10)
+                ->get();
+            foreach ($topLocations as $location) {
+                fputcsv($file, [$location->location, $location->count]);
+            }
+            fputcsv($file, []);
+
+            // Violations Last 30 Days
+            fputcsv($file, ['VIOLATIONS PER DAY (Last 30 Days)']);
+            fputcsv($file, ['Date', 'Count']);
+            $violationsPerDay = Report::where('created_at', '>=', now()->subDays(30))
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                ->groupBy('date')
+                ->orderBy('date', 'desc')
+                ->get();
+            foreach ($violationsPerDay as $day) {
+                fputcsv($file, [$day->date, $day->count]);
+            }
+            fputcsv($file, []);
+
+            // Footer
+            fputcsv($file, ['Report Generated', now()->format('Y-m-d H:i:s')]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

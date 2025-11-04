@@ -197,7 +197,6 @@
             <p><strong>MLUC Sentinel</strong></p>
             <p>A Digital Parking Management System</p>
             <p>Don Mariano Marcos Memorial State University - Mid La Union Campus</p>
-            <p style="margin-top: 15px; font-size: 12px;">If you have any questions, please contact our support team.</p>
         </div>
     </div>
 </body>

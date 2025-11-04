@@ -3,12 +3,12 @@
 @section('page-title', 'Students Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col lg:flex-row gap-3 md:gap-4">
             <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
+            <div class="flex-1">
                 <label class="form-label">Search</label>
                 <input type="text" id="search-input" class="form-input w-full" placeholder="Search by name, email, or student ID...">
             </div>
@@ -39,19 +39,20 @@
 
             <!-- Reset Button -->
             <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+                <label class="form-label opacity-0 hidden sm:block">Reset</label>
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] w-full lg:w-auto px-6">Reset</button>
             </div>
         </div>
     </div>
 
     <!-- Students Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Students List</h3>
-            <div class="flex items-center gap-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Students List</h3>
+            <div class="flex flex-wrap items-center gap-3 md:gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-xs md:text-sm">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -59,10 +60,10 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
                     <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                 </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+                <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
             </div>
         </div>
 
@@ -115,16 +116,18 @@
                                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
                                     </svg>
                                 </button>
-                                <button onclick="openEditModal({{ $student->id }})" class="btn-edit" title="Edit">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
-                                    </svg>
-                                </button>
-                                <button onclick="deleteStudent({{ $student->id }})" class="btn-delete" title="Delete">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
+                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSecurityAdmin())
+                                    <button onclick="openEditModal({{ $student->id }})" class="btn-edit" title="Edit">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="deleteStudent({{ $student->id }})" class="btn-delete" title="Delete">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -140,8 +143,8 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div id="pagination-controls" class="flex items-center justify-between mt-6">
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+        <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 md:mt-6">
+            <p class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 Showing <span id="showing-start">1</span>-<span id="showing-end">10</span> of <span id="total-count">0</span> students
             </p>
             <div class="flex space-x-2">
@@ -231,11 +234,15 @@
                         <input type="text" id="edit_license_no" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">College <span class="text-red-500">*</span></label>
-                        <select id="edit_college_id" class="form-input" required>
-                            <option value="">Select College</option>
+                        <label class="form-label">Program <span class="text-red-500">*</span></label>
+                        <select id="edit_program_id" class="form-input" required>
+                            <option value="">Select Program</option>
                             @foreach($colleges as $college)
-                                <option value="{{ $college->id }}">{{ $college->name }}</option>
+                                <optgroup label="{{ $college->name }}">
+                                    @foreach($college->programs as $program)
+                                        <option value="{{ $program->id }}">{{ $program->name }}</option>
+                                    @endforeach
+                                </optgroup>
                             @endforeach
                         </select>
                     </div>
@@ -722,8 +729,8 @@ function viewStudent(id) {
                     <p class="text-[#1b1b18] dark:text-[#EDEDEC]">${student.license_no || 'N/A'}</p>
                 </div>
                 <div>
-                    <h3 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">College</h3>
-                    <p class="text-[#1b1b18] dark:text-[#EDEDEC]">${student.college?.name || 'No College'}</p>
+                    <h3 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">Program</h3>
+                    <p class="text-[#1b1b18] dark:text-[#EDEDEC]">${student.program?.name || 'No Program'}</p>
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">Status</h3>
@@ -892,7 +899,7 @@ function addEditVehicle() {
                     <label class="form-label">Vehicle Type <span class="text-red-500">*</span></label>
                     <select name="vehicles[${editVehicleCount}][type_id]" class="form-input" required onchange="togglePlateNumberInput(this)">
                         <option value="">Select Vehicle Type</option>
-                        ${vehicleTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
+                        ${vehicleTypes.map(type => `<option value="${type.id}" data-requires-plate="${type.requires_plate ? '1' : '0'}">${type.name}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group" id="plate-number-group-${editVehicleCount}">
@@ -959,14 +966,28 @@ function updateEditAddVehicleButton() {
 function togglePlateNumberInput(selectElement) {
     const vehicleCard = selectElement.closest('.vehicle-card');
     const plateNumberGroup = vehicleCard.querySelector('[id^="plate-number-group-"]');
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const vehicleTypeName = selectedOption.text.toLowerCase();
     
-    if (vehicleTypeName.includes('electric')) {
+    if (!plateNumberGroup) {
+        return; // Safety check
+    }
+    
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const requiresPlate = selectedOption && selectedOption.getAttribute('data-requires-plate') === '1';
+    const plateNumberInput = plateNumberGroup.querySelector('input');
+    
+    if (!requiresPlate) {
         plateNumberGroup.style.display = 'none';
-        plateNumberGroup.querySelector('input').value = '';
+        if (plateNumberInput) {
+            plateNumberInput.value = '';
+            plateNumberInput.removeAttribute('required');
+        }
     } else {
         plateNumberGroup.style.display = 'block';
+        plateNumberGroup.classList.remove('hidden');
+        plateNumberGroup.style.visibility = 'visible';
+        if (plateNumberInput) {
+            plateNumberInput.setAttribute('required', 'required');
+        }
     }
 }
 
@@ -1034,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('email', document.getElementById('edit_email').value);
                 formData.append('student_id', document.getElementById('edit_student_id_input').value);
                 formData.append('license_no', document.getElementById('edit_license_no').value);
-                formData.append('college_id', document.getElementById('edit_college_id').value);
+                formData.append('program_id', document.getElementById('edit_program_id').value);
                 formData.append('is_active', isActiveValue === '1' ? '1' : '0');
                 formData.append('license_image', licenseImageInput.files[0]);
                 
@@ -1075,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     email: document.getElementById('edit_email').value,
                     student_id: document.getElementById('edit_student_id_input').value,
                     license_no: document.getElementById('edit_license_no').value,
-                    college_id: parseInt(document.getElementById('edit_college_id').value),
+                    program_id: parseInt(document.getElementById('edit_program_id').value),
                     is_active: isActiveValue === '1',
                     vehicles: vehicles,
                     vehicles_to_delete: vehiclesToDelete
@@ -1131,9 +1152,9 @@ function exportToCSV() {
         const college = student.college?.name || 'No College';
         const status = student.user.is_active ? 'Active' : 'Inactive';
         const createdDate = new Date(student.created_at).toLocaleDateString('en-US', { 
-            year: 'numeric', month: 'long', day: 'numeric' 
+            year: 'numeric', month: 'long', day: 'numeric'
         });
-        
+
         return [name, email, studentId, college, status, createdDate].map(field => {
             const escaped = String(field).replace(/"/g, '""');
             return `"${escaped}"`;
@@ -1167,7 +1188,7 @@ function openEditModal(id) {
     document.getElementById('edit_email').value = student.user.email;
     document.getElementById('edit_student_id_input').value = student.student_id;
     document.getElementById('edit_license_no').value = student.license_no;
-    document.getElementById('edit_college_id').value = student.college_id;
+    document.getElementById('edit_program_id').value = student.program_id;
     document.getElementById('edit_is_active').value = student.user.is_active ? '1' : '0';
     
     // Display current license image if exists
