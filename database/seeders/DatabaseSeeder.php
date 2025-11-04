@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MapLocationTypeSeeder::class,
             StickerCounterSeeder::class,
+            UsersSeeder::class,
         ]);
 
         // Optional: Uncomment to create test user
