@@ -15,9 +15,10 @@ fi
 echo "📊 Running migrations..."
 php artisan migrate --force
 
-# Optional: Run seeders on first deploy (comment out after first run)
-# echo "🌱 Seeding database..."
-# php artisan db:seed --force
+# Run seeders on first deploy
+echo "🌱 Seeding database..."
+php artisan db:seed --force
+php artisan db:seed --class=UsersSeeder --force
 
 # Clear and rebuild caches
 echo "🧹 Clearing caches..."

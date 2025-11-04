@@ -18,10 +18,10 @@ mkdir -p bootstrap/cache
 echo "📊 Running migrations..."
 php artisan migrate --force
 
-# Seed database (only on first deployment - uncomment if needed)
-# echo "🌱 Seeding database..."
-# php artisan db:seed --force
-# php artisan db:seed --class=UsersSeeder --force
+# Seed database (only on first deployment)
+echo "🌱 Seeding database..."
+php artisan db:seed --force
+php artisan db:seed --class=UsersSeeder --force
 
 # Clear all caches
 echo "🧹 Clearing caches..."
