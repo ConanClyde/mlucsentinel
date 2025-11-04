@@ -11,14 +11,32 @@ if [ ! -L public/storage ]; then
     php artisan storage:link
 fi
 
-# Run migrations
-echo "📊 Running migrations..."
-php artisan migrate --force
-
-# Run seeders on first deploy
-echo "🌱 Seeding database..."
-php artisan db:seed --force
-php artisan db:seed --class=UsersSeeder --force
+# Check if DB_RESET=true is set (for manual reset)
+if [ "$DB_RESET" = "true" ]; then
+    echo "🗑️  DB_RESET=true detected - Resetting database..."
+    php artisan migrate:fresh --force --seed
+    php artisan db:seed --class=UsersSeeder --force
+    echo "✅ Database reset complete!"
+    echo "   Email: ademesa.dev@gmail.com"
+    echo "   Password: admin123"
+    echo "⚠️  IMPORTANT: Remove DB_RESET environment variable after this deployment!"
+else
+    # Check if this is first deployment (no migrations table or empty)
+    MIGRATION_COUNT=$(php artisan migrate:status --no-ansi 2>/dev/null | grep -c "Ran" || echo "0")
+    
+    if [ "$MIGRATION_COUNT" = "0" ] || [ -z "$MIGRATION_COUNT" ]; then
+        echo "🆕 First deployment detected - Running migrate:fresh with seed..."
+        php artisan migrate:fresh --force --seed
+        php artisan db:seed --class=UsersSeeder --force
+        echo "✅ Database initialized with admin user!"
+        echo "   Email: ademesa.dev@gmail.com"
+        echo "   Password: admin123"
+    else
+        echo "📊 Running migrations..."
+        php artisan migrate --force
+        echo "✅ Migrations complete"
+    fi
+fi
 
 # Clear and rebuild caches
 echo "🧹 Clearing caches..."
