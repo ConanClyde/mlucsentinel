@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('reporters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->unique()->constrained()->onDelete('cascade');
-            $table->foreignId('type_id')->nullable()->constrained('reporter_types')->onDelete('set null');
-            $table->date('expiration_date')->nullable(); // expiration date only for SBO reporter type(1 year)
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignId('reporter_role_id')->nullable()->index();
+            $table->date('expiration_date')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
