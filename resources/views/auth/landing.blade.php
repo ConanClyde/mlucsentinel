@@ -40,7 +40,6 @@
                     </button>
                     
                     <a href="{{ route('login') }}" class="btn btn-secondary">Sign In</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary">Get Started</a>
                 </div>
 
                 {{-- Mobile Menu Button --}}
@@ -65,7 +64,6 @@
                     </button>
                     
                     <a href="{{ route('login') }}" class="block w-full btn btn-secondary text-center">Sign In</a>
-                    <a href="{{ route('register') }}" class="block w-full btn btn-primary text-center">Get Started</a>
                 </div>
             </div>
         </div>
@@ -75,219 +73,303 @@
     <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden transition-opacity duration-300"></div>
 
     <!-- Hero Section -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
         <div class="text-center">
-            <h1 class="text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
-                MLUC Sentinel
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] px-4 py-2 rounded-full text-sm font-medium mb-8">
+                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                Digital Parking & Reporting Management System
+            </div>
+            
+            <!-- Main Heading -->
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 leading-tight" style="word-break: break-word;">
+                Campus parking that<span class="sm:hidden"> </span><br class="hidden sm:block">works like a <span class="text-blue-600 dark:text-blue-500">Sentinel</span>
             </h1>
-            <h2 class="text-3xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">
-                A Digital Parking Management System
-            </h2>
-            <p class="text-2xl text-[#706f6c] dark:text-[#A1A09A] mb-4 max-w-3xl mx-auto font-medium">
-                Streamline Campus Parking. Enhance Safety. Simplify Your Journey.
+            
+            <!-- Subheading -->
+            <p class="text-lg md:text-xl text-[#706f6c] dark:text-[#A1A09A] mb-10 max-w-2xl mx-auto">
+                Comprehensive digital platform for parking permits, violation reporting with QR technology, evidence-based enforcement, and real-time security monitoring.
             </p>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-8 max-w-3xl mx-auto">
-                Tired of circling for a parking spot? Dealing with congestion and unclear rules? MLUC Sentinel is the smart, digital solution for Don Mariano Marcos Memorial State University - Mid La Union Campus, transforming manual parking chaos into a seamless, efficient, and secure experience for everyone.
-            </p>
-            <div class="flex justify-center gap-4 flex-wrap">
-                <a href="{{ route('login') }}" class="btn btn-primary text-lg px-8 py-3">
-                    <x-heroicon-s-rocket-launch class="w-5 h-5 inline-block mr-2" />
-                    Experience MLUC Sentinel
+            
+            <!-- CTA Buttons -->
+            <div class="flex justify-center gap-4 flex-wrap mb-6">
+                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] font-semibold text-base px-8 py-3.5 rounded-lg hover:bg-[#2a2a2a] dark:hover:bg-gray-100 transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Get Started
                 </a>
-                <a href="#research" class="btn btn-secondary text-lg px-8 py-3">
-                    View Our Research
-                </a>
+            </div>
+            
+            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Join MLUC Sentinel as a student, staff member, stakeholder, or security personnel and start managing your campus parking digitally</p>
+            
+            <!-- Real-Time Statistics Showcase -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">
+                <div class="text-center p-6 bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2" id="stat-users">
+                        {{ \App\Models\User::count() }}
+                    </div>
+                    <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Registered Users</div>
+                </div>
+                <div class="text-center p-6 bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2" id="stat-vehicles">
+                        {{ \App\Models\Vehicle::count() }}
+                    </div>
+                    <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Vehicles Registered</div>
+                </div>
+                <div class="text-center p-6 bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2" id="stat-violations">
+                        {{ \App\Models\Report::where('status', 'approved')->count() }}
+                    </div>
+                    <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violations Approved</div>
+                </div>
             </div>
         </div>
 
         <!-- Why MLUC Sentinel Section -->
-        <div class="mt-32">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">Why MLUC Sentinel?</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-8 max-w-4xl mx-auto text-center">
-                The current manual parking system at DMMMSU-MLUC leads to inefficiency, congestion, and security concerns. MLUC Sentinel addresses these challenges head-on with a centralized, data-driven platform.
-            </p>
+        <div class="mt-32 max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-sm font-semibold text-blue-600 dark:text-blue-500 mb-4 uppercase tracking-wide">Benefits</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Why MLUC Sentinel?</h2>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                    Traditional campus management relies on manual processes. MLUC Sentinel transforms operations with a centralized digital platform.
+                </p>
+            </div>
             
-            <div class="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto mt-12">
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+            <div class="grid md:grid-cols-2 gap-8 mt-12">
+                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-start mb-2">
-                        <x-heroicon-s-check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">End Manual Hassles</h3>
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Digital Parking Permit System</h3>
                     </div>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Say goodbye to paper-based permits, fragmented records, and delayed reporting.</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Eliminate paper-based parking permits with digital vehicle registration, automatic QR-enabled sticker generation, and color-coded identification—streamlining campus parking management from registration to enforcement.</p>
                 </div>
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-start mb-2">
-                        <x-heroicon-s-check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Reduce Congestion</h3>
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Smart Violation Reporting System</h3>
                     </div>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Real-time data and smart management minimize traffic buildup and search times.</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Report violations instantly by scanning QR codes on parking stickers. Upload photo evidence, pin exact locations on the interactive campus map, and automatically route reports to the appropriate administrators—transforming violation management from manual to digital.</p>
                 </div>
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-start mb-2">
-                        <x-heroicon-s-check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Enhance Campus Safety</h3>
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Security Patrol Tracking</h3>
                     </div>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Proactive monitoring and clear regulations create a safer environment for pedestrians and drivers.</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Monitor security patrols with QR-based check-ins at strategic locations, track coverage, and ensure comprehensive campus security.</p>
                 </div>
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-start mb-2">
-                        <x-heroicon-s-check-circle class="w-5 h-5 text-green-600 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Ensure Fair Enforcement</h3>
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Transparent Management</h3>
                     </div>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Digital tracking guarantees consistent and transparent application of parking rules.</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Digital tracking ensures consistent enforcement, automatic admin assignment based on violator type, and complete audit trails.</p>
                 </div>
             </div>
         </div>
 
         <!-- Key Features Section -->
-        <div class="mt-32">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">Key Features</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-12 max-w-4xl mx-auto text-center">
-                MLUC Sentinel integrates all aspects of campus parking into one intuitive system.
-            </p>
+        <div class="mt-32 max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-sm font-semibold text-blue-600 dark:text-blue-500 mb-4 uppercase tracking-wide">Features</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Complete Campus Management</h2>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                    Everything you need to manage parking, violations, and security in one comprehensive platform.
+                </p>
+            </div>
 
-            <!-- For Students, Faculty & Staff -->
+            <!-- For Students, Staff & Stakeholders -->
             <div class="bg-white dark:bg-[#1b1b18] p-8 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] mb-8">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-lg flex items-center justify-center mr-3">
-                        <x-heroicon-s-user-group class="w-5 h-5 text-white dark:text-[#1b1b18]" />
+                <div class="flex flex-col md:flex-row items-center md:items-center text-center md:text-left mb-6">
+                    <div class="w-12 h-12 flex-shrink-0 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center mb-4 md:mb-0 md:mr-4">
+                        <x-heroicon-s-user-group class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">For Students, Faculty & Staff</h3>
+                    <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">For Students, Staff & Stakeholders</h3>
                 </div>
                 <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Permits</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Apply for and receive your parking permit instantly online—no more long lines.</p>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Easy Account Creation</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Create your MLUC Sentinel account quickly and easily. Join the digital parking management system and access all campus parking services online.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Real-Time Availability</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Check live parking space availability on your phone before you even arrive on campus.</p>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Color-Coded Parking Stickers</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Receive color-coded parking stickers based on your user type and plate number for instant identification and authorized parking access across campus.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">User-Friendly Portal</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">A simple interface for managing your vehicle registration and viewing your parking status.</p>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">QR-Enabled Verification</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Each parking sticker includes a unique QR code linking to your vehicle registration for quick verification and streamlined violation reporting.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Quick Violation Checks</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Easily view and understand any parking citations.</p>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Parking Management</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Once registered, visit campus administration to register your vehicle, receive your parking permit sticker, and enjoy hassle-free digital campus parking management.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- For Security & Administration -->
-            <div class="bg-white dark:bg-[#1b1b18] p-8 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-lg flex items-center justify-center mr-3">
-                        <x-heroicon-s-shield-check class="w-5 h-5 text-white dark:text-[#1b1b18]" />
+            <!-- For Security & Reporters -->
+            <div class="bg-white dark:bg-[#1b1b18] p-8 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] mb-8">
+                <div class="flex flex-col md:flex-row items-center md:items-center text-center md:text-left mb-6">
+                    <div class="w-12 h-12 flex-shrink-0 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center mb-4 md:mb-0 md:mr-4">
+                        <x-heroicon-s-shield-exclamation class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">For Security & Administration</h3>
+                    <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">For Security Personnel & Reporters</h3>
                 </div>
                 <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Centralized Dashboard</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Get a complete, real-time overview of campus parking operations.</p>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">QR-Based Violation Reporting</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Scan parking sticker QR codes with your mobile device to instantly access vehicle information and file violation reports—no manual data entry required.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Enforcement</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Use mobile devices to verify permits, issue digital citations, and log violations instantly.</p>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Evidence Upload System</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Capture and upload photo evidence directly from your device, ensuring every violation report is backed by visual documentation for accountability.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Automated Access Control</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Integrate with RFID or license plate recognition for automated gate entry and exit.</p>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Interactive Campus Map</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Pin exact violation locations on an interactive campus map with precise coordinates, providing administrators with clear location context for enforcement.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Powerful Analytics</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Make informed decisions with detailed reports on usage patterns, violation trends, and space utilization.</p>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Violation Records</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">All reports are automatically stored with complete details, creating a comprehensive digital record system that replaces manual paperwork.</p>
+                    </div>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Patrol Check-In System</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Security personnel scan location QR codes at strategic checkpoints to log patrol activities, track coverage areas, and maintain comprehensive patrol records.</p>
+                    </div>
+                    <div class="text-center md:text-left md:text-center">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Mobile-Optimized Interface</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Access the reporting system from any mobile device with a responsive interface designed for on-the-go enforcement and patrol activities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- For Administration -->
+            <div class="bg-white dark:bg-[#1b1b18] p-8 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="flex flex-col md:flex-row items-center md:items-center text-center md:text-left mb-6">
+                    <div class="w-12 h-12 flex-shrink-0 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center mb-4 md:mb-0 md:mr-4">
+                        <x-heroicon-s-shield-check class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">For Administration</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Parking Operations Dashboard</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Comprehensive dashboard with real-time analytics for parking permit registrations, violation reports, patrol activities, and overall parking facility utilization.</p>
+                    </div>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Violation Report Management</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Review, approve, or reject violation reports with complete evidence trails, manage enforcement actions, and maintain comprehensive violation records.</p>
+                    </div>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Automated Report Assignment</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">System automatically routes violation reports to appropriate administrators—SAS Admin for student violations, Chancellor and Security Admins for others.</p>
+                    </div>
+                    <div class="text-center md:text-left">
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Analytics & Reporting</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Access detailed analytics, generate comprehensive reports, and export data for institutional records and compliance documentation.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- How It Works Section -->
-        <div class="mt-32">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">How It Works</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-12 max-w-4xl mx-auto text-center">
-                MLUC Sentinel is built on a robust and user-centered process.
-            </p>
+        <div class="mt-32 max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-sm font-semibold text-blue-600 dark:text-blue-500 mb-4 uppercase tracking-wide">Process</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">How It Works</h2>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                    Simple, streamlined process from registration to enforcement.
+                </p>
+            </div>
             
-            <div class="grid md:grid-cols-4 gap-6">
-                <div class="text-center">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">1</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Register & Apply</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Users register their vehicle and apply for a permit through the online portal.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Create Your Account</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Click "Get Started" to create your MLUC Sentinel account. Provide your basic information and join the digital parking management system.</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">2</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Get Digital Permit</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Once approved, a digital permit is issued and linked to the vehicle.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Register Your Vehicle</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Visit campus administration to register your vehicle and receive your color-coded QR-enabled parking sticker with unique identification.</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">3</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Park with Ease</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Check real-time availability, find a spot quickly, and park.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Report Violations</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Scan parking sticker QR codes to instantly file violation reports. Upload photo evidence, select violation types, and pin exact locations on the interactive campus map.</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">4</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Manage & Enforce</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Security monitors compliance digitally, ensuring a fair and orderly system for all.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Manage & Monitor</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Administrators review and process violation reports, track parking permit status, monitor security patrol coverage, and access real-time analytics for complete parking and reporting operations management.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Methodology Section -->
-        <div class="mt-32" id="research">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">Our Methodology</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-8 max-w-4xl mx-auto text-center">
-                This system was developed as a Capstone Project by BS Information Technology students, following a rigorous and iterative development process:
-            </p>
+        <!-- FAQ Section -->
+        <div class="mt-32 max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-sm font-semibold text-blue-600 dark:text-blue-500 mb-4 uppercase tracking-wide">Support</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Frequently Asked Questions</h2>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                    Everything you need to know about MLUC Sentinel
+                </p>
+            </div>
             
-            <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">In-Depth Research</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">We conducted interviews and focus group discussions with key campus stakeholders to identify real needs and challenges.</p>
-                </div>
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Iterative Development</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Built using the Spiral Model (SDLC), ensuring risks were managed and user feedback was incorporated at every cycle.</p>
-                </div>
-                <div class="bg-white dark:bg-[#1b1b18] p-6 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Proven Usability</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">The system's usability was formally evaluated and validated using the standardized System Usability Scale (SUS).</p>
-                </div>
+            <div class="max-w-3xl mx-auto space-y-4">
+                <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+                    <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">How do I get access to MLUC Sentinel?</summary>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Click "Get Started" to submit your registration. Select your user type (Student, Staff, Stakeholder, or Security) and optionally provide vehicle information. Your registration will be reviewed by an administrator before your account is activated.</p>
+                </details>
+                
+                <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+                    <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">How do I register my vehicle?</summary>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Vehicle registration is done by campus administrators on your behalf. Visit the campus administration office with your vehicle documents and they will register your vehicle and issue your parking permit sticker.</p>
+                </details>
+                
+                <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+                    <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">What if I lose my parking sticker?</summary>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Go to marketing administrators to report a lost sticker. They can use the "Request New Sticker" feature in the system to create a replacement request for your vehicle. A sticker fee will apply, and a new sticker with a unique QR code will be generated to prevent unauthorized use of the lost sticker.</p>
+                </details>
+                
+                <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+                    <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">How do I report a parking violation?</summary>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Security personnel and authorized reporters can scan the QR code on the vehicle's parking sticker using the mobile app, upload photo evidence, and pin the location on the campus map. The system will automatically route the report to the appropriate administrator.</p>
+                </details>
+                
+                <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+                    <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">Can I view my violation history?</summary>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Students, staff, and stakeholders do not have direct system access. If you receive a violation notification via email, you can contact the administration office to inquire about your violation history and status.</p>
+                </details>
             </div>
         </div>
 
-        <!-- Designed for DMMMSU Section -->
+        <!-- Contact Section -->
         <div class="mt-32 text-center">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Designed for DMMMSU-MLUC</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-4xl mx-auto">
-                MLUC Sentinel isn't just another app; it's a custom-built solution designed specifically for the unique needs and growth of our campus. It represents a strategic shift from passive rule enforcement to proactive, smart campus mobility management.
-            </p>
-        </div>
-
-        <!-- CTA Section -->
-        <div class="mt-32 bg-white dark:bg-[#1b1b18] p-12 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] text-center">
-            <h2 class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Get Started Today!</h2>
-            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-8 max-w-3xl mx-auto">
-                Join us in moving DMMMSU-MLUC towards a smarter, more modern campus infrastructure.
-            </p>
-            <div class="flex justify-center gap-4 flex-wrap mb-8">
-                <a href="{{ route('login') }}" class="btn btn-primary text-lg px-8 py-3">
-                    Access the System Here
-                </a>
-                <a href="#research" class="btn btn-secondary text-lg px-8 py-3">
-                    Download the Full Research Paper
-                </a>
-            </div>
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <p class="text-lg text-[#706f6c] dark:text-[#A1A09A]">
                 For any inquiries, please contact the development team at: <a href="mailto:ademesa.dev@gmail.com" class="text-[#1b1b18] dark:text-[#EDEDEC] font-medium hover:underline">ademesa.dev@gmail.com</a>
             </p>
         </div>
@@ -477,6 +559,41 @@
                         closeMobileMenu();
                     }
                 });
+            }
+            
+            // Real-time statistics updates
+            if (window.Echo) {
+                // Listen for new users
+                window.Echo.channel('users')
+                    .listen('.user.created', (event) => {
+                        const statElement = document.getElementById('stat-users');
+                        if (statElement) {
+                            const currentCount = parseInt(statElement.textContent);
+                            statElement.textContent = currentCount + 1;
+                        }
+                    });
+                
+                // Listen for new vehicles
+                window.Echo.channel('vehicles')
+                    .listen('.vehicle.created', (event) => {
+                        const statElement = document.getElementById('stat-vehicles');
+                        if (statElement) {
+                            const currentCount = parseInt(statElement.textContent);
+                            statElement.textContent = currentCount + 1;
+                        }
+                    });
+                
+                // Listen for approved violations
+                window.Echo.channel('reports')
+                    .listen('.report.status.updated', (event) => {
+                        if (event.report && event.report.status === 'approved') {
+                            const statElement = document.getElementById('stat-violations');
+                            if (statElement) {
+                                const currentCount = parseInt(statElement.textContent);
+                                statElement.textContent = currentCount + 1;
+                            }
+                        }
+                    });
             }
         });
     </script>

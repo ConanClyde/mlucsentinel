@@ -3,81 +3,85 @@
 @section('page-title', 'Vehicles Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
-            <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
-                <label class="form-label">Search</label>
-                <input type="text" id="search-input" class="form-input w-full" placeholder="Search by owner, plate number...">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col gap-3 md:gap-4">
+            <!-- Search and Reset Row -->
+            <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
+                <div class="flex-1">
+                    <label class="form-label">Search</label>
+                    <input type="text" id="search-input" class="form-input w-full" placeholder="Search by owner, plate number...">
+                </div>
+                <div class="flex-shrink-0 sm:w-auto">
+                    <label class="form-label opacity-0 hidden sm:block">Reset</label>
+                    <button id="reset-filters" class="btn btn-secondary !h-[38px] w-full sm:w-auto px-6">Reset</button>
+                </div>
             </div>
 
-            <!-- Vehicle Type Filter -->
-            <div class="flex-1">
-                <label class="form-label">Type</label>
-                <select id="type-filter" class="form-input w-full">
-                    <option value="">All Types</option>
-                    @foreach($vehicleTypes as $type)
-                        <option value="{{ $type->id }}">{{ $type->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <!-- Filters Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <!-- Vehicle Type Filter -->
+                <div class="w-full">
+                    <label class="form-label">Type</label>
+                    <select id="type-filter" class="form-input w-full">
+                        <option value="">All Types</option>
+                        @foreach($vehicleTypes as $type)
+                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Color Filter -->
-            <div class="flex-1">
-                <label class="form-label">Color</label>
-                <select id="color-filter" class="form-input w-full">
-                    <option value="">All Colors</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="pink">Pink</option>
-                    <option value="orange">Orange</option>
-                    <option value="maroon">Maroon</option>
-                    <option value="white">White</option>
-                    <option value="black">Black</option>
-                </select>
-            </div>
+                <!-- Color Filter -->
+                <div class="w-full">
+                    <label class="form-label">Color</label>
+                    <select id="color-filter" class="form-input w-full">
+                        <option value="">All Colors</option>
+                        <option value="blue">Blue</option>
+                        <option value="green">Green</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="pink">Pink</option>
+                        <option value="orange">Orange</option>
+                        <option value="maroon">Maroon</option>
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
+                    </select>
+                </div>
 
-            <!-- User Type Filter -->
-            <div class="flex-1">
-                <label class="form-label">User Type</label>
-                <select id="user-type-filter" class="form-input w-full">
-                    <option value="">All Users</option>
-                    <option value="student">Student</option>
-                    <option value="staff">Staff</option>
-                    <option value="security">Security</option>
-                    <option value="stakeholder">Stakeholder</option>
-                </select>
-            </div>
+                <!-- User Type Filter -->
+                <div class="w-full">
+                    <label class="form-label">User Type</label>
+                    <select id="user-type-filter" class="form-input w-full">
+                        <option value="">All Users</option>
+                        <option value="student">Student</option>
+                        <option value="staff">Staff</option>
+                        <option value="security">Security</option>
+                        <option value="stakeholder">Stakeholder</option>
+                    </select>
+                </div>
 
-            <!-- College Filter (only for students) -->
-            <div class="flex-1 hidden" id="college-filter-wrapper">
-                <label class="form-label">College</label>
-                <select id="college-filter" class="form-input w-full">
-                    <option value="">All Colleges</option>
-                    @foreach($colleges as $college)
-                        <option value="{{ $college->id }}">{{ $college->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Reset Button -->
-            <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+                <!-- College Filter (only for students) -->
+                <div class="w-full hidden" id="college-filter-wrapper">
+                    <label class="form-label">College</label>
+                    <select id="college-filter" class="form-input w-full">
+                        <option value="">All Colleges</option>
+                        @foreach($colleges as $college)
+                            <option value="{{ $college->id }}">{{ $college->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Vehicles Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Vehicles List</h3>
-            <div class="flex items-center gap-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Vehicles List</h3>
+            <div class="flex flex-wrap items-center gap-3 md:gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-xs md:text-sm">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -85,10 +89,10 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
                     <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                 </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+                <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
             </div>
         </div>
 
@@ -131,17 +135,7 @@
                         <td class="py-2 px-3">
                             <div class="flex items-center gap-2">
                                 @php
-                                    $colorMap = [
-                                        'blue' => '#007BFF',
-                                        'green' => '#28A745',
-                                        'yellow' => '#FFC107',
-                                        'pink' => '#E83E8C',
-                                        'orange' => '#FD7E14',
-                                        'maroon' => '#800000',
-                                        'white' => '#FFFFFF',
-                                        'black' => '#000000',
-                                    ];
-                                    $bgColor = $colorMap[$vehicle->color] ?? '#000000';
+                                    $bgColor = ($stickerPalette[$vehicle->color] ?? '#000000');
                                 @endphp
                                 <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" style="background-color: {{ $bgColor }}"></div>
                                 <span class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">{{ $vehicle->number }}</span>
@@ -265,5 +259,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
 });
+
+// Export to CSV function
+function exportToCSV() {
+    if (!vehicles || vehicles.length === 0) {
+        alert('No vehicles to export');
+        return;
+    }
+
+    const headers = ['Owner Name', 'Owner Email', 'User Type', 'Vehicle Type', 'Plate Number', 'Sticker Number', 'Color', 'Status', 'Created Date'];
+    const rows = vehicles.map(vehicle => {
+        const ownerName = vehicle.user ? `${vehicle.user.first_name} ${vehicle.user.last_name}` : 'N/A';
+        const ownerEmail = vehicle.user?.email || 'N/A';
+        const userType = vehicle.user?.user_type || 'N/A';
+        const vehicleType = vehicle.type?.name || 'N/A';
+        const plateNo = vehicle.plate_no || 'N/A';
+        const sticker = vehicle.sticker ? `${vehicle.color.toUpperCase()}_${vehicle.number}` : 'N/A';
+        const color = vehicle.color || 'N/A';
+        const status = vehicle.is_active ? 'Active' : 'Inactive';
+        const createdDate = new Date(vehicle.created_at).toLocaleDateString('en-US', { 
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        return [ownerName, ownerEmail, userType, vehicleType, plateNo, sticker, color, status, createdDate].map(field => {
+            const escaped = String(field).replace(/"/g, '""');
+            return `"${escaped}"`;
+        }).join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `vehicles_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.exportToCSV = exportToCSV;
 </script>
 @endpush

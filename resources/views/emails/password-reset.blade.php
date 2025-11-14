@@ -35,14 +35,6 @@
         .content {
             padding: 40px 30px;
         }
-        .code-container {
-            background: #f8f9fa;
-            border: 2px dashed #1b1b18;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin: 30px 0;
-        }
         .code {
             font-size: 36px;
             font-weight: 700;
@@ -50,13 +42,34 @@
             color: #1b1b18;
             font-family: 'Courier New', monospace;
         }
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            border-radius: 4px;
             padding: 15px;
             margin: 20px 0;
+            color: #004085;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
             color: #856404;
+        }
+        .warning-box strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .code-container {
+            background: #f8f9fa;
+            border: 2px dashed #1b1b18;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
         }
         .footer {
             background: #f8f9fa;
@@ -92,8 +105,9 @@
                 <div class="code">{{ $code }}</div>
             </div>
             
-            <div class="warning">
-                <strong>⚠️ Important:</strong> This code will expire in 5 minutes for security reasons. If you didn't request this password reset, please ignore this email.
+            <div class="warning-box">
+                <strong>⚠️ Important</strong>
+                This code will expire in 5 minutes for security reasons. If you didn't request this password reset, please ignore this email.
             </div>
             
             <p>Enter this code on the password reset page to set your new password.</p>
@@ -107,6 +121,9 @@
             <p>This email was sent from MLUC Sentinel - A Digital Parking Management System</p>
             <p>Don Mariano Marcos Memorial State University - Mid La Union Campus</p>
             <p>If you have any questions, please contact our support team.</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+                This is an automated notification. Please do not reply to this email.
+            </p>
         </div>
     </div>
 </body>

@@ -32,9 +32,16 @@ class CollegeController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:colleges,name'],
+            'code' => ['required', 'string', 'max:20', 'unique:colleges,code'],
+            'type' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $college = College::create($validated);
+        $validated['code'] = strtoupper($validated['code']);
+        $validated['type'] = $validated['type'] ?? 'college';
+        $validated['description'] = $validated['description'] ?? null;
+
+        $college = College::create($validated)->refresh();
 
         // Get editor name
         $editor = auth()->user()->first_name.' '.auth()->user()->last_name;
@@ -56,9 +63,17 @@ class CollegeController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('colleges')->ignore($college->id)],
+            'code' => ['required', 'string', 'max:20', Rule::unique('colleges', 'code')->ignore($college->id)],
+            'type' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated['code'] = strtoupper($validated['code']);
+        $validated['type'] = $validated['type'] ?? 'college';
+        $validated['description'] = $validated['description'] ?? null;
+
         $college->update($validated);
+        $college->refresh();
 
         // Get editor name
         $editor = auth()->user()->first_name.' '.auth()->user()->last_name;
@@ -99,5 +114,15 @@ class CollegeController extends Controller
             'success' => true,
             'message' => 'College deleted successfully',
         ]);
+    }
+
+    /**
+     * Get programs for a specific college.
+     */
+    public function programs(College $college): JsonResponse
+    {
+        $programs = $college->programs()->orderBy('name')->get();
+
+        return response()->json($programs);
     }
 }

@@ -11,7 +11,10 @@ class College extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'name',
+        'description',
+        'type',
     ];
 
     /**
@@ -20,5 +23,13 @@ class College extends Model
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);
+    }
+
+    /**
+     * Get the programs for the college.
+     */
+    public function programs(): HasMany
+    {
+        return $this->hasMany(Program::class);
     }
 }

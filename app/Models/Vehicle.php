@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +48,14 @@ class Vehicle extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(VehicleType::class, 'type_id');
+    }
+
+    /**
+     * Alias for type relationship to match view expectations
+     */
+    public function vehicleType(): BelongsTo
+    {
+        return $this->type();
     }
 
     /**

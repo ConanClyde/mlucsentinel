@@ -51,8 +51,8 @@ class PaymentReceiptService
             'issued_time' => now()->format('h:i A'),
             'total_amount' => $payment->amount,
             'vehicle_count' => $payment->vehicle_count,
-            'unit_price' => 15.00,
-            'subtotal' => $payment->vehicle_count * 15.00,
+            'unit_price' => \App\Models\Fee::getAmount('sticker_fee', 15.00),
+            'subtotal' => $payment->vehicle_count * \App\Models\Fee::getAmount('sticker_fee', 15.00),
             'tax_rate' => 0.00, // No tax for now
             'tax_amount' => 0.00,
             'organization' => [
@@ -123,12 +123,11 @@ class PaymentReceiptService
             'batch_payments' => $batchPayments,
             'receipt_number' => $this->generateReceiptNumber($payment),
             'issued_date' => now()->format('F d, Y'),
-            'issued_date' => now()->format('F d, Y'),
             'issued_time' => now()->format('h:i A'),
             'total_amount' => $payment->amount,
             'vehicle_count' => $payment->vehicle_count,
-            'unit_price' => 15.00,
-            'subtotal' => $payment->vehicle_count * 15.00,
+            'unit_price' => \App\Models\Fee::getAmount('sticker_fee', 15.00),
+            'subtotal' => $payment->vehicle_count * \App\Models\Fee::getAmount('sticker_fee', 15.00),
             'tax_rate' => 0.00,
             'tax_amount' => 0.00,
             'organization' => [

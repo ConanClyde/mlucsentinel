@@ -3,26 +3,9 @@
 @section('page-title', 'Submit Report')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                    Submit Violation Report
-                </h2>
-                <p class="text-[#706f6c] dark:text-[#A1A09A]">
-                    Report a violation for the selected vehicle
-                </p>
-            </div>
-            <div class="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                <x-heroicon-o-exclamation-triangle class="w-8 h-8 text-red-600 dark:text-red-400" />
-            </div>
-        </div>
-    </div>
-
+<div class="space-y-4 md:space-y-6">
     <!-- Vehicle Information Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Vehicle Information</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -47,10 +30,10 @@
     </div>
 
     <!-- Report Form -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Report Details</h3>
         
-        <form id="reportForm" class="space-y-6">
+        <form id="reportForm" class="space-y-4 md:space-y-6">
             @csrf
             <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
 
@@ -77,27 +60,31 @@
                 <div class="bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Pin Location on Map</h4>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="resetMapView()" class="btn btn-sm btn-secondary">
-                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                Reset View
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Map Container -->
-                    <div id="report-map-container" class="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden" style="min-height: 400px; max-height: 500px;">
+                    <div id="report-map-container" class="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                        
+                        <!-- Loading Skeleton -->
+                        <div id="report-map-skeleton" class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-20">
+                            <div class="text-center">
+                                <svg class="animate-spin h-12 w-12 mx-auto text-blue-600 dark:text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] font-medium">Loading campus map...</p>
+                            </div>
+                        </div>
+                        
                         <!-- Zoom Controls (inside container, outside wrapper so they don't zoom) -->
-                        <div class="absolute top-2 right-2 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-2 space-y-2" style="z-index: 10; pointer-events: auto;">
-                            <button id="zoom-in-btn" class="flex items-center justify-center w-8 h-8 bg-blue-600 dark:bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors">
+                        <div class="absolute top-2 right-2 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-2 space-y-2" style="z-index: 20; pointer-events: auto;">
+                            <button id="zoom-in-btn" class="flex items-center justify-center w-8 h-8 bg-blue-600 dark:bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors touch-manipulation">
                                 <span class="text-lg font-bold leading-none">+</span>
                             </button>
-                            <button id="zoom-out-btn" class="flex items-center justify-center w-8 h-8 bg-blue-600 dark:bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors">
+                            <button id="zoom-out-btn" class="flex items-center justify-center w-8 h-8 bg-blue-600 dark:bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors touch-manipulation">
                                 <span class="text-lg font-bold leading-none">−</span>
                             </button>
-                            <button id="reset-zoom-btn" class="flex items-center justify-center w-8 h-8 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors">
+                            <button id="reset-zoom-btn" class="flex items-center justify-center w-8 h-8 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors touch-manipulation">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                 </svg>
@@ -107,11 +94,10 @@
                         <!-- Map Wrapper -->
                         <div id="report-map-wrapper" class="w-full h-full cursor-grab active:cursor-grabbing" style="transform-origin: center center; transition: transform 0.1s ease-out;">
                             <img id="report-map-image" 
-                                 src="{{ asset('images/campus-map.png') }}" 
+                                 src="{{ asset('images/campus-map.svg') }}" 
                                  alt="Campus Map" 
                                  class="block w-full h-auto select-none" 
                                  draggable="false"
-                                 onload="initializeReportMapDimensions()"
                                  onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2Y3ZjlmNyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM5Yzk5YzkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NYXAgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=';"
                                  style="display: block;">
                             
@@ -127,17 +113,15 @@
                                 </defs>
                             </svg>
                             
-                            <!-- Pin (inside wrapper so it moves with map) -->
+                            <!-- Pin (inside wrapper so it moves with map) - Fixed size like points -->
                             <div id="violation-pin" class="absolute pointer-events-none hidden" style="transform-origin: 50% 100%; z-index: 20;">
-                                <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin-left: -16px; margin-top: -40px;">
-                                    <!-- Shadow -->
-                                    <ellipse cx="16" cy="38" rx="8" ry="2" fill="black" opacity="0.3"/>
+                                <svg width="16" height="20" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin-left: -8px; margin-top: -20px;">
                                     <!-- Pin body -->
                                     <path d="M16 0C9.373 0 4 5.373 4 12c0 8.4 12 28 12 28s12-19.6 12-28c0-6.627-5.373-12-12-12z" fill="#EA4335"/>
                                     <!-- Inner circle -->
-                                    <circle cx="16" cy="12" r="5" fill="white"/>
+                                    <circle cx="16" cy="12" r="4" fill="white"/>
                                     <!-- Inner dot -->
-                                    <circle cx="16" cy="12" r="2.5" fill="#C5221F"/>
+                                    <circle cx="16" cy="12" r="2" fill="#C5221F"/>
                                 </svg>
                             </div>
                         </div>
@@ -221,7 +205,7 @@
         </div>
         <div class="modal-body">
             <p id="successMessage">Your report has been submitted and assigned to the appropriate administrator.</p>
-            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div id="assignedToContainer" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p class="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Assigned to:</strong> <span id="assignedToRole"></span>
                 </p>
@@ -395,8 +379,17 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show success modal with assigned role
-            document.getElementById('assignedToRole').textContent = data.assigned_to_role;
+            // Show success modal; assigned role section is optional
+            const assignedEl = document.getElementById('assignedToRole');
+            const assignedContainer = document.getElementById('assignedToContainer');
+            if (assignedContainer) {
+                if (data.assigned_to_role) {
+                    if (assignedEl) assignedEl.textContent = data.assigned_to_role;
+                    assignedContainer.classList.remove('hidden');
+                } else {
+                    assignedContainer.classList.add('hidden');
+                }
+            }
             showSuccessModal();
         } else {
             alert(data.message || 'Failed to submit report');
@@ -448,18 +441,20 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         const img = document.getElementById('report-map-image');
         if (img && img.complete && img.naturalHeight > 0) {
+            hideReportMapSkeleton();
             initReportMap();
         } else if (img) {
             img.onload = function() {
+                hideReportMapSkeleton();
                 initReportMap();
+            };
+            img.onerror = function() {
+                hideReportMapSkeleton();
             };
         }
     }, 500); // Small delay to ensure DOM is ready
 });
 
-function resetMapView() {
-    resetZoom();
-}
 
 // Remove old modal functions - map is now inline
 
@@ -489,17 +484,22 @@ function initReportMap() {
     });
 }
 
+function hideReportMapSkeleton() {
+    const skeleton = document.getElementById('report-map-skeleton');
+    if (skeleton) {
+        skeleton.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(() => skeleton.remove(), 300);
+    }
+}
+
 function initializeReportMapDimensions() {
     const img = document.getElementById('report-map-image');
     const container = document.getElementById('report-map-container');
     
-    // Set container height based on image aspect ratio
+    // Set container aspect ratio based on image dimensions (like other maps)
     if (img && img.complete && img.naturalHeight > 0) {
         reportMapAspectRatio = img.naturalHeight / img.naturalWidth;
-        const containerWidth = container.offsetWidth;
-        const newHeight = containerWidth * reportMapAspectRatio;
-        container.style.height = newHeight + 'px';
-        container.style.minHeight = newHeight + 'px';
+        container.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
         
         // Apply initial transform
         applyReportMapTransform();
@@ -525,7 +525,126 @@ function addReportMapEventListeners() {
     container.addEventListener('click', handleReportMapClick);
     
     // Wheel for zoom
-    container.addEventListener('wheel', handleReportMapWheel);
+    container.addEventListener('wheel', handleReportMapWheel, { passive: false });
+    
+    // Touch events for mobile dragging and pinch-to-zoom
+    let touchStartDistance = 0;
+    let touchStartScale = 1;
+    let touchStartCenterX = 0;
+    let touchStartCenterY = 0;
+    let touchStartPanX = 0;
+    let touchStartPanY = 0;
+    let isPinching = false;
+    let isTouchDragging = false;
+    
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            // Single touch - dragging
+            if (e.target.tagName === 'IMG') {
+                isTouchDragging = true;
+                const touch = e.touches[0];
+                dragStartX = touch.clientX;
+                dragStartY = touch.clientY;
+                startPanX = reportMapPanX;
+                startPanY = reportMapPanY;
+                hasDragged = false;
+            }
+        } else if (e.touches.length === 2) {
+            // Two touches - pinch to zoom
+            e.preventDefault();
+            isPinching = true;
+            isTouchDragging = false;
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            
+            // Calculate distance between two touches
+            const dx = touch2.clientX - touch1.clientX;
+            const dy = touch2.clientY - touch1.clientY;
+            touchStartDistance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Store initial scale and pan
+            touchStartScale = reportMapScale;
+            touchStartPanX = reportMapPanX;
+            touchStartPanY = reportMapPanY;
+            
+            // Calculate center point between two touches
+            const rect = container.getBoundingClientRect();
+            touchStartCenterX = ((touch1.clientX + touch2.clientX) / 2) - rect.left - rect.width / 2;
+            touchStartCenterY = ((touch1.clientY + touch2.clientY) / 2) - rect.top - rect.height / 2;
+        }
+    }, { passive: false });
+    
+    container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && isTouchDragging && !isPinching) {
+            // Single touch dragging
+            e.preventDefault();
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - dragStartX;
+            const deltaY = touch.clientY - dragStartY;
+            
+            // If moved more than 10 pixels, consider it a drag
+            if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+                hasDragged = true;
+                
+                reportMapPanX = startPanX + deltaX;
+                reportMapPanY = startPanY + deltaY;
+                
+                applyReportMapTransform();
+            }
+        } else if (e.touches.length === 2 && isPinching) {
+            // Pinch to zoom
+            e.preventDefault();
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            
+            // Calculate current distance
+            const dx = touch2.clientX - touch1.clientX;
+            const dy = touch2.clientY - touch1.clientY;
+            const currentDistance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate scale change
+            const scaleChange = currentDistance / touchStartDistance;
+            const newScale = Math.min(Math.max(1, touchStartScale * scaleChange), 3);
+            
+            if (newScale !== reportMapScale) {
+                // Calculate the zoom point offset from center
+                const scaleRatio = newScale / touchStartScale;
+                
+                // Adjust pan to keep center point stationary
+                reportMapPanX = touchStartPanX - (touchStartCenterX - touchStartPanX) * (scaleRatio - 1);
+                reportMapPanY = touchStartPanY - (touchStartCenterY - touchStartPanY) * (scaleRatio - 1);
+                
+                reportMapScale = newScale;
+                applyReportMapTransform();
+            }
+        }
+    }, { passive: false });
+    
+    container.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            // All touches ended
+            isTouchDragging = false;
+            isPinching = false;
+        } else if (e.touches.length === 1 && isPinching) {
+            // One touch ended during pinch - switch to dragging
+            isPinching = false;
+            isTouchDragging = true;
+            const touch = e.touches[0];
+            dragStartX = touch.clientX;
+            dragStartY = touch.clientY;
+            startPanX = reportMapPanX;
+            startPanY = reportMapPanY;
+        }
+        
+        // Handle tap to pin (only if no drag occurred)
+        if (e.touches.length === 0 && !hasDragged && e.changedTouches.length === 1) {
+            const touch = e.changedTouches[0];
+            const coords = screenToImageCoords(touch.clientX, touch.clientY);
+            pinLocation(coords.x, coords.y);
+        }
+    });
 }
 
 let dragStartX = 0;
@@ -566,13 +685,45 @@ function handleReportMapMouseUp() {
     isDragging = false;
 }
 
+// Convert screen coordinates to image percentage coordinates accounting for pan and zoom
+function screenToImageCoords(clientX, clientY) {
+    const container = document.getElementById('report-map-container');
+    const wrapper = document.getElementById('report-map-wrapper');
+    const img = document.getElementById('report-map-image');
+    
+    if (!container || !wrapper || !img) return { x: 0, y: 0 };
+    
+    const containerRect = container.getBoundingClientRect();
+    const containerCenterX = containerRect.left + containerRect.width / 2;
+    const containerCenterY = containerRect.top + containerRect.height / 2;
+    
+    // Get click position relative to container center
+    const clickX = clientX - containerCenterX;
+    const clickY = clientY - containerCenterY;
+    
+    // Account for pan (pan is already in pixels relative to center)
+    const imageX = clickX - reportMapPanX;
+    const imageY = clickY - reportMapPanY;
+    
+    // Account for scale (unscale to get original image coordinates)
+    const unscaledX = imageX / reportMapScale;
+    const unscaledY = imageY / reportMapScale;
+    
+    // Convert to percentage (container is 100% = full width/height)
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+    
+    // Add 50% to center the coordinate system (since pan is relative to center)
+    const x = ((unscaledX / containerWidth) * 100) + 50;
+    const y = ((unscaledY / containerHeight) * 100) + 50;
+    
+    return { x, y };
+}
+
 function handleReportMapClick(e) {
     if (e.target.tagName === 'IMG' && !hasDragged) {
-        const rect = e.target.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
-        pinLocation(x, y);
+        const coords = screenToImageCoords(e.clientX, e.clientY);
+        pinLocation(coords.x, coords.y);
     }
 }
 
@@ -639,12 +790,8 @@ function applyReportMapTransform() {
     
     wrapper.style.transform = `translate(${reportMapPanX}px, ${reportMapPanY}px) scale(${reportMapScale})`;
     
-    // Counter-scale the pin so it stays the same size
-    const pin = document.getElementById('violation-pin');
-    if (pin && !pin.classList.contains('hidden')) {
-        const inverseScale = 1 / reportMapScale;
-        pin.style.transform = `scale(${inverseScale})`;
-    }
+    // Pin stays fixed size relative to map (like points in campus map)
+    // No scaling needed - pin size is fixed
 }
 
 function zoomMap(delta) {
@@ -766,7 +913,7 @@ function renderReportMapLocations() {
         polygon.setAttribute('stroke', location.color);
         polygon.setAttribute('stroke-width', '0.2');
         
-        // Label
+        // Label (matching dashboard sizing)
         let label = null;
         if (location.center_x && location.center_y) {
             label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -774,12 +921,12 @@ function renderReportMapLocations() {
             label.setAttribute('y', location.center_y);
             label.setAttribute('text-anchor', 'middle');
             label.setAttribute('dominant-baseline', 'central');
-            label.setAttribute('fill', '#6b7280');
-            label.setAttribute('stroke', '#ffffff');
-            label.setAttribute('stroke-width', '0.1');
+            label.setAttribute('fill', '#000000'); // Black like dashboard
+            label.setAttribute('stroke', '#ffffff'); // White outline
+            label.setAttribute('stroke-width', 0.15); // Same as dashboard
             label.setAttribute('paint-order', 'stroke fill');
-            label.setAttribute('font-weight', '600');
-            label.setAttribute('font-size', '0.8');
+            label.setAttribute('font-weight', '700'); // Bold like dashboard
+            label.setAttribute('font-size', 1); // Fixed small size like dashboard (SVG units)
             label.setAttribute('font-family', 'Satoshi, ui-sans-serif, system-ui, sans-serif');
             label.setAttribute('transform', `scale(1, ${1 / reportMapAspectRatio})`);
             label.setAttribute('transform-origin', `${location.center_x} ${location.center_y}`);
@@ -797,7 +944,6 @@ window.showSuccessModal = showSuccessModal;
 window.closeSuccessModal = closeSuccessModal;
 window.zoomMap = zoomMap;
 window.resetZoom = resetZoom;
-window.resetMapView = resetMapView;
 window.updateLocationPreview = updateLocationPreview;
 </script>
 @endpush

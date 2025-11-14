@@ -27,6 +27,10 @@ class User extends Authenticatable
         'password',
         'user_type',
         'is_active',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -37,6 +41,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -51,6 +57,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'user_type' => UserType::class,
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -127,6 +135,53 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if the user is a Global Administrator.
+     */
+    public function isGlobalAdministrator(): bool
+    {
+        return $this->user_type === UserType::GlobalAdministrator;
+    }
+
+    /**
+     * Check if the user is a Security Administrator.
+     */
+    public function isSecurityAdmin(): bool
+    {
+        // Global administrators can access everything
+        if ($this->user_type === UserType::GlobalAdministrator) {
+            return true;
+        }
+
+        // Check if user is an administrator with Security role
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            return $this->administrator->adminRole &&
+                   $this->administrator->adminRole->name === 'Security';
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user is a SAS or DRRM Administrator.
+     */
+    public function isSasOrDrrmAdmin(): bool
+    {
+        // Global administrators can access everything
+        if ($this->user_type === UserType::GlobalAdministrator) {
+            return true;
+        }
+
+        // Check if user is an administrator with SAS or DRRM role
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            $adminRole = $this->administrator->adminRole->name ?? '';
+
+            return in_array($adminRole, ['SAS (Student Affairs & Services)', 'DRRM']);
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the user is a Marketing administrator.
      */
     public function isMarketingAdmin(): bool
@@ -159,5 +214,100 @@ class User extends Authenticatable
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class, 'reported_by');
+    }
+
+    /**
+     * Get the activity logs for the user.
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Check if the user has a specific privilege.
+     */
+    public function hasPrivilege(string $privilege): bool
+    {
+        // Global administrators can do everything
+        if ($this->isGlobalAdministrator()) {
+            return true;
+        }
+
+        // Basic settings privileges are available to all authenticated users
+        $basicSettingsPrivileges = [
+            'view_settings_appearance',
+            'view_settings_notifications',
+            'view_settings_security',
+        ];
+
+        if (in_array($privilege, $basicSettingsPrivileges)) {
+            return true; // All authenticated users can access these settings
+        }
+
+        // Check if user is an administrator with the privilege
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            $role = $this->administrator->adminRole;
+
+            if ($role && $role->is_active) {
+                return $role->hasPrivilege($privilege);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has any of the given privileges.
+     */
+    public function hasAnyPrivilege(array $privileges): bool
+    {
+        foreach ($privileges as $privilege) {
+            if ($this->hasPrivilege($privilege)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has all of the given privileges.
+     */
+    public function hasAllPrivileges(array $privileges): bool
+    {
+        foreach ($privileges as $privilege) {
+            if (! $this->hasPrivilege($privilege)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the user can report a specific user type.
+     */
+    public function canReportUserType(string $userType): bool
+    {
+        // Check if user is a reporter
+        if (! $this->reporter) {
+            return false;
+        }
+
+        return $this->reporter->canReportUserType($userType);
+    }
+
+    /**
+     * Check if the user can report another user.
+     */
+    public function canReportUser(User $targetUser): bool
+    {
+        // Check if user is a reporter
+        if (! $this->reporter) {
+            return false;
+        }
+
+        return $this->reporter->canReportUser($targetUser);
     }
 }

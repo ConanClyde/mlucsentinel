@@ -32,7 +32,13 @@ class VehicleTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:vehicle_types,name'],
+            'requires_plate' => ['boolean'],
         ]);
+
+        // Set default to true if not provided
+        if (! isset($validated['requires_plate'])) {
+            $validated['requires_plate'] = true;
+        }
 
         $vehicleType = VehicleType::create($validated);
 
@@ -55,10 +61,12 @@ class VehicleTypeController extends Controller
     public function update(Request $request, VehicleType $vehicleType): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('vehicle_types')->ignore($vehicleType->id)],
+            'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('vehicle_types', 'name')->ignore($vehicleType->id)],
+            'requires_plate' => ['sometimes', 'boolean'],
         ]);
 
         $vehicleType->update($validated);
+        $vehicleType->refresh();
 
         // Get editor name
         $editor = auth()->user()->first_name.' '.auth()->user()->last_name;

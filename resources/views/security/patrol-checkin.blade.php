@@ -1,10 +1,12 @@
 @extends('layouts.app')
 
+@section('page-title', 'Patrol Check-In')
+
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 md:py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Location Header -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
@@ -35,7 +37,7 @@
 
         <!-- Last Check-in Info -->
         @if($lastCheckin)
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 md:mb-6">
                 <div class="flex items-center gap-2 text-blue-800 dark:text-blue-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -48,17 +50,21 @@
         @endif
 
         <!-- Check-in Form -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Check In</h2>
+            
+            @if(config('app.debug'))
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                <strong>Debug Info:</strong> Form will submit to: <code>{{ route('security.patrol-checkin.store') }}</code>
+            </div>
+            @endif
             
             <form method="POST" action="{{ route('security.patrol-checkin.store') }}" id="checkinForm">
                 @csrf
                 <input type="hidden" name="map_location_id" value="{{ $location->id }}">
-                <input type="hidden" name="latitude" id="latitude">
-                <input type="hidden" name="longitude" id="longitude">
 
                 <!-- Notes -->
-                <div class="mb-4">
+                <div class="mb-6">
                     <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Notes (Optional)
                     </label>
@@ -68,15 +74,6 @@
                         rows="3"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         placeholder="Add any observations or notes about this patrol point..."></textarea>
-                </div>
-
-                <!-- GPS Status -->
-                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">GPS Location:</span>
-                        <span id="gpsStatus" class="text-sm font-medium text-yellow-600">Getting location...</span>
-                    </div>
-                    <div id="gpsCoords" class="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden"></div>
                 </div>
 
                 <!-- Submit Button -->
@@ -93,7 +90,7 @@
 
         <!-- Recent Check-ins -->
         @if($recentCheckins->count() > 0)
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Your Recent Check-ins Here</h2>
                 <div class="space-y-3">
                     @foreach($recentCheckins as $checkin)
@@ -131,33 +128,22 @@
         </div>
     </div>
 </div>
-
-<script>
-// Get GPS location
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            document.getElementById('latitude').value = position.coords.latitude;
-            document.getElementById('longitude').value = position.coords.longitude;
-            document.getElementById('gpsStatus').textContent = 'Location captured ✓';
-            document.getElementById('gpsStatus').classList.remove('text-yellow-600');
-            document.getElementById('gpsStatus').classList.add('text-green-600');
-            
-            document.getElementById('gpsCoords').textContent = 
-                `Lat: ${position.coords.latitude.toFixed(6)}, Long: ${position.coords.longitude.toFixed(6)}`;
-            document.getElementById('gpsCoords').classList.remove('hidden');
-        },
-        function(error) {
-            document.getElementById('gpsStatus').textContent = 'GPS unavailable';
-            document.getElementById('gpsStatus').classList.remove('text-yellow-600');
-            document.getElementById('gpsStatus').classList.add('text-gray-500');
-        }
-    );
-} else {
-    document.getElementById('gpsStatus').textContent = 'GPS not supported';
-    document.getElementById('gpsStatus').classList.remove('text-yellow-600');
-    document.getElementById('gpsStatus').classList.add('text-gray-500');
-}
-</script>
 @endsection
 
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkinForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitting...');
+            console.log('Action URL:', form.action);
+            console.log('Method:', form.method);
+            console.log('CSRF Token:', document.querySelector('input[name="_token"]')?.value ? 'Present' : 'Missing');
+            console.log('Location ID:', document.querySelector('input[name="map_location_id"]')?.value);
+        });
+    }
+});
+</script>
+@endpush

@@ -1,32 +1,34 @@
 // Password Toggle Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Get all password toggle buttons
-    const toggleButtons = document.querySelectorAll('.toggle-password');
+// Use event delegation to handle dynamically added password toggles
+// This works for login, register, reset-password, and other auth pages
+document.addEventListener('click', function(e) {
+    // Handle clicks on the button or any of its children (including icons)
+    const toggleButton = e.target.closest('.toggle-password');
+    if (!toggleButton) return;
     
-    toggleButtons.forEach((button) => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const targetId = this.getAttribute('data-target');
-            const passwordInput = document.getElementById(targetId);
-            const eyeIcon = this.querySelector('.eye-icon');
-            const eyeSlashIcon = this.querySelector('.eye-slash-icon');
-            
-            if (!passwordInput) {
-                console.error('Password input not found for target:', targetId);
-                return;
-            }
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                if (eyeIcon) eyeIcon.classList.add('hidden');
-                if (eyeSlashIcon) eyeSlashIcon.classList.remove('hidden');
-            } else {
-                passwordInput.type = 'password';
-                if (eyeIcon) eyeIcon.classList.remove('hidden');
-                if (eyeSlashIcon) eyeSlashIcon.classList.add('hidden');
-            }
-        });
-    });
+    // Skip if this is in settings page (settings has its own handler in security.js)
+    const isInSettings = toggleButton.closest('#disable2FAModal, #viewRecoveryCodesModal');
+    if (isInSettings) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const targetId = toggleButton.getAttribute('data-target');
+    if (!targetId) return;
+    
+    const passwordInput = document.getElementById(targetId);
+    if (!passwordInput) return;
+    
+    const eyeIcon = toggleButton.querySelector('.eye-icon');
+    const eyeSlashIcon = toggleButton.querySelector('.eye-slash-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('hidden');
+        if (eyeSlashIcon) eyeSlashIcon.classList.remove('hidden');
+    } else {
+        passwordInput.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('hidden');
+        if (eyeSlashIcon) eyeSlashIcon.classList.add('hidden');
+    }
 });

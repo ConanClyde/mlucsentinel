@@ -3,9 +3,9 @@
 @section('page-title', 'Patrol Scanner')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Page Header - Simple -->
-    <div class="mb-6">
+    <div class="mb-4 md:mb-6">
         <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
             Patrol Scanner
         </h2>
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Scanner Option Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-lg border-2 border-[#e3e3e0] dark:border-[#3E3E3A] p-6 sm:p-8">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-lg border-2 border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 lg:p-8">
         <!-- Scanner Container -->
         <div id="scanner-container" class="relative bg-black rounded-lg overflow-hidden aspect-square" style="max-width: 500px; margin: 0 auto;">
             <video id="scanner-video" class="w-full h-full object-cover" style="display: none;"></video>
@@ -88,10 +88,11 @@
             <li>Complete the check-in process</li>
         </ol>
     </div>
+</div>
 
     <!-- Recent Check-ins -->
     @if($recentCheckins->count() > 0)
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-lg border-2 border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-lg border-2 border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
             <h3 class="text-lg font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Recent Check-ins</h3>
             <div class="space-y-2">
                 @foreach($recentCheckins as $checkin)

@@ -1,0 +1,405 @@
+================================================================================
+MLUC SENTINEL - SEVALLA DEPLOYMENT GUIDE
+================================================================================
+
+PREREQUISITES
+-------------
+- Sevalla account with Laravel hosting plan
+- Git repository (GitHub/GitLab/Bitbucket)
+- Domain name (optional, Sevalla provides subdomain)
+
+================================================================================
+STEP 1: PREPARE YOUR APPLICATION
+================================================================================
+
+1. Ensure .gitignore includes:
+   /node_modules
+   /public/hot
+   /public/storage
+   /storage/*.key
+   /vendor
+   .env
+   .env.backup
+   .phpunit.result.cache
+   Homestead.json
+   Homestead.yaml
+   npm-debug.log
+   yarn-error.log
+
+2. Commit all changes to Git:
+   git add .
+   git commit -m "Prepare for deployment"
+   git push origin main
+
+================================================================================
+STEP 2: CREATE SEVALLA APPLICATION
+================================================================================
+
+1. Login to Sevalla Dashboard (https://sevalla.com)
+
+2. Click "Create New Application"
+
+3. Select:
+   - Application Type: Laravel
+   - PHP Version: 8.2 or higher
+   - Database: MySQL 8.0
+
+4. Connect your Git repository:
+   - Choose your Git provider (GitHub/GitLab/Bitbucket)
+   - Authorize Sevalla to access your repository
+   - Select the repository: mluc-sentinel
+   - Select branch: main
+
+5. Configure Build Settings:
+   - Build Command: composer install --no-dev --optimize-autoloader && npm install && npm run build
+   - Start Command: (Leave default for Laravel)
+
+================================================================================
+STEP 3: CONFIGURE ENVIRONMENT VARIABLES
+================================================================================
+
+In Sevalla Dashboard > Your App > Environment Variables, add:
+
+# Application
+APP_NAME="MLUC Sentinel"
+APP_ENV=production
+APP_KEY=                          # Generate with: php artisan key:generate --show
+APP_DEBUG=false
+APP_URL=https://your-app.sevalla.app
+
+# Database (Sevalla will provide these)
+DB_CONNECTION=mysql
+DB_HOST=                          # Provided by Sevalla
+DB_PORT=3306
+DB_DATABASE=                      # Provided by Sevalla
+DB_USERNAME=                      # Provided by Sevalla
+DB_PASSWORD=                      # Provided by Sevalla
+
+# Session & Cache
+SESSION_DRIVER=database
+CACHE_DRIVER=file
+QUEUE_CONNECTION=database
+
+# Mail Configuration
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=mlucsentinel@gmail.com
+MAIL_PASSWORD=fklkmfoettidswha
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=mlucsentinel@gmail.com
+MAIL_FROM_NAME="MLUC Sentinel"
+
+# Broadcasting (WebSocket) - IMPORTANT FOR REAL-TIME NOTIFICATIONS
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=338257
+REVERB_APP_KEY=xjybg4ttpkkoazcqudlb
+REVERB_APP_SECRET=wz3y3d82d2g8s9ygz74z
+REVERB_HOST=0.0.0.0                # Use 0.0.0.0 for production
+REVERB_PORT=8080
+REVERB_SCHEME=https                # Use https in production
+
+# Vite Configuration
+VITE_APP_NAME="${APP_NAME}"
+VITE_REVERB_APP_KEY=xjybg4ttpkkoazcqudlb
+VITE_REVERB_HOST=your-app.sevalla.app    # Replace with your actual domain
+VITE_REVERB_PORT=8080
+VITE_REVERB_SCHEME=https
+
+# File Storage
+FILESYSTEM_DISK=public
+
+================================================================================
+STEP 4: DATABASE SETUP
+================================================================================
+
+1. In Sevalla Dashboard, note your database credentials
+
+2. Access your application's terminal (Sevalla provides SSH access)
+
+3. Run migrations and seed data:
+   php artisan migrate --seed --force
+
+================================================================================
+STEP 5: INITIAL SETUP COMMANDS (SEVALLA TERMINAL)
+================================================================================
+
+After first deployment, SSH into your Sevalla server and run these commands:
+
+1. Create storage symbolic link:
+   php artisan storage:link
+
+2. Run database migrations and seed data:
+   php artisan migrate --seed --force
+
+3. Cache configuration for better performance:
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+
+5. Set proper permissions (if needed):
+   chmod -R 775 storage
+   chmod -R 775 bootstrap/cache
+
+================================================================================
+STEP 6: CONFIGURE REVERB (WEBSOCKET SERVER)
+================================================================================
+
+IMPORTANT: For real-time notifications to work!
+
+Option A: Using Sevalla's Process Manager
+------------------------------------------
+1. In Sevalla Dashboard > Your App > Processes
+2. Add new process:
+   - Name: reverb
+   - Command: php artisan reverb:start
+   - Type: Worker
+   - Instances: 1
+
+Option B: Using Supervisor (if available)
+-----------------------------------------
+Create supervisor config file:
+
+[program:reverb]
+command=php /path/to/your/app/artisan reverb:start
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/path/to/your/app/storage/logs/reverb.log
+
+================================================================================
+STEP 7: CONFIGURE QUEUE WORKER
+================================================================================
+
+For email notifications and background jobs:
+
+In Sevalla Dashboard > Your App > Processes
+Add new process:
+- Name: queue-worker
+- Command: php artisan queue:work --tries=3 --timeout=90
+- Type: Worker
+- Instances: 1
+
+================================================================================
+STEP 8: CONFIGURE CRON JOBS (OPTIONAL)
+================================================================================
+
+If you have scheduled tasks, add in Sevalla Dashboard > Cron Jobs:
+
+Schedule: * * * * *
+Command: php artisan schedule:run
+
+================================================================================
+STEP 9: SECURITY & OPTIMIZATION
+================================================================================
+
+1. Run optimization commands:
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+
+2. Set proper file permissions (usually handled by Sevalla):
+   chmod -R 755 storage bootstrap/cache
+
+3. Enable HTTPS:
+   - Sevalla provides free SSL certificates
+   - Enable in Dashboard > Your App > SSL/TLS
+
+================================================================================
+QUICK REFERENCE: ALL TERMINAL COMMANDS
+================================================================================
+
+FIRST-TIME DEPLOYMENT:
+----------------------
+# SSH into Sevalla server
+ssh your-username@your-app.sevalla.app
+
+# Run these commands in order:
+php artisan storage:link
+php artisan migrate --seed --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+
+AFTER EVERY UPDATE/DEPLOYMENT:
+-------------------------------
+php artisan migrate --seed --force   # Run new migrations and seed data
+php artisan config:cache             # Cache config
+php artisan route:cache              # Cache routes
+php artisan view:cache               # Cache views
+
+TROUBLESHOOTING COMMANDS:
+-------------------------
+php artisan config:clear             # Clear config cache
+php artisan route:clear              # Clear route cache
+php artisan view:clear               # Clear view cache
+php artisan cache:clear              # Clear application cache
+php artisan optimize:clear           # Clear all caches
+
+QUEUE & WORKER MANAGEMENT:
+--------------------------
+php artisan queue:work --tries=3     # Start queue worker manually
+php artisan queue:restart            # Restart all queue workers
+php artisan queue:failed             # List failed jobs
+php artisan queue:retry all          # Retry all failed jobs
+
+REVERB (WEBSOCKET) COMMANDS:
+----------------------------
+php artisan reverb:start             # Start Reverb server
+php artisan reverb:restart           # Restart Reverb server
+
+DATABASE COMMANDS:
+------------------
+php artisan migrate --seed --force   # Run migrations and seed data
+php artisan migrate --force          # Run migrations only
+php artisan migrate:status           # Check migration status
+php artisan migrate:rollback --force # Rollback last migration
+php artisan db:seed --force          # Seed database only
+
+MAINTENANCE MODE:
+-----------------
+php artisan down                     # Put app in maintenance mode
+php artisan up                       # Bring app back online
+
+CHECK APPLICATION STATUS:
+-------------------------
+php artisan about                    # Show app info
+php artisan env                      # Show environment
+tail -f storage/logs/laravel.log     # View live logs
+
+================================================================================
+STEP 10: POST-DEPLOYMENT VERIFICATION
+================================================================================
+
+1. Visit your application URL
+
+2. Test login functionality
+
+3. Test real-time notifications:
+   - Login as reporter
+   - Submit a report
+   - Login as admin (different browser/incognito)
+   - Verify notification appears instantly
+
+4. Test email notifications:
+   - Trigger status change
+   - Check email delivery
+
+5. Check logs for errors:
+   - Sevalla Dashboard > Your App > Logs
+   - Or: tail -f storage/logs/laravel.log
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: Real-time notifications not working
+Solution:
+- Verify Reverb process is running
+- Check VITE_REVERB_HOST matches your domain
+- Ensure port 8080 is open (check Sevalla firewall)
+- Check browser console for WebSocket errors
+
+Issue: 500 Internal Server Error
+Solution:
+- Check storage/logs/laravel.log
+- Verify APP_KEY is set
+- Run: php artisan config:clear
+
+Issue: Database connection error
+Solution:
+- Verify database credentials in .env
+- Check database is created in Sevalla
+- Test connection: php artisan migrate:status
+
+Issue: File upload not working
+Solution:
+- Verify storage link: php artisan storage:link
+- Check storage permissions: chmod -R 775 storage
+
+Issue: Queue jobs not processing
+Solution:
+- Verify queue worker is running
+- Check queue connection in .env
+- Restart queue worker
+
+================================================================================
+DEPLOYMENT WORKFLOW (UPDATES)
+================================================================================
+
+For future updates:
+
+1. Make changes locally and test
+2. Commit and push to Git:
+   git add .
+   git commit -m "Your update message"
+   git push origin main
+
+3. Sevalla will auto-deploy (if auto-deploy enabled)
+   OR manually deploy in Dashboard
+
+4. After deployment, run:
+   php artisan migrate --seed --force
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+
+5. Restart workers if needed:
+   - Restart Reverb process
+   - Restart Queue worker
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. NEVER commit .env file to Git
+2. Always use --force flag for artisan commands in production
+3. Keep APP_DEBUG=false in production
+4. Regularly backup your database
+5. Monitor application logs
+6. Keep dependencies updated (composer update, npm update)
+7. Test thoroughly in staging before production deployment
+
+================================================================================
+SUPPORT & RESOURCES
+================================================================================
+
+Sevalla Documentation: https://sevalla.com/docs
+Laravel Documentation: https://laravel.com/docs
+Reverb Documentation: https://laravel.com/docs/broadcasting#reverb
+
+For issues:
+- Check Sevalla support portal
+- Review application logs
+- Check Laravel error logs in storage/logs/
+
+================================================================================
+CHECKLIST BEFORE GO-LIVE
+================================================================================
+
+[ ] All environment variables configured
+[ ] Database migrated successfully
+[ ] Storage linked (php artisan storage:link)
+[ ] Reverb process running
+[ ] Queue worker running
+[ ] SSL certificate enabled
+[ ] Config cached (php artisan config:cache)
+[ ] Routes cached (php artisan route:cache)
+[ ] Views cached (php artisan view:cache)
+[ ] Test login functionality
+[ ] Test report submission
+[ ] Test real-time notifications
+[ ] Test email notifications
+[ ] Test file uploads
+[ ] Check all pages load correctly
+[ ] Verify mobile responsiveness
+[ ] Test with different user roles
+[ ] Backup database
+[ ] Document admin credentials securely
+
+================================================================================
+END OF DEPLOYMENT GUIDE
+================================================================================

@@ -291,7 +291,7 @@ class ReportersRealtime {
             : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
 
         const statusText = reporter.user.is_active ? 'Active' : 'Inactive';
-        const typeName = reporter.reporter_type ? reporter.reporter_type.name : 'No Type';
+        const roleName = reporter.reporter_role ? reporter.reporter_role.name : 'No Role';
         const createdDate = new Date(reporter.created_at).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -313,7 +313,7 @@ class ReportersRealtime {
                 </div>
             </td>
             <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${this.escapeHtml(reporter.user.email)}</td>
-            <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${this.escapeHtml(typeName)}</td>
+            <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${this.escapeHtml(roleName)}</td>
             <td class="py-2 px-3">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
                     ${statusText}
@@ -329,8 +329,8 @@ class ReportersRealtime {
                         </svg>
                     </button>
                     <button onclick="openEditModal(${reporter.id})" class="btn-edit" title="Edit">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
                     <button onclick="deleteReporter(${reporter.id})" class="btn-delete" title="Delete">

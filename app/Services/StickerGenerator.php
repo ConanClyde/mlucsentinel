@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\StickerCounter;
+use App\Models\StickerRule;
 use App\Models\Vehicle;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
@@ -156,18 +157,19 @@ class StickerGenerator
      */
     protected function getHexColor(string $colorName): string
     {
-        $map = [
-            'black' => '#000000',
-            'white' => '#FFFFFF',
-            'green' => '#28A745',
-            'blue' => '#007BFF',
-            'yellow' => '#FFC107',
-            'orange' => '#FD7E14',
-            'pink' => '#E83E8C',
-            'maroon' => '#800000',
-        ];
+        $rules = StickerRule::getSingleton();
+        $palette = is_array($rules->palette) ? $rules->palette : [];
+        if (isset($palette[$colorName])) {
+            return $palette[$colorName];
+        }
 
-        return $map[$colorName] ?? '#000000';
+        // Fallback strictly from DB palette: use the first available palette color
+        $first = reset($palette);
+        if ($first !== false) {
+            return $first;
+        }
+
+        throw new \RuntimeException('Sticker palette is empty. Configure colors in Sticker Rules.');
     }
 
     /**
@@ -175,41 +177,63 @@ class StickerGenerator
      */
     public function determineStickerColor(string $userType, ?string $stakeholderType = null, ?string $plateNumber = null): string
     {
-        // Security & Staff
-        if (in_array($userType, ['security', 'staff'])) {
-            return 'maroon';
+        $rules = StickerRule::getSingleton();
+
+        if ($userType === 'security') {
+            return $rules->security_color ?? $this->fallbackColorKey();
+        }
+        if ($userType === 'staff') {
+            return $rules->staff_color ?? $this->fallbackColorKey();
         }
 
-        // Stakeholders
         if ($userType === 'stakeholder') {
-            return match ($stakeholderType) {
-                'Visitor' => 'black',
-                'Guardian', 'Service Provider' => 'white',
-                default => 'white' // fallback
-            };
-        }
-
-        // Students - based on plate number
-        if ($userType === 'student') {
-            // If no plate number (electric vehicle), return white
-            if (! $plateNumber) {
-                return 'white';
+            $map = is_array($rules->stakeholder_map) ? $rules->stakeholder_map : [];
+            if ($stakeholderType && isset($map[$stakeholderType])) {
+                return (string) $map[$stakeholderType];
             }
 
-            // Otherwise, determine color based on last digit of plate number
-            $lastDigit = substr($plateNumber, -1);
-
-            return match ($lastDigit) {
-                '1', '2' => 'blue',
-                '3', '4' => 'green',
-                '5', '6' => 'yellow',
-                '7', '8' => 'pink',
-                '9', '0' => 'orange',
-                default => 'blue' // fallback
-            };
+            return $this->fallbackColorKey();
         }
 
-        return 'blue'; // default fallback
+        if ($userType === 'student') {
+            $studentMap = is_array($rules->student_map) ? $rules->student_map : [];
+            if (! $plateNumber) {
+                return $studentMap['no_plate'] ?? $this->fallbackColorKey();
+            }
+
+            $lastDigit = substr($plateNumber, -1);
+            if (in_array($lastDigit, ['1', '2'], true)) {
+                return $studentMap['12'] ?? $this->fallbackColorKey();
+            }
+            if (in_array($lastDigit, ['3', '4'], true)) {
+                return $studentMap['34'] ?? $this->fallbackColorKey();
+            }
+            if (in_array($lastDigit, ['5', '6'], true)) {
+                return $studentMap['56'] ?? $this->fallbackColorKey();
+            }
+            if (in_array($lastDigit, ['7', '8'], true)) {
+                return $studentMap['78'] ?? $this->fallbackColorKey();
+            }
+            if (in_array($lastDigit, ['9', '0'], true)) {
+                return $studentMap['90'] ?? $this->fallbackColorKey();
+            }
+
+            return $this->fallbackColorKey();
+        }
+
+        return $this->fallbackColorKey();
+    }
+
+    protected function fallbackColorKey(): string
+    {
+        $rules = StickerRule::getSingleton();
+        $palette = is_array($rules->palette) ? $rules->palette : [];
+        $firstKey = array_key_first($palette);
+        if ($firstKey === null) {
+            throw new \RuntimeException('Sticker palette is empty. Configure colors in Sticker Rules.');
+        }
+
+        return $firstKey;
     }
 
     /**

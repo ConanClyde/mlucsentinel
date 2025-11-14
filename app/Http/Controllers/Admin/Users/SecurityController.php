@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Users;
 
-use App\Events\NotificationCreated;
 use App\Events\SecurityUpdated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
 use App\Models\Security;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\NotificationService;
+use App\Services\PaymentBatchService;
 use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
@@ -82,6 +82,12 @@ class SecurityController extends Controller
      */
     public function update(Request $request, Security $security)
     {
+        // Check authorization: Only Global Admin or Security Admin can update security
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -143,6 +149,9 @@ class SecurityController extends Controller
                 (is_string($request->vehicles_to_delete) ? json_decode($request->vehicles_to_delete, true) : $request->vehicles_to_delete) :
                 [];
 
+            // Store old is_active status
+            $oldIsActive = $security->user->is_active;
+
             // Update user
             $userData = [
                 'first_name' => $validated['first_name'],
@@ -157,6 +166,11 @@ class SecurityController extends Controller
             }
 
             $security->user->update($userData);
+
+            // Broadcast status change directly to the user if is_active changed
+            if ($oldIsActive !== $validated['is_active']) {
+                broadcast(new \App\Events\UserStatusChanged($security->user, $validated['is_active']));
+            }
 
             // Handle license image upload if provided
             $licenseImageData = [];
@@ -182,52 +196,16 @@ class SecurityController extends Controller
                 'license_no' => $validated['license_no'],
             ], $licenseImageData));
 
-            // Delete vehicles marked for deletion
+            // Delete vehicles marked for deletion via service
             if (! empty($vehiclesToDelete)) {
+                $batchSvc = app(PaymentBatchService::class);
+                $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
                 foreach ($vehiclesToDelete as $vehicleId) {
                     $vehicle = \App\Models\Vehicle::find($vehicleId);
                     if ($vehicle && $vehicle->user_id === $security->user_id) {
-                        // Delete associated pending payment if exists
-                        $pendingPayment = \App\Models\Payment::where('vehicle_id', $vehicle->id)
-                            ->where('status', 'pending')
-                            ->first();
-
-                        if ($pendingPayment) {
-                            // Check if this payment is part of a batch
-                            if ($pendingPayment->batch_id) {
-                                // Get all payments in this batch
-                                $batchPayments = \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)
-                                    ->where('status', 'pending')
-                                    ->where('id', '!=', $pendingPayment->id)
-                                    ->get();
-
-                                // Delete the payment for this specific vehicle
-                                $pendingPayment->delete();
-
-                                // Update vehicle_count for remaining payments in the batch
-                                if ($batchPayments->isNotEmpty()) {
-                                    $newVehicleCount = $batchPayments->count();
-
-                                    \App\Models\Payment::where('batch_id', $pendingPayment->batch_id)
-                                        ->where('status', 'pending')
-                                        ->update(['vehicle_count' => $newVehicleCount]);
-
-                                    // Broadcast payment update for real-time updates
-                                    $updatedPayment = $batchPayments->first()->fresh(['user', 'vehicle.type']);
-                                    broadcast(new \App\Events\PaymentUpdated($updatedPayment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
-                                }
-                            } else {
-                                // Single vehicle payment - delete the entire payment
-                                $pendingPayment->delete();
-
-                                // Broadcast payment deletion
-                                broadcast(new \App\Events\PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            }
-                        }
-
-                        // Broadcast vehicle deletion before deleting
+                        $batchSvc->removeVehicleFromBatch($vehicle->id, $editorName);
                         $vehicle->load(['user', 'type']);
-                        broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
+                        broadcast(new VehicleUpdated($vehicle, 'deleted', $editorName));
                         $vehicle->delete();
                     }
                 }
@@ -280,71 +258,31 @@ class SecurityController extends Controller
                     $newVehicleIds[] = $vehicle->id;
                 }
 
-                // Create pending payments for new vehicles (batched if multiple)
+                // Create pending payments for new vehicles via service
                 if (count($newVehicleIds) > 0) {
-                    $batchId = count($newVehicleIds) > 1 ? 'BATCH-'.strtoupper(uniqid()) : null;
-                    $totalAmount = count($newVehicleIds) * 15.00;
-
-                    // Create main payment record
-                    $payment = \App\Models\Payment::create([
-                        'user_id' => $security->user_id,
-                        'vehicle_id' => $newVehicleIds[0],
-                        'type' => 'sticker_fee',
-                        'status' => 'pending',
-                        'amount' => $totalAmount,
-                        'reference' => 'STK-'.strtoupper(uniqid()),
-                        'batch_id' => $batchId,
-                        'vehicle_count' => count($newVehicleIds),
-                    ]);
-
-                    // Create child payment records for other vehicles
-                    if (count($newVehicleIds) > 1) {
-                        for ($i = 1; $i < count($newVehicleIds); $i++) {
-                            \App\Models\Payment::create([
-                                'user_id' => $security->user_id,
-                                'vehicle_id' => $newVehicleIds[$i],
-                                'type' => 'sticker_fee',
-                                'status' => 'pending',
-                                'amount' => 15.00,
-                                'reference' => 'STK-'.strtoupper(uniqid()),
-                                'batch_id' => $batchId,
-                                'vehicle_count' => 1,
-                            ]);
-                        }
-                    }
-
-                    // Broadcast payment creation (only broadcast the main payment)
-                    $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-                    broadcast(new \App\Events\PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                    $batchSvc = app(PaymentBatchService::class);
+                    $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
+                    $batchSvc->addVehiclesToBatch($security->user_id, $newVehicleIds, $editorName);
                 }
             }
 
             // Broadcast the event with fresh relationships
             broadcast(new SecurityUpdated($security->fresh(['user', 'vehicles.type']), 'updated', auth()->user()));
 
-            // Create notification for all administrators
+            // Notify administrators (exclude actor)
             $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
             $securityName = $security->user->first_name.' '.$security->user->last_name;
-
-            User::whereIn('user_type', ['global_administrator', 'administrator'])
-                ->where('id', '!=', auth()->id())
-                ->get()
-                ->each(function ($user) use ($editorName, $securityName, $security) {
-                    $notification = Notification::create([
-                        'user_id' => $user->id,
-                        'type' => 'security_updated',
-                        'title' => 'Security Updated',
-                        'message' => "{$editorName} updated Security {$securityName}",
-                        'data' => [
-                            'security_id' => $security->id,
-                            'action' => 'updated',
-                            'url' => '/users/security',
-                        ],
-                    ]);
-
-                    // Broadcast notification in real-time
-                    broadcast(new NotificationCreated($notification));
-                });
+            app(NotificationService::class)->notifyAdmins(
+                'security_updated',
+                'Security Updated',
+                "{$editorName} updated Security {$securityName}",
+                [
+                    'security_id' => $security->id,
+                    'action' => 'updated',
+                    'url' => '/users/security',
+                ],
+                auth()->id()
+            );
         });
 
         return response()->json([
@@ -359,6 +297,12 @@ class SecurityController extends Controller
      */
     public function destroy(Security $security)
     {
+        // Check authorization: Only Global Admin or Security Admin can delete security
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
         $securityName = $security->user->first_name.' '.$security->user->last_name;
 
@@ -366,25 +310,17 @@ class SecurityController extends Controller
             // Broadcast the event before deletion
             broadcast(new SecurityUpdated($security, 'deleted', auth()->user()));
 
-            // Create notification for all administrators
-            User::whereIn('user_type', ['global_administrator', 'administrator'])
-                ->where('id', '!=', auth()->id())
-                ->get()
-                ->each(function ($user) use ($editorName, $securityName) {
-                    $notification = Notification::create([
-                        'user_id' => $user->id,
-                        'type' => 'security_deleted',
-                        'title' => 'Security Removed',
-                        'message' => "{$editorName} removed {$securityName}",
-                        'data' => [
-                            'action' => 'deleted',
-                            'url' => '/users/security',
-                        ],
-                    ]);
-
-                    // Broadcast notification in real-time
-                    broadcast(new NotificationCreated($notification));
-                });
+            // Notify administrators (exclude actor)
+            app(NotificationService::class)->notifyAdmins(
+                'security_deleted',
+                'Security Removed',
+                "{$editorName} removed {$securityName}",
+                [
+                    'action' => 'deleted',
+                    'url' => '/users/security',
+                ],
+                auth()->id()
+            );
 
             // Delete security and user
             $security->user->delete(); // This will cascade delete the security and vehicles

@@ -3,7 +3,7 @@
 @section('page-title', 'My Vehicles')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Vehicles List -->
     <div>
         <div>

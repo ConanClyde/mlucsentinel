@@ -12,16 +12,12 @@ class PatrolLog extends Model
         'map_location_id',
         'checked_in_at',
         'notes',
-        'latitude',
-        'longitude',
     ];
 
     protected function casts(): array
     {
         return [
             'checked_in_at' => 'datetime',
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
         ];
     }
 

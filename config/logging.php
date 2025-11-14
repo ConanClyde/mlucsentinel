@@ -127,6 +127,47 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Custom Application Channels
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 30, // Keep security logs for 30 days
+            'replace_placeholders' => true,
+        ],
+
+        'payments' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payments.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 90, // Keep payment logs for 90 days (financial records)
+            'replace_placeholders' => true,
+        ],
+
+        'reports' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/reports.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 60, // Keep report logs for 60 days
+            'replace_placeholders' => true,
+        ],
+
+        'patrol' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/patrol.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 30, // Keep patrol logs for 30 days
+            'replace_placeholders' => true,
+        ],
+
+        'performance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/performance.log'),
+            'level' => env('LOG_LEVEL', 'warning'),
+            'days' => 7, // Keep performance logs for 7 days
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

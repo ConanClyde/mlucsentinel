@@ -48,16 +48,33 @@
                 @csrf
 
                 @if ($errors->any())
+                    @php
+                        $hasDeactivatedError = false;
+                        $deactivatedMessage = '';
+                        $otherErrors = [];
+                        
+                        foreach ($errors->all() as $error) {
+                            if (str_contains(strtolower($error), 'deactivated')) {
+                                $hasDeactivatedError = true;
+                                $deactivatedMessage = $error;
+                            } else {
+                                $otherErrors[] = $error;
+                            }
+                        }
+                    @endphp
+                    
+                    @if(count($otherErrors) > 0)
                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
                         <div class="flex">
                             <x-heroicon-s-exclamation-circle class="w-5 h-5 text-red-500 mr-2" />
                             <div class="text-sm text-red-700 dark:text-red-400">
-                                @foreach ($errors->all() as $error)
+                                    @foreach ($otherErrors as $error)
                                     <p>{{ $error }}</p>
                                 @endforeach
                             </div>
                         </div>
                     </div>
+                    @endif
                 @endif
 
                 @if (session('status'))
@@ -138,11 +155,11 @@
                     </button>
                 </div>
 
-                <!-- Sign Up Link -->
-                <div class="text-center text-sm">
-                    <span class="text-[#706f6c] dark:text-[#A1A09A]">Don't have an account?</span>
-                    <a href="{{ route('register') }}" class="ml-1 text-[#1b1b18] dark:text-[#EDEDEC] font-medium hover:underline">
-                        Sign up
+                <!-- Registration Link -->
+                <div class="text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                    Don't have an account? 
+                    <a href="{{ route('register') }}" class="text-[#1b1b18] dark:text-[#EDEDEC] font-medium hover:underline">
+                        Register here
                     </a>
                 </div>
             </form>
@@ -173,6 +190,32 @@
                 
                 html.classList.toggle('dark');
                 localStorage.setItem('theme', newTheme);
+            });
+
+            // Password Toggle - Direct handler for login page
+            document.addEventListener('click', function(e) {
+                const toggleButton = e.target.closest('.toggle-password');
+                if (!toggleButton) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const targetId = toggleButton.getAttribute('data-target') || 'password';
+                const passwordInput = document.getElementById(targetId);
+                if (!passwordInput) return;
+                
+                const eyeIcon = toggleButton.querySelector('.eye-icon');
+                const eyeSlashIcon = toggleButton.querySelector('.eye-slash-icon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    if (eyeIcon) eyeIcon.classList.add('hidden');
+                    if (eyeSlashIcon) eyeSlashIcon.classList.remove('hidden');
+                } else {
+                    passwordInput.type = 'password';
+                    if (eyeIcon) eyeIcon.classList.remove('hidden');
+                    if (eyeSlashIcon) eyeSlashIcon.classList.add('hidden');
+                }
             });
 
             // Form validation
@@ -253,7 +296,67 @@
                 input.classList.remove('border-red-500');
                 input.classList.add('border-gray-300', 'dark:border-gray-600');
             }
+
+            // Show deactivation modal if there's a deactivated error
+            @if(isset($hasDeactivatedError) && $hasDeactivatedError)
+                showInactiveAccountModal(@json($deactivatedMessage));
+            @endif
+
+            function showInactiveAccountModal(message) {
+                // Create modal HTML
+                const modalHTML = `
+                    <div id="inactive-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 dark:bg-black/70">
+                        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-2xl max-w-md w-full mx-4 border border-[#e3e3e0] dark:border-[#3E3E3A] animate-scale-in">
+                            <div class="p-6">
+                                <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+                                    <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-center text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                    Account Deactivated
+                                </h3>
+                                <p class="text-center text-[#706f6c] dark:text-[#A1A09A] mb-6">
+                                    ${message}
+                                </p>
+                                <div class="flex justify-center">
+                                    <button onclick="closeInactiveModal()" class="btn btn-primary px-6">
+                                        OK
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert modal into body
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+
+            window.closeInactiveModal = function() {
+                const modal = document.getElementById('inactive-modal');
+                if (modal) {
+                    modal.remove();
+                }
+            };
         });
     </script>
+    
+    <style>
+        @keyframes scale-in {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .animate-scale-in {
+            animation: scale-in 0.2s ease-out;
+        }
+    </style>
 </body>
 </html>

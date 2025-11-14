@@ -26,7 +26,8 @@ class ViolationApprovedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Database notification is created manually in ReportsController to enable broadcasting
+        return ['mail'];
     }
 
     /**

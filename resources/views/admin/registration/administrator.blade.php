@@ -1,36 +1,37 @@
 @extends('layouts.app')
 
 @section('title', 'Administrator Registration')
+@section('page-title', 'Administrator Registration')
 
 @section('content')
-<div class="min-h-screen py-8">
+<div class="min-h-screen py-4 md:py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="mb-8 text-center">
-            <h1 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Administrator Registration</h1>
-            <p class="text-[#706f6c] dark:text-[#A1A09A]">Create a new administrator account</p>
+        <div class="mb-6 md:mb-8 text-center">
+            <h1 class="text-xl md:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Administrator Registration</h1>
+            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Create a new administrator account</p>
         </div>
 
         <!-- Progress Steps -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 mb-6">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center space-x-4">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6 overflow-x-auto">
+            <div class="flex items-center justify-center min-w-max">
+                <div class="flex items-center space-x-2 md:space-x-4">
                     <!-- Step 1 -->
                     <div class="flex items-center">
-                        <div id="step-1-indicator" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
+                        <div id="step-1-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-medium">
                             1
                         </div>
-                        <span id="step-1-label" class="ml-2 text-sm font-medium text-blue-600 dark:text-blue-400">Basic Information</span>
+                        <span id="step-1-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline">Basic Information</span>
                     </div>
                     
-                    <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 2 -->
                     <div class="flex items-center">
-                        <div id="step-2-indicator" class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium">
+                        <div id="step-2-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
                             2
                         </div>
-                        <span id="step-2-label" class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Account Information</span>
+                        <span id="step-2-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Account Information</span>
                     </div>
                 </div>
             </div>
@@ -42,10 +43,10 @@
                 @csrf
                 
                 <!-- Step 1: Basic Information -->
-                <div id="step-1" class="step-content p-6">
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Basic Information</h3>
+                <div id="step-1" class="step-content p-4 md:p-6">
+                    <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4 md:mb-6">Basic Information</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                                 First Name <span class="text-red-500">*</span>
@@ -63,7 +64,7 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6">
+                    <div class="mt-4 md:mt-6">
                         <label for="role_id" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                             Admin Role <span class="text-red-500">*</span>
                         </label>
@@ -81,7 +82,7 @@
                 <div id="step-2" class="step-content p-6 hidden">
                     <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">Account Information</h3>
                     
-                    <div class="space-y-6">
+                    <div class="space-y-4 md:space-y-6">
                         <div>
                             <label for="email" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
                                 Email Address <span class="text-red-500">*</span>
@@ -122,20 +123,20 @@
                 </div>
 
                 <!-- Form Actions -->
-                <div class="flex items-center justify-end gap-3 pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-6 pb-6">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 md:pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-4 md:px-6 pb-4 md:pb-6">
                     <!-- Step 1 Buttons -->
-                    <div id="step-1-buttons">
-                        <button type="button" id="next-step" class="btn btn-primary" disabled>
+                    <div id="step-1-buttons" class="w-full sm:w-auto">
+                        <button type="button" id="next-step" class="btn btn-primary w-full sm:w-auto" disabled>
                             Next
                         </button>
                     </div>
                     
                     <!-- Step 2 Buttons -->
-                    <div id="step-2-buttons" class="hidden">
-                        <button type="button" id="prev-step" class="btn btn-secondary">
+                    <div id="step-2-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button type="button" id="prev-step" class="btn btn-secondary w-full sm:w-auto">
                             Previous
                         </button>
-                        <button type="submit" id="submit-form" class="btn btn-primary" disabled>
+                        <button type="submit" id="submit-form" class="btn btn-primary w-full sm:w-auto" disabled>
                             Register
                         </button>
                     </div>
@@ -183,7 +184,45 @@
 @endsection
 
 <script>
+// Override global modal functions from main.js immediately (before DOMContentLoaded)
+// The global showSuccessModal from main.js expects successTitle and successMessage elements
+// which don't exist in this page's modal, so we override it before any calls
+(function() {
+    'use strict';
+    window.showSuccessModal = function(title, message) {
+        // This page's modal doesn't have successTitle/successMessage, just show the modal
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    };
+    
+    window.closeSuccessModal = function() {
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    window.showErrorModal = function(message) {
+        const modal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+        if (modal && errorMessage) {
+            errorMessage.textContent = message || 'An error occurred while processing your request';
+            modal.classList.remove('hidden');
+        }
+    };
+    
+    window.closeErrorModal = function() {
+        const modal = document.getElementById('errorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+})();
+
 let currentStep = 1;
+
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
@@ -239,14 +278,26 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Hide loading state first to re-enable inputs
+                    if (window.FormLoader) {
+                        FormLoader.hideLoading(form);
+                    }
                     showSuccessModal();
                     resetForm();
                 } else {
+                    // Hide loading state on error too
+                    if (window.FormLoader) {
+                        FormLoader.hideLoading(form);
+                    }
                     showErrorModal(data.message || 'An error occurred');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+                // Hide loading state on error
+                if (window.FormLoader) {
+                    FormLoader.hideLoading(form);
+                }
                 showErrorModal('An error occurred while processing your request');
             });
         });
@@ -599,42 +650,24 @@ function validateCurrentStep() {
     return false;
 }
 
-// Show success modal
-function showSuccessModal() {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-}
-
-// Close success modal
-function closeSuccessModal() {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-// Show error modal
-function showErrorModal(message) {
-    const modal = document.getElementById('errorModal');
-    const errorMessage = document.getElementById('errorMessage');
-    if (modal && errorMessage) {
-        errorMessage.textContent = message;
-        modal.classList.remove('hidden');
-    }
-}
-
-// Close error modal
-function closeErrorModal() {
-    const modal = document.getElementById('errorModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
 
 // Reset form to initial state
 function resetForm() {
+    const form = document.getElementById('administratorRegistrationForm');
+    
+    // Re-enable all form inputs (in case they were disabled during submission)
+    const allInputs = form.querySelectorAll('input, select, textarea, button');
+    allInputs.forEach(input => {
+        // Don't enable buttons that should be disabled based on form state
+        if (input.type === 'submit' || input.id === 'next-step' || input.id === 'submit-form') {
+            // Will be handled by updateButtonStates()
+            return;
+        }
+        input.disabled = false;
+        // Clear any loading state data attributes
+        delete input.dataset.originalDisabled;
+    });
+    
     // Reset form fields
     document.getElementById('first_name').value = '';
     document.getElementById('last_name').value = '';
@@ -659,5 +692,46 @@ function resetForm() {
         input.classList.remove('border-red-500');
         input.classList.add('border-gray-300', 'dark:border-gray-600');
     });
+    
+    // Remove loading state from form if FormLoader was used
+    if (window.FormLoader && form) {
+        form.classList.remove('form-loading');
+        delete form.dataset.loading;
+    }
+    
+    // Update button states to reflect empty form
+    updateButtonStates();
 }
+
+// Password Toggle Functionality (same as profile page)
+document.addEventListener('click', function(e) {
+    const button = e.target.closest('.toggle-password');
+    if (!button) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const targetId = button.getAttribute('data-target');
+    const passwordInput = document.getElementById(targetId);
+    
+    if (!passwordInput) {
+        console.error('Password input not found for target:', targetId);
+        return;
+    }
+    
+    // Get all SVG elements (Blade components render as SVG)
+    const svgs = button.querySelectorAll('svg');
+    const eyeIcon = svgs[0]; // First SVG is the eye icon
+    const eyeSlashIcon = svgs[1]; // Second SVG is the eye-slash icon
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('hidden');
+        if (eyeSlashIcon) eyeSlashIcon.classList.remove('hidden');
+    } else {
+        passwordInput.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('hidden');
+        if (eyeSlashIcon) eyeSlashIcon.classList.add('hidden');
+    }
+});
 </script>

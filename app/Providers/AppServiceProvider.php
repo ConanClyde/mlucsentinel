@@ -5,12 +5,16 @@ namespace App\Providers;
 use App\Models\AdminRole;
 use App\Models\College;
 use App\Models\MapLocation;
+use App\Models\Payment;
+use App\Models\Privilege;
 use App\Models\StakeholderType;
 use App\Models\VehicleType;
 use App\Models\ViolationType;
 use App\Observers\AdminRoleObserver;
 use App\Observers\CollegeObserver;
 use App\Observers\MapLocationObserver;
+use App\Observers\PaymentObserver;
+use App\Observers\PrivilegeObserver;
 use App\Observers\StakeholderTypeObserver;
 use App\Observers\VehicleTypeObserver;
 use App\Observers\ViolationTypeObserver;
@@ -31,12 +35,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS in production
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
+
         // Register model observers for cache invalidation
         VehicleType::observe(VehicleTypeObserver::class);
         College::observe(CollegeObserver::class);
         ViolationType::observe(ViolationTypeObserver::class);
         AdminRole::observe(AdminRoleObserver::class);
         StakeholderType::observe(StakeholderTypeObserver::class);
+        Payment::observe(PaymentObserver::class);
+        Privilege::observe(PrivilegeObserver::class);
 
         // Register map location observer for sticker generation
         MapLocation::observe(MapLocationObserver::class);

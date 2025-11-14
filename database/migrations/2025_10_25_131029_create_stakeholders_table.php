@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('type_id')->nullable()->constrained('stakeholder_types')->onDelete('set null');
             $table->string('license_no')->nullable();
             $table->string('license_image')->nullable();
+            $table->string('guardian_evidence')->nullable(); // Upload proof of children's university ID
             $table->date('expiration_date')->nullable(); // expiration date of this user account, not the license (4 years)
             $table->timestamps();
 

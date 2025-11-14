@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
             $table->foreignId('college_id')->constrained('colleges')->onDelete('cascade');
+            $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('set null');
             $table->string('student_id')->unique();
             $table->string('license_no')->nullable();
             $table->string('license_image')->nullable();
@@ -24,6 +25,8 @@ return new class extends Migration
             // Performance indexes
             $table->index(['student_id', 'college_id'], 'students_student_id_college_id_index');
             $table->index('license_no', 'students_license_no_index');
+            $table->index('program_id', 'students_program_id_index');
+            $table->index(['college_id', 'program_id'], 'students_college_id_program_id_index');
         });
     }
 

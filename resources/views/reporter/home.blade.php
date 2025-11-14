@@ -3,9 +3,9 @@
 @section('page-title', 'Reporter Home')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Welcome Section -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 sm:p-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <div class="flex items-center justify-between gap-4">
             <div class="flex-1 min-w-0">
                 <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2 truncate">
@@ -22,8 +22,8 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
                     <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-red-600 dark:text-red-400" />
@@ -38,7 +38,7 @@
             </a>
         </div>
 
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
                     <x-heroicon-o-document-text class="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -54,7 +54,7 @@
         </div>
 
         @if(Auth::user()->user_type === App\Enums\UserType::Security)
-            <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
                         <x-heroicon-o-truck class="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -64,7 +64,7 @@
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage your vehicles</p>
                     </div>
                 </div>
-                <a href="{{ route('reporter.my-vehicles') }}" class="btn bg-green-600 hover:bg-green-700 text-white border-green-600 w-full text-center">
+                <a href="{{ route('user.vehicles') }}" class="btn bg-green-600 hover:bg-green-700 text-white border-green-600 w-full text-center">
                     Manage Vehicles
                 </a>
             </div>

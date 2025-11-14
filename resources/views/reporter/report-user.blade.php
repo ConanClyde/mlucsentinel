@@ -3,9 +3,9 @@
 @section('page-title', 'Report User')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Page Header - Simple -->
-    <div class="mb-6">
+    <div class="mb-4 md:mb-6">
         <h2 class="text-xl sm:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1 sm:mb-2">
             Report Violation
         </h2>
@@ -13,17 +13,17 @@
             Choose identification method
         </p>
         @php
-            $isSBO = Auth::user()->user_type === App\Enums\UserType::Reporter && 
+            $canOnlyReportStudents = Auth::user()->user_type === App\Enums\UserType::Reporter && 
                      Auth::user()->reporter && 
-                     (Auth::user()->reporter->reporterType->name ?? '') === 'SBO';
+                                     Auth::user()->reporter->canOnlyReportStudents();
         @endphp
-        @if($isSBO)
+        @if($canOnlyReportStudents)
             <div class="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <p class="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 flex items-start sm:items-center">
                     <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                     </svg>
-                    <span><strong>Note:</strong> As an SBO member, you can only report student vehicles.</span>
+                    <span><strong>Note:</strong> Based on your reporter role, you can only report student vehicles.</span>
                 </p>
             </div>
         @endif
@@ -177,6 +177,13 @@
 @push('scripts')
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 <script>
+// Check for session error on page load
+document.addEventListener('DOMContentLoaded', function() {
+    @if(session('error'))
+        showErrorModal('{{ session('error') }}');
+    @endif
+});
+
 let qrCodeReader = null;
 let qrStream = null;
 let qrFacingMode = 'environment'; // 'environment' for back camera, 'user' for front camera

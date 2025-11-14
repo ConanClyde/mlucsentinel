@@ -14,6 +14,7 @@ class Student extends Model
     protected $fillable = [
         'user_id',
         'college_id',
+        'program_id',
         'student_id',
         'license_no',
         'license_image',
@@ -46,6 +47,14 @@ class Student extends Model
     public function college(): BelongsTo
     {
         return $this->belongsTo(College::class);
+    }
+
+    /**
+     * Get the program that the student belongs to.
+     */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
     }
 
     /**

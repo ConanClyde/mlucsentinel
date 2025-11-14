@@ -80,6 +80,9 @@ class ProfileController extends Controller
         // Broadcast the password change to relevant channels (without notifications)
         broadcast(new UserUpdated($user, 'password_changed', 'self'));
 
+        // Log activity
+        \App\Services\ActivityLogService::log($user->id, 'password_change');
+
         return response()->json([
             'success' => true,
             'message' => 'Password changed successfully!',

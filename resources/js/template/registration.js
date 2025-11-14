@@ -154,6 +154,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             vehicleCount++;
             
+            // Get vehicle type options from the first select
+            const existingSelect = document.querySelector('select[name="vehicles[0][type_id]"]');
+            let vehicleTypeOptions = '<option value="">Select Vehicle Type</option>';
+            if (existingSelect) {
+                Array.from(existingSelect.options).forEach(option => {
+                    if (option.value) { // Skip the "Select Vehicle Type" option
+                        const requiresPlate = option.getAttribute('data-requires-plate');
+                        vehicleTypeOptions += '<option value="' + option.value + '" data-requires-plate="' + (requiresPlate || '1') + '">' + option.textContent + '</option>';
+                    }
+                });
+            }
+            
             const vehicleHtml = '<div class="vehicle-item bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">' +
                 '<div class="flex items-center justify-between mb-3">' +
                     '<h4 class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Vehicle ' + vehicleCount + '</h4>' +
@@ -165,8 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<div class="form-group">' +
                         '<label class="form-label">Vehicle Type</label>' +
                         '<select name="vehicles[' + (vehicleCount - 1) + '][type_id]" class="form-input" required>' +
-                            '<option value="">Select Vehicle Type</option>' +
-                            // Vehicle types will be populated from the server
+                            vehicleTypeOptions +
                         '</select>' +
                     '</div>' +
                     '<div class="form-group">' +
@@ -315,15 +326,19 @@ function updateVehicleNumbers() {
 function togglePlateNumberVisibility(vehicleItem) {
     const vehicleTypeSelect = vehicleItem.querySelector('select[name*="[type_id]"]');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
+    const plateNumberGroup = vehicleItem.querySelector('.plate-number-group');
     
     if (!vehicleTypeSelect || !plateNumberInput) return;
     
-    const selectedType = vehicleTypeSelect.value;
+    const selectedOption = vehicleTypeSelect.options[vehicleTypeSelect.selectedIndex];
+    const requiresPlate = selectedOption && selectedOption.getAttribute('data-requires-plate') === '1';
     
-    // For now, all vehicle types require plate numbers
-    // This can be extended based on business logic
-    if (selectedType) {
-        plateNumberInput.style.display = 'block';
+    if (!requiresPlate) {
+        if (plateNumberGroup) plateNumberGroup.style.display = 'none';
+        plateNumberInput.removeAttribute('required');
+        plateNumberInput.value = ''; // Clear the value
+    } else {
+        if (plateNumberGroup) plateNumberGroup.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
     }
 }

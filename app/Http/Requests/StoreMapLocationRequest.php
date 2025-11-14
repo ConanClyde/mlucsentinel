@@ -24,7 +24,7 @@ class StoreMapLocationRequest extends FormRequest
         return [
             'type_id' => ['required', 'integer', 'exists:map_location_types,id'],
             'name' => ['required', 'string', 'max:255'],
-            'short_code' => ['nullable', 'string', 'max:10', 'unique:map_locations,short_code,'.$locationId],
+            'short_code' => ['nullable', 'string', 'max:5', 'unique:map_locations,short_code,'.$locationId],
             'description' => ['nullable', 'string', 'max:1000'],
             'color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'vertices' => ['nullable', 'array', 'min:3'], // Optional - only needed for map visualization

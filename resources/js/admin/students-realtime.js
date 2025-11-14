@@ -227,7 +227,9 @@ class StudentsRealtime {
      * Add a new student row to the table
      */
     addStudent(student) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${student.id}"]`);
+        // Use user_id to find row (consistent with table rows which use data-id="{{ $student->user_id }}")
+        const userId = student.user_id || student.user?.id;
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${userId}"]`);
         
         if (existingRow) {
             this.updateStudent(student);
@@ -254,7 +256,9 @@ class StudentsRealtime {
      * Update an existing student row
      */
     updateStudent(student) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${student.id}"]`);
+        // Use user_id to find row (consistent with table rows which use data-id="{{ $student->user_id }}")
+        const userId = student.user_id || student.user?.id;
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${userId}"]`);
         
         if (!existingRow) {
             console.log('Student not found in table, adding instead');
@@ -262,7 +266,8 @@ class StudentsRealtime {
             return;
         }
 
-        const index = this.students.findIndex(s => s.id === student.id);
+        // Find student by user_id (consistent with how rows are identified)
+        const index = this.students.findIndex(s => (s.user_id === userId) || (s.user?.id === userId));
         if (index !== -1) {
             this.students[index] = student;
         }
@@ -281,14 +286,17 @@ class StudentsRealtime {
      * Remove a student row from the table
      */
     removeStudent(student) {
-        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${student.id}"]`);
+        // Use user_id to find row (consistent with table rows which use data-id="{{ $student->user_id }}")
+        const userId = student.user_id || student.user?.id;
+        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${userId}"]`);
         
         if (!rowToRemove) {
             console.log('Student not found in table');
             return;
         }
 
-        this.students = this.students.filter(s => s.id !== student.id);
+        // Filter by user_id (consistent with how rows are identified)
+        this.students = this.students.filter(s => (s.user_id !== userId) && (s.user?.id !== userId));
         rowToRemove.classList.add('animate-fade-out');
 
         setTimeout(() => {
@@ -306,7 +314,9 @@ class StudentsRealtime {
     createStudentRow(student) {
         const row = document.createElement('tr');
         row.className = 'border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] transition-colors';
-        row.setAttribute('data-id', student.id);
+        // Use user_id for data-id (consistent with table rows which use data-id="{{ $student->user_id }}")
+        const userId = student.user_id || student.user?.id;
+        row.setAttribute('data-id', userId);
 
         const statusClass = student.user.is_active
             ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'

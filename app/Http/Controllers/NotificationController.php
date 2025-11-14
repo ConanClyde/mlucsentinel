@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use Illuminate\Http\JsonResponse;
 
 class NotificationController extends Controller
 {
     /**
      * Get all notifications for the authenticated user
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $notifications = auth()->user()
             ->notifications()
@@ -26,7 +27,7 @@ class NotificationController extends Controller
     /**
      * Mark a notification as read
      */
-    public function markAsRead($id)
+    public function markAsRead($id): JsonResponse
     {
         $notification = auth()->user()->notifications()->findOrFail($id);
 
@@ -44,7 +45,7 @@ class NotificationController extends Controller
     /**
      * Mark all notifications as read
      */
-    public function markAllAsRead()
+    public function markAllAsRead(): JsonResponse
     {
         auth()->user()->notifications()
             ->where('is_read', false)
@@ -62,7 +63,7 @@ class NotificationController extends Controller
     /**
      * Clear all notifications
      */
-    public function clearAll()
+    public function clearAll(): JsonResponse
     {
         auth()->user()->notifications()->delete();
 

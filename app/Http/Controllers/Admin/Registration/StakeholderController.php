@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Registration;
 
-use App\Events\PaymentUpdated;
 use App\Events\StakeholderUpdated;
 use App\Events\UserUpdated;
 use App\Events\VehicleUpdated;
@@ -12,6 +11,8 @@ use App\Models\Stakeholder;
 use App\Models\StakeholderType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\IdempotencyService;
+use App\Services\PaymentBatchService;
 use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
@@ -47,8 +48,14 @@ class StakeholderController extends Controller
      */
     public function store(Request $request)
     {
+        // Check authorization: Only Global Admin or Security Admin can register stakeholders
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         try {
-            $request->validate([
+            $validationRules = [
                 'first_name' => ['required', 'string', 'max:255'],
                 'last_name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[^\s@]+@(gmail\.com|dmmmsu\.edu\.ph)$/'],
@@ -67,31 +74,69 @@ class StakeholderController extends Controller
                 'vehicles' => ['required', 'array', 'min:1', 'max:3'],
                 'vehicles.*.type_id' => ['required', 'exists:vehicle_types,id'],
                 'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
-            ], [
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'password_confirmation' => ['required'],
+            ];
+
+            // Check if the selected stakeholder type requires evidence
+            if ($request->type_id) {
+                $stakeholderType = \App\Models\StakeholderType::find($request->type_id);
+                if ($stakeholderType && $stakeholderType->evidence_required) {
+                    $validationRules['guardian_evidence'] = ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10240']; // 10MB max
+                } else {
+                    $validationRules['guardian_evidence'] = ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10240']; // 10MB max
+                }
+            }
+
+            $request->validate($validationRules, [
                 'email.unique' => 'Email is already registered',
                 'email.regex' => 'Email must be from Gmail (@gmail.com) or DMMMSU (@dmmmsu.edu.ph)',
                 'type_id.required' => 'Stakeholder type is required',
                 'type_id.exists' => 'Invalid stakeholder type',
                 'license_no.unique' => 'License number is already registered',
                 'vehicles.max' => 'Maximum of 3 vehicles allowed per stakeholder',
+                'guardian_evidence.required' => 'Guardian evidence is required for stakeholder registration',
+                'guardian_evidence.mimes' => 'Guardian evidence must be a JPG or PNG image file',
+                'guardian_evidence.max' => 'Guardian evidence file size must not exceed 10MB',
+                'password.min' => 'Password must be at least 8 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
             ]);
+
+            // Idempotency: prevent duplicate submissions
+            if ($key = $request->header('Idempotency-Key')) {
+                $routeName = $request->route() ? $request->route()->getName() : 'admin.registration.stakeholder.store';
+                $ok = app(IdempotencyService::class)->ensure($key, auth()->id(), $routeName, [
+                    'email' => $request->email,
+                    'type_id' => $request->type_id,
+                    'vehicles' => $request->vehicles,
+                ]);
+                if (! $ok) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Duplicate registration ignored.',
+                    ], 200);
+                }
+            }
 
             // Custom validation for plate numbers
             foreach ($request->vehicles as $index => $vehicle) {
                 $typeId = $vehicle['type_id'];
                 $plateNo = $vehicle['plate_no'] ?? '';
 
-                // Plate number is required for Motorcycle (1) and Car (2), but not for Electric Vehicle (3)
-                if ($typeId != 3 && empty($plateNo)) {
+                // Get vehicle type to check if it requires plate number
+                $vehicleType = $typeId ? \App\Models\VehicleType::find($typeId) : null;
+
+                // Plate number is required if vehicle type requires it
+                if ($vehicleType && $vehicleType->requires_plate && empty($plateNo)) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Plate number is required for Motorcycle and Car vehicles.',
-                        'errors' => ["vehicles.{$index}.plate_no" => ['Plate number is required for Motorcycle and Car vehicles.']],
+                        'message' => "Plate number is required for {$vehicleType->name} vehicles.",
+                        'errors' => ["vehicles.{$index}.plate_no" => ["Plate number is required for {$vehicleType->name} vehicles."]],
                     ], 422);
                 }
 
-                // Validate plate number format for non-electric vehicles
-                if ($typeId != 3 && ! empty($plateNo)) {
+                // Validate plate number format for vehicles that require plates
+                if ($vehicleType && $vehicleType->requires_plate && ! empty($plateNo)) {
                     if (! preg_match('/^[A-Z]{2,3}-[0-9]{3,4}$/', $plateNo)) {
                         return response()->json([
                             'success' => false,
@@ -120,7 +165,7 @@ class StakeholderController extends Controller
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'email' => $request->email,
-                    'password' => Hash::make('password123'),
+                    'password' => Hash::make($request->password),
                     'user_type' => 'stakeholder',
                     'is_active' => true,
                 ]);
@@ -133,13 +178,24 @@ class StakeholderController extends Controller
                     $licenseImagePath = $file->storeAs('licenses', $filename, 'public');
                 }
 
+                // Handle guardian evidence upload
+                $guardianEvidencePath = null;
+                if ($request->hasFile('guardian_evidence')) {
+                    $file = $request->file('guardian_evidence');
+                    $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                    $guardianEvidencePath = $file->storeAs('guardian_evidence', $filename, 'public');
+                }
+
                 // Create stakeholder
+                $rules = \App\Models\StickerRule::getSingleton();
+                $years = (int) ($rules->stakeholder_expiration_years ?? 4);
                 $stakeholder = Stakeholder::create([
                     'user_id' => $user->id,
                     'type_id' => $request->type_id,
                     'license_no' => $request->license_no,
                     'license_image' => $licenseImagePath,
-                    'expiration_date' => now()->addYears(4),
+                    'guardian_evidence' => $guardianEvidencePath,
+                    'expiration_date' => now()->addYears($years),
                 ]);
 
                 // Get stakeholder type for sticker color determination
@@ -149,8 +205,16 @@ class StakeholderController extends Controller
                 // Create vehicles with stickers
                 $vehicleIds = [];
                 foreach ($request->vehicles as $vehicleData) {
-                    $typeId = $vehicleData['type_id'];
+                    $vehicleType = \App\Models\VehicleType::find($vehicleData['type_id']);
                     $plateNumber = $vehicleData['plate_no'] ?? null;
+
+                    // If vehicle type doesn't require plate, set to null
+                    if ($vehicleType && ! $vehicleType->requires_plate) {
+                        $plateNumber = null;
+                    } else {
+                        // For vehicles that require plate, ensure plate_no is not empty string
+                        $plateNumber = ! empty($plateNumber) ? $plateNumber : null;
+                    }
 
                     // Determine sticker color using StickerGenerator
                     $stickerColor = $this->stickerGenerator->determineStickerColor('stakeholder', $stakeholderTypeName, $plateNumber);
@@ -161,7 +225,7 @@ class StakeholderController extends Controller
                     // Create vehicle first
                     $vehicle = Vehicle::create([
                         'user_id' => $user->id,
-                        'type_id' => $typeId,
+                        'type_id' => $vehicleData['type_id'],
                         'plate_no' => $plateNumber,
                         'color' => $stickerColor,
                         'number' => $stickerNumber,
@@ -188,39 +252,11 @@ class StakeholderController extends Controller
                     $vehicleIds[] = $vehicle->id;
                 }
 
-                // Create batched payment for all vehicles
+                // Create batched payment using the service to enforce single representative per batch
                 if (count($vehicleIds) > 0) {
-                    $batchId = count($vehicleIds) > 1 ? 'BATCH-'.strtoupper(uniqid()) : null;
-                    $totalAmount = count($vehicleIds) * 15.00;
-
-                    $payment = Payment::create([
-                        'user_id' => $user->id,
-                        'vehicle_id' => $vehicleIds[0],
-                        'type' => 'sticker_fee',
-                        'status' => 'pending',
-                        'amount' => $totalAmount,
-                        'reference' => 'STK-'.strtoupper(uniqid()),
-                        'batch_id' => $batchId,
-                        'vehicle_count' => count($vehicleIds),
-                    ]);
-
-                    if (count($vehicleIds) > 1) {
-                        for ($i = 1; $i < count($vehicleIds); $i++) {
-                            Payment::create([
-                                'user_id' => $user->id,
-                                'vehicle_id' => $vehicleIds[$i],
-                                'type' => 'sticker_fee',
-                                'status' => 'pending',
-                                'amount' => 15.00,
-                                'reference' => 'STK-'.strtoupper(uniqid()),
-                                'batch_id' => $batchId,
-                                'vehicle_count' => 1,
-                            ]);
-                        }
-                    }
-
-                    $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-                    broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                    $batchSvc = app(PaymentBatchService::class);
+                    $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
+                    $batchSvc->addVehiclesToBatch($user->id, $vehicleIds, $editorName);
                 }
 
                 DB::commit();
@@ -245,9 +281,14 @@ class StakeholderController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            \Log::error('Stakeholder registration failed: '.$e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred during registration: '.$e->getMessage(),
+                'message' => 'Registration failed. Please try again.',
             ], 500);
         }
     }

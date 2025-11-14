@@ -116,12 +116,11 @@ class UserUpdated implements ShouldBroadcastNow
                 $data['reporter'] = [
                     'id' => $reporter->id,
                     'user_id' => $reporter->user_id,
-                    'type_id' => $reporter->type_id,
-                    'expiration_date' => $reporter->expiration_date,
+                    'reporter_role_id' => $reporter->reporter_role_id,
                     'user' => $data['user'],
-                    'reporter_type' => $reporter->reporterType ? [
-                        'id' => $reporter->reporterType->id,
-                        'name' => $reporter->reporterType->name,
+                    'reporter_role' => $reporter->reporterRole ? [
+                        'id' => $reporter->reporterRole->id,
+                        'name' => $reporter->reporterRole->name,
                     ] : null,
                     'created_at' => $reporter->created_at,
                     'updated_at' => $reporter->updated_at,

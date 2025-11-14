@@ -3,12 +3,12 @@
 @section('page-title', 'Staff Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col lg:flex-row gap-3 md:gap-4">
             <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
+            <div class="flex-[2]">
                 <label class="form-label">Search</label>
                 <input type="text" id="search-input" class="form-input w-full" placeholder="Search by name, email, or staff ID...">
             </div>
@@ -25,19 +25,61 @@
 
             <!-- Reset Button -->
             <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+                <label class="form-label opacity-0 hidden sm:block">Reset</label>
+                <button id="reset-filters" class="btn btn-secondary !h-[38px] w-full lg:w-auto px-6">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div id="bulk-actions-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1a1a1a] px-6 py-4">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 pr-4 border-r border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                        <span id="selected-count">0</span> selected
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearSelection()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button onclick="bulkActivate()" class="btn btn-success !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Activate</span>
+                </button>
+                <button onclick="bulkDeactivate()" class="btn btn-warning !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Deactivate</span>
+                </button>
+                <button onclick="confirmBulkDelete()" class="btn btn-danger !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Delete</span>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- staff Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Staff List</h3>
-            <div class="flex items-center gap-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Staff List</h3>
+            <div class="flex flex-wrap items-center gap-3 md:gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
-                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-sm">
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
+                    <select id="pagination-limit" class="form-input !h-[38px] !py-1 !px-3 text-xs md:text-sm">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -45,10 +87,10 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
+                    <span class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A]">Live Updates:</span>
                     <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                 </div>
-                <button onclick="exportToCSV()" class="btn btn-csv">CSV</button>
+                <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
             </div>
         </div>
 
@@ -56,6 +98,11 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_staff', 'delete_staff']))
+                        <th class="text-center py-2 px-3 w-12">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        </th>
+                        @endif
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Name</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Email</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Staff ID</th>
@@ -66,7 +113,12 @@
                 </thead>
                 <tbody id="staffTableBody">
                     @forelse($staff as $staffMember)
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $staffMember->id }}">
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $staffMember->user_id }}">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_staff', 'delete_staff']))
+                        <td class="text-center py-2 px-3">
+                            <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" value="{{ $staffMember->user_id }}" onchange="updateBulkActions()">
+                        </td>
+                        @endif
                         <td class="py-2 px-3">
                             <div class="flex items-center">
                                 @php
@@ -99,22 +151,24 @@
                                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
                                     </svg>
                                 </button>
-                                <button onclick="openEditModal({{ $staffMember->id }})" class="btn-edit" title="Edit">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSecurityAdmin())
+                                    <button onclick="openEditModal({{ $staffMember->id }})" class="btn-edit" title="Edit">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="deleteStaff({{ $staffMember->id }})" class="btn-delete" title="Delete">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                                     </svg>
-                                </button>
-                                <button onclick="deleteStaff({{ $staffMember->id }})" class="btn-delete" title="Delete">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                        <td colspan="{{ Auth::user()->hasAnyPrivilege(['edit_staff', 'delete_staff']) ? '7' : '6' }}" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
                             No staff found.
                         </td>
                     </tr>
@@ -316,6 +370,63 @@
             <button class="btn-camera" onclick="captureEditLicensePhoto()">
                 <svg class="w-6 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Activate Confirmation Modal -->
+<div id="bulkActivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkActivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-check-circle class="modal-icon-success" />
+                Activate Staff
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkActivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkActivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkActivate()" class="btn btn-success">Activate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Deactivate Confirmation Modal -->
+<div id="bulkDeactivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeactivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                Deactivate Staff
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeactivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeactivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDeactivate()" class="btn btn-warning">Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulkDeleteModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeleteModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Delete Staff
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeleteMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeleteModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDelete()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -839,7 +950,7 @@ function addEditVehicle() {
                     <label class="form-label">Vehicle Type <span class="text-red-500">*</span></label>
                     <select name="vehicles[${editVehicleCount}][type_id]" class="form-input" required onchange="togglePlateNumberInput(this)">
                         <option value="">Select Vehicle Type</option>
-                        ${vehicleTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
+                        ${vehicleTypes.map(type => `<option value="${type.id}" data-requires-plate="${type.requires_plate ? '1' : '0'}">${type.name}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group" id="plate-number-group-${editVehicleCount}">
@@ -906,14 +1017,28 @@ function updateEditAddVehicleButton() {
 function togglePlateNumberInput(selectElement) {
     const vehicleCard = selectElement.closest('.vehicle-card');
     const plateNumberGroup = vehicleCard.querySelector('[id^="plate-number-group-"]');
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const vehicleTypeName = selectedOption.text.toLowerCase();
     
-    if (vehicleTypeName.includes('electric')) {
+    if (!plateNumberGroup) {
+        return; // Safety check
+    }
+    
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const requiresPlate = selectedOption && selectedOption.getAttribute('data-requires-plate') === '1';
+    const plateNumberInput = plateNumberGroup.querySelector('input');
+    
+    if (!requiresPlate) {
         plateNumberGroup.style.display = 'none';
-        plateNumberGroup.querySelector('input').value = '';
+        if (plateNumberInput) {
+            plateNumberInput.value = '';
+            plateNumberInput.removeAttribute('required');
+        }
     } else {
         plateNumberGroup.style.display = 'block';
+        plateNumberGroup.classList.remove('hidden');
+        plateNumberGroup.style.visibility = 'visible';
+        if (plateNumberInput) {
+            plateNumberInput.setAttribute('required', 'required');
+        }
     }
 }
 
@@ -1273,6 +1398,229 @@ window.addEventListener('beforeunload', function() {
         realtimeManager.disconnect();
     }
 });
+
+// Bulk Operations Functions
+function toggleSelectAll(checkbox) {
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    rowCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const count = selected.length;
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (count > 0) {
+        bulkBar.classList.remove('hidden');
+        countSpan.textContent = count;
+    } else {
+        bulkBar.classList.add('hidden');
+    }
+    
+    const selectAll = document.getElementById('select-all');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    if (selectAll) {
+        selectAll.checked = allCheckboxes.length > 0 && selected.length === allCheckboxes.length;
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox, #select-all').forEach(cb => cb.checked = false);
+    updateBulkActions();
+}
+
+function getSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+function bulkActivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one staff member');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to activate 1 staff member?'
+        : `Are you sure you want to activate ${count} staff members?`;
+    
+    document.getElementById('bulkActivateMessage').textContent = message;
+    document.getElementById('bulkActivateModal').classList.remove('hidden');
+}
+
+function closeBulkActivateModal() {
+    document.getElementById('bulkActivateModal').classList.add('hidden');
+}
+
+function executeBulkActivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: true,
+            user_type: 'staff'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkActivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error activating staff members');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error activating staff members');
+    });
+}
+
+function bulkDeactivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one staff member');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to deactivate 1 staff member?'
+        : `Are you sure you want to deactivate ${count} staff members?`;
+    
+    document.getElementById('bulkDeactivateMessage').textContent = message;
+    document.getElementById('bulkDeactivateModal').classList.remove('hidden');
+}
+
+function closeBulkDeactivateModal() {
+    document.getElementById('bulkDeactivateModal').classList.add('hidden');
+}
+
+function executeBulkDeactivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: false,
+            user_type: 'staff'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeactivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deactivating staff members');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deactivating staff members');
+    });
+}
+
+function confirmBulkDelete() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one staff member');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to delete 1 staff member? This action cannot be undone.'
+        : `Are you sure you want to delete ${count} staff members? This action cannot be undone.`;
+    
+    document.getElementById('bulkDeleteMessage').textContent = message;
+    document.getElementById('bulkDeleteModal').classList.remove('hidden');
+}
+
+function closeBulkDeleteModal() {
+    document.getElementById('bulkDeleteModal').classList.add('hidden');
+}
+
+function executeBulkDelete() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            user_type: 'staff'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeleteModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deleting staff members');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deleting staff members');
+    });
+}
+
+// Expose bulk operation functions
+window.toggleSelectAll = toggleSelectAll;
+window.updateBulkActions = updateBulkActions;
+window.clearSelection = clearSelection;
+window.bulkActivate = bulkActivate;
+window.bulkDeactivate = bulkDeactivate;
+window.confirmBulkDelete = confirmBulkDelete;
+window.closeBulkActivateModal = closeBulkActivateModal;
+window.closeBulkDeactivateModal = closeBulkDeactivateModal;
+window.closeBulkDeleteModal = closeBulkDeleteModal;
+window.executeBulkActivate = executeBulkActivate;
+window.executeBulkDeactivate = executeBulkDeactivate;
+window.executeBulkDelete = executeBulkDelete;
 </script>
 
 <style>

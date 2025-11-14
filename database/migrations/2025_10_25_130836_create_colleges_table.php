@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,23 +13,14 @@ return new class extends Migration
     {
         Schema::create('colleges', function (Blueprint $table) {
             $table->id();
+            $table->string('code', 20)->unique();
             $table->string('name')->unique();
+            $table->string('type', 100)->default('college');
+            $table->string('description')->nullable();
             $table->timestamps();
-        });
 
-        // Insert default colleges
-        $now = now();
-        DB::table('colleges')->insert([
-            ['name' => 'College of Graduate Studies', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Law', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Engineering', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Information Technology', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Arts and Sciences', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Education', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Management', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Institute of Criminal Justice Education', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'College of Technology', 'created_at' => $now, 'updated_at' => $now],
-        ]);
+            $table->index('name', 'colleges_name_index');
+        });
     }
 
     /**

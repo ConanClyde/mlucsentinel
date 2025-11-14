@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin\Registration;
 use App\Events\ReporterUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Reporter;
-use App\Models\ReporterType;
+use App\Models\ReporterRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,11 +18,11 @@ class ReporterController extends Controller
      */
     public function index()
     {
-        $reporterTypes = ReporterType::orderBy('name')->get();
+        $reporterRoles = ReporterRole::active()->orderBy('name')->get();
 
         return view('admin.registration.reporter', [
             'pageTitle' => 'Reporter Registration',
-            'reporterTypes' => $reporterTypes,
+            'reporterRoles' => $reporterRoles,
         ]);
     }
 
@@ -31,25 +31,22 @@ class ReporterController extends Controller
      */
     public function store(Request $request)
     {
+        // Authorization: Global Admin or admins with 'register_reporters' privilege
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->hasPrivilege('register_reporters')) {
+            abort(403, 'You do not have permission to register reporters.');
+        }
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[^\s@]+@(gmail\.com|dmmmsu\.edu\.ph|student\.dmmmsu\.edu\.ph)$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'type_id' => ['required', 'exists:reporter_types,id'],
+            'reporter_role_id' => ['required', 'exists:reporter_roles,id'],
         ], [
             'email.unique' => 'Email is already registered',
             'email.regex' => 'Email must be from Gmail (@gmail.com), DMMMSU (@dmmmsu.edu.ph), or Student DMMMSU (@student.dmmmsu.edu.ph)',
         ]);
-
-        // Get reporter type to determine expiration date
-        $reporterType = ReporterType::find($request->type_id);
-        $expirationDate = null;
-
-        // If type is SBO, set expiration to 1 year from now
-        if ($reporterType && $reporterType->name === 'SBO') {
-            $expirationDate = now()->addYear()->toDateString();
-        }
 
         // Create user
         $user = User::create([
@@ -65,8 +62,8 @@ class ReporterController extends Controller
         // Create reporter record
         $reporter = Reporter::create([
             'user_id' => $user->id,
-            'type_id' => $request->type_id,
-            'expiration_date' => $expirationDate,
+            'reporter_role_id' => $request->reporter_role_id,
+            'is_active' => true,
         ]);
 
         // Broadcast the reporter creation event

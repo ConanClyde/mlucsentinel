@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Registration;
 
-use App\Events\PaymentUpdated;
 use App\Events\UserUpdated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
@@ -11,6 +10,8 @@ use App\Models\Payment;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\IdempotencyService;
+use App\Services\PaymentBatchService;
 use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $colleges = StaticDataCacheService::getColleges();
+        $colleges = StaticDataCacheService::getColleges()->load('programs');
         $vehicleTypes = StaticDataCacheService::getVehicleTypes();
 
         return view('admin.registration.student', [
@@ -46,8 +47,30 @@ class StudentController extends Controller
      */
     public function store(StoreStudentRequest $request)
     {
+        // Check authorization: Only Global Admin or Security Admin can register students
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         try {
             $validated = $request->validated();
+
+            // Idempotency: prevent duplicate submissions
+            if ($key = $request->header('Idempotency-Key')) {
+                $routeName = $request->route() ? $request->route()->getName() : 'admin.registration.student.store';
+                $ok = app(IdempotencyService::class)->ensure($key, auth()->id(), $routeName, [
+                    'email' => $request->email,
+                    'student_id' => $request->student_id,
+                    'vehicles' => $request->vehicles,
+                ]);
+                if (! $ok) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Duplicate registration ignored.',
+                    ], 200);
+                }
+            }
 
             DB::beginTransaction();
 
@@ -56,7 +79,7 @@ class StudentController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make('temp_password_'.time()), // Temporary password since students don't login
+                'password' => Hash::make($request->password),
                 'user_type' => 'student',
                 'is_active' => true,
             ]);
@@ -69,26 +92,33 @@ class StudentController extends Controller
                 $licenseImagePath = $file->storeAs('licenses', $filename, 'public');
             }
 
+            // Get program and its college
+            $program = \App\Models\Program::findOrFail($request->program_id);
+
             // Create student record
+            $rules = \App\Models\StickerRule::getSingleton();
+            $years = (int) ($rules->student_expiration_years ?? 4);
             $student = Student::create([
                 'user_id' => $user->id,
-                'college_id' => $request->college_id,
+                'college_id' => $program->college_id,
+                'program_id' => $request->program_id,
                 'student_id' => $request->student_id,
                 'license_no' => $request->license_no,
                 'license_image' => $licenseImagePath,
-                'expiration_date' => now()->addYears(4), // 4 years from now
+                'expiration_date' => now()->addYears($years),
             ]);
 
             // Create vehicles and generate stickers
             $vehicleIds = [];
             foreach ($request->vehicles as $vehicleData) {
+                $vehicleType = \App\Models\VehicleType::find($vehicleData['type_id']);
                 $plateNumber = $vehicleData['plate_no'] ?? null;
 
-                // For Electric Vehicle (type_id 3), plate_no must be null
-                if ($vehicleData['type_id'] == 3) {
+                // If vehicle type doesn't require plate, set to null
+                if ($vehicleType && ! $vehicleType->requires_plate) {
                     $plateNumber = null;
                 } else {
-                    // For other vehicles, ensure plate_no is not empty string
+                    // For vehicles that require plate, ensure plate_no is not empty string
                     $plateNumber = ! empty($plateNumber) ? $plateNumber : null;
                 }
 
@@ -127,41 +157,11 @@ class StudentController extends Controller
                 $vehicleIds[] = $vehicle->id;
             }
 
-            // Create batched payment for all vehicles
+            // Create batched payment using the service to enforce invariants
             if (count($vehicleIds) > 0) {
-                $batchId = count($vehicleIds) > 1 ? 'BATCH-'.strtoupper(uniqid()) : null;
-                $totalAmount = count($vehicleIds) * 15.00;
-
-                // Create main payment record
-                $payment = Payment::create([
-                    'user_id' => $user->id,
-                    'vehicle_id' => $vehicleIds[0],
-                    'type' => 'sticker_fee',
-                    'status' => 'pending',
-                    'amount' => $totalAmount,
-                    'reference' => 'STK-'.strtoupper(uniqid()),
-                    'batch_id' => $batchId,
-                    'vehicle_count' => count($vehicleIds),
-                ]);
-
-                // Create child payment records for other vehicles
-                if (count($vehicleIds) > 1) {
-                    for ($i = 1; $i < count($vehicleIds); $i++) {
-                        Payment::create([
-                            'user_id' => $user->id,
-                            'vehicle_id' => $vehicleIds[$i],
-                            'type' => 'sticker_fee',
-                            'status' => 'pending',
-                            'amount' => 15.00,
-                            'reference' => 'STK-'.strtoupper(uniqid()),
-                            'batch_id' => $batchId,
-                            'vehicle_count' => 1,
-                        ]);
-                    }
-                }
-
-                $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-                broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                $batchSvc = app(PaymentBatchService::class);
+                $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
+                $batchSvc->addVehiclesToBatch($user->id, $vehicleIds, $editorName);
             }
 
             // Broadcast user update
@@ -185,12 +185,14 @@ class StudentController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Student registration failed: '.$e->getMessage());
+            \Log::error('Student registration failed: '.$e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Registration failed. Please try again.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

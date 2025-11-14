@@ -3,51 +3,54 @@
 @section('page-title', 'My Reports')
 
 @section('content')
-<div class="space-y-6" data-user-id="{{ Auth::id() }}">
+<div class="space-y-4 md:space-y-6" data-user-id="{{ Auth::id() }}">
     <!-- Filter Card -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex flex-col md:flex-row gap-4 items-end">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex flex-col gap-3 md:gap-4">
             <!-- Search -->
-            <div class="flex-1 md:flex-[2]">
+            <div class="w-full">
                 <label class="form-label">Search</label>
                 <input type="text" id="search-input" class="form-input w-full" placeholder="Search by violator, vehicle, or location...">
             </div>
 
-            <!-- Status Filter -->
-            <div class="flex-1">
-                <label class="form-label">Status</label>
-                <select id="status-filter" class="form-input w-full">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-            </div>
+            <!-- Filters Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                <!-- Status Filter -->
+                <div class="w-full">
+                    <label class="form-label">Status</label>
+                    <select id="status-filter" class="form-input w-full">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
 
-            <!-- Violation Type Filter -->
-            <div class="flex-1">
-                <label class="form-label">Violation Type</label>
-                <select id="violation-filter" class="form-input w-full">
-                    <option value="">All Types</option>
-                    @php
-                        $violationTypes = \App\Models\ViolationType::orderBy('name')->get();
-                    @endphp
-                    @foreach($violationTypes as $type)
-                        <option value="{{ $type->id }}">{{ $type->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+                <!-- Violation Type Filter -->
+                <div class="w-full">
+                    <label class="form-label">Violation Type</label>
+                    <select id="violation-filter" class="form-input w-full">
+                        <option value="">All Types</option>
+                        @php
+                            $violationTypes = \App\Models\ViolationType::orderBy('name')->get();
+                        @endphp
+                        @foreach($violationTypes as $type)
+                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Reset Button -->
-            <div class="flex-shrink-0">
-                <button id="reset-filters" class="btn btn-secondary !h-[38px] px-6">Reset</button>
+                <!-- Reset Button -->
+                <div class="w-full flex items-end">
+                    <button id="reset-filters" class="btn btn-secondary w-full !h-[38px]">Reset</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Reports Table -->
-    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-6">
-        <div class="flex items-center justify-between mb-6">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4 md:mb-6">
             <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">My Reports</h3>
             <div class="flex items-center gap-2">
                 <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Show:</span>
@@ -85,11 +88,8 @@
                                 @php
                                     $statusColors = [
                                         'pending' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-                                        'under_review' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
                                         'approved' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
                                         'rejected' => 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-                                        'resolved' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-                                        'dismissed' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
                                     ];
                                     $statusClass = $statusColors[$report->status] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
                                     
@@ -102,7 +102,7 @@
                                         : 'N/A';
                             @endphp
                             
-                            <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors">
+                            <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-report-id="{{ $report->id }}">
                                 <td class="py-2 px-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
                                     {{ $report->violationType->name ?? 'N/A' }}
                                 </td>
@@ -164,52 +164,8 @@
                 <x-heroicon-o-x-mark class="w-6 h-6" />
             </button>
         </div>
-        <div class="modal-body">
-            <div class="grid grid-cols-2 gap-6">
-                <!-- Left Column -->
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violation Type</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-violation-type"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violator</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-violator"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Vehicle</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-vehicle"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Location</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-location"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Description</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-description"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Reported At</p>
-                        <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]" id="modal-reported-at"></p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Status</p>
-                        <span id="modal-status-badge"></span>
-                    </div>
-                </div>
-                
-                <!-- Right Column - Evidence Image -->
-                <div id="modal-evidence-container">
-                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-2">Evidence Image</p>
-                    <img id="modal-evidence" src="" alt="Evidence" class="w-full max-h-96 object-contain rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
-                </div>
-            </div>
+        <div class="modal-body max-h-[70vh] overflow-y-auto" id="viewModalContent">
+            <!-- Content will be dynamically populated -->
         </div>
         <div class="modal-footer">
             <button onclick="closeViewModal()" class="btn btn-secondary">Close</button>
@@ -226,43 +182,156 @@ function viewReport(reportId) {
     const report = reports.find(r => r.id === reportId);
     if (!report) return;
     
-    // Status colors
-    const statusColors = {
-        'pending': 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-        'approved': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-        'rejected': 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-    };
-    
-    const statusClass = statusColors[report.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-    
-    // Populate modal
-    document.getElementById('modal-violation-type').textContent = report.violation_type?.name || 'N/A';
-    document.getElementById('modal-status-badge').innerHTML = `<span class="px-2.5 py-1 text-xs font-medium ${statusClass} rounded-full">${report.status.charAt(0).toUpperCase() + report.status.slice(1)}</span>`;
-    
-    const violatorName = report.violator_vehicle?.user 
-        ? `${report.violator_vehicle.user.first_name} ${report.violator_vehicle.user.last_name}`
-        : 'Unknown';
-    document.getElementById('modal-violator').textContent = violatorName;
-    
-    const vehicleInfo = report.violator_vehicle 
-        ? (report.violator_vehicle.plate_no || report.violator_sticker_number)
-        : 'N/A';
-    document.getElementById('modal-vehicle').textContent = vehicleInfo;
-    
-    document.getElementById('modal-location').textContent = report.location;
-    document.getElementById('modal-description').textContent = report.description;
-    document.getElementById('modal-reported-at').textContent = new Date(report.reported_at).toLocaleString();
-    
-    // Evidence image
-    if (report.evidence_image) {
-        document.getElementById('modal-evidence').src = `/storage/${report.evidence_image}`;
-        document.getElementById('modal-evidence-container').classList.remove('hidden');
-    } else {
-        document.getElementById('modal-evidence-container').classList.add('hidden');
-    }
+    // Populate modal content
+    const modalContent = document.getElementById('viewModalContent');
+    modalContent.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <!-- Left Column - Report Details -->
+            <div class="space-y-3 md:space-y-4 lg:col-span-1">
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Report ID</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">#${report.id}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violator</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${report.violator_vehicle && report.violator_vehicle.user ? report.violator_vehicle.user.first_name + ' ' + report.violator_vehicle.user.last_name : 'N/A'}</p>
+                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">${report.violator_vehicle && report.violator_vehicle.user ? report.violator_vehicle.user.email : ''}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Vehicle Details</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                        ${report.violator_vehicle ? 
+                            (report.violator_vehicle.plate_no || `${report.violator_vehicle.color}-${report.violator_vehicle.number}`) + 
+                            (report.violator_vehicle.type ? ` (${report.violator_vehicle.type.name})` : '') 
+                            : 'N/A'
+                        }
+                    </p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violation Type</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${report.violation_type ? report.violation_type.name : 'N/A'}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Location</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${report.location || 'N/A'}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Description</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC] break-words">${report.description || 'N/A'}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Status</p>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        report.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        report.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        report.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                    }">
+                        ${report.status ? report.status.charAt(0).toUpperCase() + report.status.slice(1).replace('_', ' ') : 'Unknown'}
+                    </span>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Reported At</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${report.reported_at ? new Date(report.reported_at).toLocaleString() : 'N/A'}</p>
+                </div>
+                
+                ${report.remarks ? `
+                <div>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Remarks</p>
+                    <p class="font-medium text-[#1b1b18] dark:text-[#EDEDEC] break-words">${report.remarks}</p>
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- Right Column - Map and Evidence Image -->
+            <div class="space-y-4 md:space-y-6 lg:col-span-1">
+                <!-- Violation Location Map -->
+                <div class="space-y-3">
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Violation Location</p>
+                    <div class="relative w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 border border-[#e3e3e0] dark:border-[#3E3E3A]" id="report-detail-map-container">
+                        <div class="relative overflow-hidden" id="report-detail-map-wrapper">
+                            <img src="{{ asset('images/campus-map.svg') }}" alt="Campus Map" id="report-detail-map-image" class="w-full h-auto block" />
+                            
+                            <!-- Pin -->
+                            <div id="report-detail-pin" class="absolute pointer-events-none hidden" style="transform-origin: 50% 100%; z-index: 20;">
+                                <svg width="16" height="20" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin-left: -8px; margin-top: -20px;">
+                                    <path d="M16 0C9.373 0 4 5.373 4 12c0 8.4 12 28 12 28s12-19.6 12-28c0-6.627-5.373-12-12-12z" fill="#EA4335"/>
+                                    <circle cx="16" cy="12" r="4" fill="white"/>
+                                    <circle cx="16" cy="12" r="2" fill="#C5221F"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Evidence Image -->
+                <div class="space-y-3">
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Evidence Image</p>
+                    ${report.evidence_image ? 
+                        `<img src="/storage/${report.evidence_image}" alt="Evidence" class="w-full h-auto max-h-64 md:max-h-80 object-contain rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">` :
+                        '<div class="w-full h-48 bg-gray-100 dark:bg-gray-800 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] flex items-center justify-center"><p class="text-[#706f6c] dark:text-[#A1A09A]">No evidence image</p></div>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
     
     // Show modal
     document.getElementById('viewModal').classList.remove('hidden');
+    
+    // Initialize map after modal is shown
+    setTimeout(() => initializeReportDetailMap(report), 100);
+}
+
+function initializeReportDetailMap(report) {
+    const img = document.getElementById('report-detail-map-image');
+    const container = document.getElementById('report-detail-map-container');
+    const wrapper = document.getElementById('report-detail-map-wrapper');
+    const pin = document.getElementById('report-detail-pin');
+    
+    if (!img || !container || !wrapper || !pin) {
+        console.error('❌ Map elements not found');
+        return;
+    }
+    
+    if (!img.complete || img.naturalHeight === 0) {
+        img.onload = () => initializeReportDetailMap(report);
+        return;
+    }
+    
+    const aspectRatio = img.naturalHeight / img.naturalWidth;
+    container.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+    
+    if (report.pin_x && report.pin_y) {
+        pin.style.left = report.pin_x + '%';
+        pin.style.top = report.pin_y + '%';
+        pin.classList.remove('hidden');
+        
+        const zoomScale = 2.5;
+        const pinX = parseFloat(report.pin_x);
+        const pinY = parseFloat(report.pin_y);
+        
+        const offsetX = 50 - pinX;
+        const offsetY = 50 - pinY;
+        
+        const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
+        const panX = (offsetX / 100) * containerWidth * zoomScale;
+        const panY = (offsetY / 100) * containerHeight * zoomScale;
+        
+        wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        wrapper.style.transformOrigin = 'center center';
+    } else {
+        pin.classList.add('hidden');
+        wrapper.style.transform = 'translate(0, 0) scale(1)';
+    }
 }
 
 function closeViewModal() {
@@ -366,5 +435,112 @@ window.goToPage = function(page) {
     currentPage = page;
     applyPagination();
 };
+
+// Real-time updates using Laravel Echo
+if (window.Echo) {
+    window.Echo.channel('reports')
+        .listen('.report.status.updated', (event) => {
+            console.log('Report status updated:', event.report);
+            
+            // Get current user ID
+            const currentUserId = parseInt(document.querySelector('[data-user-id]')?.dataset.userId);
+            
+            // Check if current user is the one who updated the status
+            const updatedById = event.report.updated_by?.id || event.report.updated_by;
+            
+            // Skip if current user is the actor (they're the one who changed it)
+            if (currentUserId && updatedById && currentUserId === updatedById) {
+                console.log('Skipping self-triggered notification');
+                return;
+            }
+            
+            // Check if this report belongs to the current user
+            if (currentUserId && event.report.reported_by_id == currentUserId) {
+                // Find and update the report in the array
+                const index = reports.findIndex(r => r.id === event.report.id);
+                if (index !== -1) {
+                    const oldStatus = reports[index].status;
+                    reports[index] = event.report;
+                    
+                    // Update the table row status
+                    const row = document.querySelector(`tr[data-report-id="${event.report.id}"]`);
+                    if (row) {
+                        const statusCell = row.querySelector('td:nth-child(6)');
+                        if (statusCell) {
+                            const statusColors = {
+                                'pending': 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+                                'approved': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                'rejected': 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                            };
+                            const statusClass = statusColors[event.report.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                            const statusText = event.report.status.charAt(0).toUpperCase() + event.report.status.slice(1);
+                            statusCell.innerHTML = `<span class="px-2.5 py-1 text-xs font-medium ${statusClass} rounded-full whitespace-nowrap">${statusText}</span>`;
+                        }
+                    }
+                    
+                    // Show notification
+                    const statusLabel = event.report.status.charAt(0).toUpperCase() + event.report.status.slice(1).replace('_', ' ');
+                    showNotification(`Report #${event.report.id} status changed to ${statusLabel}`, event.report.id);
+                }
+            }
+        });
+}
+
+// Show notification function
+function showNotification(message, reportId = null) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in cursor-pointer hover:bg-blue-600 transition-colors';
+    notification.innerHTML = `
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Add click handler to open modal if reportId is provided
+    if (reportId) {
+        notification.addEventListener('click', () => {
+            notification.remove();
+            viewReport(reportId);
+        });
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        notification.classList.add('animate-fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+// Check URL parameters on page load to open modal
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportId = urlParams.get('view');
+    
+    if (reportId) {
+        // Wait for reports to be loaded
+        setTimeout(() => {
+            const report = reports.find(r => r.id == reportId);
+            if (report) {
+                viewReport(parseInt(reportId));
+                // Remove query parameter from URL without reloading
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+        }, 500);
+    }
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.Echo) {
+        window.Echo.leaveChannel('reports');
+    }
+});
 </script>
 @endpush

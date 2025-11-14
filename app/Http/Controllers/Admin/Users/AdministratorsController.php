@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Administrator;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\StaticDataCacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,14 @@ class AdministratorsController extends Controller
      */
     public function update(Request $request, Administrator $administrator)
     {
+        // Only Global Administrators can edit administrators
+        if (auth()->user()->user_type->value !== 'global_administrator') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only Global Administrators can edit administrators.',
+            ], 403);
+        }
+
         $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -92,6 +101,13 @@ class AdministratorsController extends Controller
         $validated = $request->validate($rules);
 
         DB::transaction(function () use ($validated, $administrator, $request) {
+            $oldValues = [
+                'first_name' => $administrator->user->first_name,
+                'last_name' => $administrator->user->last_name,
+                'email' => $administrator->user->email,
+                'is_active' => $administrator->user->is_active,
+            ];
+
             // Prepare user update data
             $userData = [
                 'first_name' => $validated['first_name'],
@@ -103,15 +119,24 @@ class AdministratorsController extends Controller
             // Update password if provided
             if ($request->has('password') && $request->password) {
                 $userData['password'] = Hash::make($request->password);
+                $oldValues['password'] = '***'; // Don't log actual password
             }
 
             // Update user
             $administrator->user->update($userData);
 
+            // Audit log administrator update
+            AuditLogService::log('administrator_updated', $administrator->user, $oldValues, $userData);
+
             // Administrator role cannot be changed through edit
 
             // Broadcast the event with fresh relationships
             broadcast(new AdministratorUpdated($administrator->fresh(['user', 'adminRole']), 'updated'));
+
+            // Broadcast status change directly to the user if is_active changed
+            if ($oldValues['is_active'] !== $validated['is_active']) {
+                broadcast(new \App\Events\UserStatusChanged($administrator->user, $validated['is_active']));
+            }
 
             // Create notification for all other administrators
             $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
@@ -150,6 +175,14 @@ class AdministratorsController extends Controller
      */
     public function destroy(Administrator $administrator)
     {
+        // Only Global Administrators can delete administrators
+        if (auth()->user()->user_type->value !== 'global_administrator') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only Global Administrators can delete administrators.',
+            ], 403);
+        }
+
         $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
         $adminName = $administrator->user->first_name.' '.$administrator->user->last_name;
 

@@ -12,12 +12,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies for Railway/Sevalla deployment
+        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+        );
+
         // Global middleware - applies to all requests
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+        $middleware->append(\App\Http\Middleware\PerformanceMonitoring::class);
+        $middleware->append(\App\Http\Middleware\CheckUserActive::class);
 
         // Route middleware aliases
         $middleware->alias([
             'user.type' => \App\Http\Middleware\CheckUserType::class,
+            'privilege' => \App\Http\Middleware\PrivilegeMiddleware::class,
+            'global.admin' => \App\Http\Middleware\GlobalAdminMiddleware::class,
+            'security.admin' => \App\Http\Middleware\SecurityAdminMiddleware::class,
+            'sas.drrm.admin' => \App\Http\Middleware\SasOrDrrmAdminMiddleware::class,
             'marketing.admin' => \App\Http\Middleware\MarketingAdminMiddleware::class,
             'file.upload.security' => \App\Http\Middleware\FileUploadSecurity::class,
             'patrol.monitor' => \App\Http\Middleware\CheckPatrolMonitorAccess::class,

@@ -20,10 +20,34 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MLUC Sentinel')</title>
     
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="MLUC Parking and Reporting Management System - Vehicle registration, sticker management, and campus security reporting">
+    <meta name="theme-color" content="#1b1b18" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/icon-192x192.png">
+    
+    <!-- Mobile Web App -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MLUC Sentinel">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#1b1b18">
+    <meta name="msapplication-TileImage" content="/images/icons/icon-144x144.png">
+    
     <!-- Fontshare - Satoshi -->
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- PWA Scripts -->
+    <script src="/pwa-register.js" defer></script>
     
     <!-- Dark Mode Script - Run before page renders to prevent flash -->
     <script>
@@ -49,8 +73,8 @@
                 </button>
 
                 <!-- Page Title -->
-                <div class="flex-1 lg:flex-none">
-                    <h1 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">@yield('page-title', 'Dashboard')</h1>
+                <div class="flex-1 lg:flex-none min-w-0">
+                    <h1 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] truncate">@yield('page-title', 'Dashboard')</h1>
                 </div>
 
                 <!-- Right Side Actions -->
@@ -64,21 +88,21 @@
                         </button>
                         
                         <!-- Notifications Dropdown -->
-                        <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] z-50">
+                        <div id="notifications-dropdown" class="hidden fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-96 max-w-md bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg border border-[#e3e3e0] dark:border-[#3E3E3A] z-50">
                             <!-- Header -->
-                            <div class="flex items-center justify-between p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] gap-2">
                                 <h3 class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Notifications</h3>
-                                <div class="flex items-center gap-2">
-                                    <button id="mark-all-read" class="text-xs text-[#706f6c] dark:text-[#A1A09A] hover:underline">Mark all read</button>
-                                    <button id="clear-all" class="text-xs text-[#706f6c] dark:text-[#A1A09A] hover:underline">Clear all</button>
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <button id="mark-all-read" class="text-xs text-[#706f6c] dark:text-[#A1A09A] hover:underline whitespace-nowrap">Mark all read</button>
+                                    <button id="clear-all" class="text-xs text-[#706f6c] dark:text-[#A1A09A] hover:underline whitespace-nowrap">Clear all</button>
                                 </div>
                             </div>
                             
                             <!-- Notifications List -->
                             <div id="notifications-list" class="max-h-96 overflow-y-auto">
                                 <!-- Empty State -->
-                                <div id="empty-notifications" class="p-8 text-center">
-                                    <x-heroicon-o-bell-slash class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-2" />
+                                <div id="empty-notifications" class="p-6 sm:p-8 text-center">
+                                    <x-heroicon-o-bell-slash class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 dark:text-gray-600 mb-2" />
                                     <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">No notifications</p>
                                 </div>
                             </div>
@@ -117,9 +141,54 @@
                 html.classList.toggle('dark');
                 localStorage.setItem('theme', newTheme);
                 
+                // Update theme icons immediately
+                updateThemeIcons(newTheme);
+                
+                // Update settings page theme selection if it exists
+                if (typeof updateThemeSelection === 'function') {
+                    updateThemeSelection(newTheme);
+                }
+                
                 // Update charts if they exist
                 if (typeof updateChartsForTheme === 'function') {
                     setTimeout(updateChartsForTheme, 100);
+                }
+            });
+            
+            // Function to update theme icons
+            function updateThemeIcons(theme) {
+                const sunIcon = document.getElementById('sun-icon');
+                const moonIcon = document.getElementById('moon-icon');
+                
+                if (sunIcon && moonIcon) {
+                    if (theme === 'dark') {
+                        sunIcon.classList.remove('hidden');
+                        sunIcon.classList.add('block');
+                        moonIcon.classList.remove('block');
+                        moonIcon.classList.add('hidden');
+                    } else {
+                        sunIcon.classList.remove('block');
+                        sunIcon.classList.add('hidden');
+                        moonIcon.classList.remove('hidden');
+                        moonIcon.classList.add('block');
+                    }
+                }
+            }
+            
+            // Initialize theme icons on load
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            updateThemeIcons(savedTheme);
+            
+            // Listen for theme changes from settings page
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'theme') {
+                    const theme = e.newValue || 'light';
+                    if (theme === 'dark') {
+                        html.classList.add('dark');
+                    } else {
+                        html.classList.remove('dark');
+                    }
+                    updateThemeIcons(theme);
                 }
             });
 
@@ -195,8 +264,8 @@
                 
                 if (notifications.length === 0) {
                     list.innerHTML = `
-                        <div id="empty-notifications" class="p-8 text-center">
-                            <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div id="empty-notifications" class="p-6 sm:p-8 text-center">
+                            <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                             </svg>
                             <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">No notifications</p>
@@ -206,19 +275,19 @@
                 }
 
                 list.innerHTML = notifications.map(notif => `
-                    <div class="notification-item ${!notif.is_read ? 'unread bg-blue-50 dark:bg-blue-900/10' : ''} p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer" 
+                    <div class="notification-item ${!notif.is_read ? 'unread bg-blue-50 dark:bg-blue-900/10' : ''} p-3 sm:p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer" 
                          data-id="${notif.id}" 
                          data-url="${notif.data?.url || ''}" 
                          data-entity-id="${notif.data?.administrator_id || notif.data?.reporter_id || notif.data?.student_id || notif.data?.staff_id || notif.data?.security_id || notif.data?.stakeholder_id || ''}"
                          data-entity-type="${notif.data?.administrator_id ? 'administrator' : notif.data?.reporter_id ? 'reporter' : notif.data?.student_id ? 'student' : notif.data?.staff_id ? 'staff' : notif.data?.security_id ? 'security' : notif.data?.stakeholder_id ? 'stakeholder' : ''}"
                          data-action="${notif.data?.action || ''}">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h4 class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${notif.title}</h4>
-                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">${notif.message}</p>
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] break-words">${notif.title}</h4>
+                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1 break-words">${notif.message}</p>
                                 <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">${formatTime(notif.created_at)}</p>
                             </div>
-                            ${!notif.is_read ? '<div class="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>' : ''}
+                            ${!notif.is_read ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>' : ''}
                         </div>
                     </div>
                 `).join('');
@@ -273,6 +342,9 @@
                                 break;
                             case 'stakeholder':
                                 if (typeof viewStakeholder === 'function') viewStakeholder(id);
+                                break;
+                            case 'report':
+                                if (typeof viewReport === 'function') viewReport(id);
                                 break;
                         }
                     }, 100);
@@ -348,7 +420,7 @@
                 
                 // Create new notification element
                 const notificationElement = document.createElement('div');
-                notificationElement.className = 'notification-item unread bg-blue-50 dark:bg-blue-900/10 p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer';
+                notificationElement.className = 'notification-item unread bg-blue-50 dark:bg-blue-900/10 p-3 sm:p-4 border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615] cursor-pointer';
                 notificationElement.setAttribute('data-id', notification.id);
                 notificationElement.setAttribute('data-url', notification.data?.url || '');
                 
@@ -361,13 +433,13 @@
                 notificationElement.setAttribute('data-action', notification.data?.action || '');
                 
                 notificationElement.innerHTML = `
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h4 class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">${notification.title}</h4>
-                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">${notification.message}</p>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] break-words">${notification.title}</h4>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1 break-words">${notification.message}</p>
                             <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">${formatTime(notification.created_at)}</p>
                         </div>
-                        <div class="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                        <div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                     </div>
                 `;
                 
@@ -467,6 +539,77 @@
                             });
                         }
                     });
+
+                // Listen for user status changes (deactivation)
+                window.Echo.private('user.{{ auth()->id() }}')
+                    .listen('.status.changed', (event) => {
+                        console.log('User status changed:', event);
+                        
+                        // If user is deactivated, show modal with countdown and logout
+                        if (!event.is_active) {
+                            showDeactivationModal(event.message || 'Your account has been deactivated. You will be logged out.');
+                        }
+                    });
+            }
+
+            // Show deactivation modal with countdown
+            function showDeactivationModal(message) {
+                // Create modal HTML
+                const modalHTML = `
+                    <div id="deactivation-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 dark:bg-black/70">
+                        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-2xl max-w-md w-full mx-4 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="p-6">
+                                <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+                                    <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-center text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                    Account Deactivated
+                                </h3>
+                                <p class="text-center text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                    ${message}
+                                </p>
+                                <div class="text-center">
+                                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-2">Logging out in:</p>
+                                    <div class="text-4xl font-bold text-red-600 dark:text-red-400" id="countdown-timer">5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert modal into body
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                // Start countdown
+                let seconds = 5;
+                const countdownElement = document.getElementById('countdown-timer');
+                
+                const countdownInterval = setInterval(() => {
+                    seconds--;
+                    if (countdownElement) {
+                        countdownElement.textContent = seconds;
+                    }
+                    
+                    if (seconds <= 0) {
+                        clearInterval(countdownInterval);
+                        
+                        // Perform logout
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route("logout") }}';
+                        
+                        const csrfToken = document.createElement('input');
+                        csrfToken.type = 'hidden';
+                        csrfToken.name = '_token';
+                        csrfToken.value = '{{ csrf_token() }}';
+                        form.appendChild(csrfToken);
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                }, 1000);
             }
         });
 

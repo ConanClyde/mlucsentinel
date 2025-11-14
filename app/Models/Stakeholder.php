@@ -16,6 +16,7 @@ class Stakeholder extends Model
         'type_id',
         'license_no',
         'license_image',
+        'guardian_evidence',
         'expiration_date',
     ];
 

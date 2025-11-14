@@ -33,14 +33,10 @@ class PaymentUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        // Load relationships
+        // Ensure we have the latest values after any update operations
+        $this->payment->refresh();
+        // Load relationships needed by the client
         $this->payment->load(['user', 'vehicle.type']);
-
-        // Get vehicle count for this user
-        $vehicleCount = 0;
-        if ($this->payment->user) {
-            $vehicleCount = \App\Models\Vehicle::where('user_id', $this->payment->user_id)->count();
-        }
 
         return [
             'payment' => [
@@ -54,7 +50,8 @@ class PaymentUpdated implements ShouldBroadcastNow
                 'paid_at' => $this->payment->paid_at,
                 'created_at' => $this->payment->created_at,
                 'updated_at' => $this->payment->updated_at,
-                'vehicle_count' => $vehicleCount,
+                // Use the payment's own vehicle_count (batch size), not total user vehicles
+                'vehicle_count' => $this->payment->vehicle_count,
                 'user' => $this->payment->user ? [
                     'id' => $this->payment->user->id,
                     'first_name' => $this->payment->user->first_name,

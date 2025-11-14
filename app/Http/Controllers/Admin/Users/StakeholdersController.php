@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers\Admin\Users;
 
-use App\Events\NotificationCreated;
-use App\Events\PaymentUpdated;
 use App\Events\StakeholderUpdated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\Stakeholder;
 use App\Models\StakeholderType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\NotificationService;
+use App\Services\PaymentBatchService;
 use App\Services\StaticDataCacheService;
 use App\Services\StickerGenerator;
 use Illuminate\Http\Request;
@@ -60,6 +59,7 @@ class StakeholdersController extends Controller
                     ] : null,
                     'license_no' => $stakeholder->license_no,
                     'license_image' => $stakeholder->license_image ? '/storage/'.$stakeholder->license_image : null,
+                    'guardian_evidence' => $stakeholder->guardian_evidence ? $stakeholder->guardian_evidence : null,
                     'user' => [
                         'id' => $stakeholder->user->id,
                         'first_name' => $stakeholder->user->first_name,
@@ -91,6 +91,12 @@ class StakeholdersController extends Controller
      */
     public function update(Request $request, Stakeholder $stakeholder)
     {
+        // Check authorization: Only Global Admin or Security Admin can update stakeholders
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -104,6 +110,7 @@ class StakeholdersController extends Controller
             'vehicles_to_delete' => ['nullable', 'array'],
             'vehicles_to_delete.*' => ['integer', 'exists:vehicles,id'],
             'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'], // 5MB max
+            'guardian_evidence' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10240'], // 10MB max
         ]);
 
         // Additional validation for plate numbers - check for duplicates
@@ -150,6 +157,9 @@ class StakeholdersController extends Controller
                 (is_string($request->vehicles_to_delete) ? json_decode($request->vehicles_to_delete, true) : $request->vehicles_to_delete) :
                 [];
 
+            // Store old is_active status
+            $oldIsActive = $stakeholder->user->is_active;
+
             // Update user
             $stakeholder->user->update([
                 'first_name' => $validated['first_name'],
@@ -158,8 +168,13 @@ class StakeholdersController extends Controller
                 'is_active' => $validated['is_active'],
             ]);
 
+            // Broadcast status change directly to the user if is_active changed
+            if ($oldIsActive !== $validated['is_active']) {
+                broadcast(new \App\Events\UserStatusChanged($stakeholder->user, $validated['is_active']));
+            }
+
             // Handle license image upload if provided
-            $licenseImageData = [];
+            $updateData = [];
             if ($request->hasFile('license_image')) {
                 // Delete old license image if exists
                 if ($stakeholder->license_image) {
@@ -173,61 +188,42 @@ class StakeholdersController extends Controller
                 $file = $request->file('license_image');
                 $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
                 $path = $file->storeAs('licenses', $filename, 'public');
-                $licenseImageData['license_image'] = $path;
+                $updateData['license_image'] = $path;
+            }
+
+            // Handle guardian evidence upload if provided
+            if ($request->hasFile('guardian_evidence')) {
+                // Delete old guardian evidence if exists
+                if ($stakeholder->guardian_evidence) {
+                    $oldPath = storage_path('app/public/'.$stakeholder->guardian_evidence);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                }
+
+                // Store new guardian evidence
+                $file = $request->file('guardian_evidence');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('guardian_evidence', $filename, 'public');
+                $updateData['guardian_evidence'] = $path;
             }
 
             // Update stakeholder
             $stakeholder->update(array_merge([
                 'type_id' => $validated['type_id'],
                 'license_no' => $validated['license_no'],
-            ], $licenseImageData));
+            ], $updateData));
 
-            // Delete vehicles marked for deletion
+            // Delete vehicles marked for deletion via service
             if (! empty($vehiclesToDelete)) {
+                $batchSvc = app(PaymentBatchService::class);
+                $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
                 foreach ($vehiclesToDelete as $vehicleId) {
                     $vehicle = \App\Models\Vehicle::find($vehicleId);
                     if ($vehicle && $vehicle->user_id === $stakeholder->user_id) {
-                        // Check if vehicle has pending payment and delete it
-                        $pendingPayment = Payment::where('vehicle_id', $vehicle->id)
-                            ->where('status', 'pending')
-                            ->first();
-
-                        if ($pendingPayment) {
-                            // Check if this payment is part of a batch
-                            if ($pendingPayment->batch_id) {
-                                // Get all payments in this batch
-                                $batchPayments = Payment::where('batch_id', $pendingPayment->batch_id)
-                                    ->where('status', 'pending')
-                                    ->where('id', '!=', $pendingPayment->id)
-                                    ->get();
-
-                                // Delete the payment for this specific vehicle
-                                $pendingPayment->delete();
-
-                                // Update vehicle_count for remaining payments in the batch
-                                if ($batchPayments->isNotEmpty()) {
-                                    $newVehicleCount = $batchPayments->count();
-
-                                    Payment::where('batch_id', $pendingPayment->batch_id)
-                                        ->where('status', 'pending')
-                                        ->update(['vehicle_count' => $newVehicleCount]);
-
-                                    // Broadcast payment update for real-time updates
-                                    $updatedPayment = $batchPayments->first()->fresh(['user', 'vehicle.type']);
-                                    broadcast(new PaymentUpdated($updatedPayment, 'updated', auth()->user()->first_name.' '.auth()->user()->last_name));
-                                }
-                            } else {
-                                // Single vehicle payment - delete the entire payment
-                                $pendingPayment->delete();
-
-                                // Broadcast payment deletion
-                                broadcast(new PaymentUpdated($pendingPayment, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
-                            }
-                        }
-
-                        // Broadcast vehicle deletion before deleting
+                        $batchSvc->removeVehicleFromBatch($vehicle->id, $editorName);
                         $vehicle->load(['user', 'type']);
-                        broadcast(new VehicleUpdated($vehicle, 'deleted', auth()->user()->first_name.' '.auth()->user()->last_name));
+                        broadcast(new VehicleUpdated($vehicle, 'deleted', $editorName));
                         $vehicle->delete();
                     }
                 }
@@ -237,6 +233,7 @@ class StakeholdersController extends Controller
             if (! empty($vehiclesData)) {
                 // Add new vehicles only
                 $stickerGenerator = new StickerGenerator;
+                $newVehicleIds = [];
 
                 // Get stakeholder type for sticker color
                 $stakeholderType = StakeholderType::find($validated['type_id']);
@@ -279,48 +276,35 @@ class StakeholdersController extends Controller
                     $vehicle->load(['user', 'type']);
                     broadcast(new VehicleUpdated($vehicle, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
 
-                    // Create pending payment for the new vehicle
-                    $payment = Payment::create([
-                        'user_id' => $stakeholder->user_id,
-                        'vehicle_id' => $vehicle->id,
-                        'type' => 'sticker_fee',
-                        'status' => 'pending',
-                        'amount' => 15.00,
-                        'reference' => 'STK-'.strtoupper(uniqid()),
-                    ]);
+                    // Track new vehicle IDs for payment creation
+                    $newVehicleIds[] = $vehicle->id;
+                }
 
-                    // Broadcast payment creation
-                    $payment->load(['user', 'vehicle.type', 'batchVehicles']);
-                    broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
+                // Create pending payments for new vehicles via service
+                if (count($newVehicleIds) > 0) {
+                    $batchSvc = app(PaymentBatchService::class);
+                    $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
+                    $batchSvc->addVehiclesToBatch($stakeholder->user_id, $newVehicleIds, $editorName);
                 }
             }
 
             // Broadcast the event with fresh relationships
             broadcast(new StakeholderUpdated($stakeholder->fresh(['user', 'type', 'vehicles.type']), 'updated', auth()->user()));
 
-            // Create notification for all administrators
+            // Notify administrators (exclude actor)
             $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
             $stakeholderName = $stakeholder->user->first_name.' '.$stakeholder->user->last_name;
-
-            User::whereIn('user_type', ['global_administrator', 'administrator'])
-                ->where('id', '!=', auth()->id())
-                ->get()
-                ->each(function ($user) use ($editorName, $stakeholderName, $stakeholder) {
-                    $notification = Notification::create([
-                        'user_id' => $user->id,
-                        'type' => 'stakeholder_updated',
-                        'title' => 'Stakeholder Updated',
-                        'message' => "{$editorName} updated Stakeholder {$stakeholderName}",
-                        'data' => [
-                            'stakeholder_id' => $stakeholder->id,
-                            'action' => 'updated',
-                            'url' => '/users/stakeholders',
-                        ],
-                    ]);
-
-                    // Broadcast notification in real-time
-                    broadcast(new NotificationCreated($notification));
-                });
+            app(NotificationService::class)->notifyAdmins(
+                'stakeholder_updated',
+                'Stakeholder Updated',
+                "{$editorName} updated Stakeholder {$stakeholderName}",
+                [
+                    'stakeholder_id' => $stakeholder->id,
+                    'action' => 'updated',
+                    'url' => '/users/stakeholders',
+                ],
+                auth()->id()
+            );
         });
 
         return response()->json([
@@ -335,6 +319,12 @@ class StakeholdersController extends Controller
      */
     public function destroy(Stakeholder $stakeholder)
     {
+        // Check authorization: Only Global Admin or Security Admin can delete stakeholders
+        $user = auth()->user();
+        if (! $user->isGlobalAdministrator() && ! $user->isSecurityAdmin()) {
+            abort(403, 'Access denied. Global Administrator or Security Administrator access required.');
+        }
+
         $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;
         $stakeholderName = $stakeholder->user->first_name.' '.$stakeholder->user->last_name;
 
@@ -342,25 +332,17 @@ class StakeholdersController extends Controller
             // Broadcast the event before deletion
             broadcast(new StakeholderUpdated($stakeholder, 'deleted', auth()->user()));
 
-            // Create notification for all administrators
-            User::whereIn('user_type', ['global_administrator', 'administrator'])
-                ->where('id', '!=', auth()->id())
-                ->get()
-                ->each(function ($user) use ($editorName, $stakeholderName) {
-                    $notification = Notification::create([
-                        'user_id' => $user->id,
-                        'type' => 'stakeholder_deleted',
-                        'title' => 'Stakeholder Removed',
-                        'message' => "{$editorName} removed {$stakeholderName}",
-                        'data' => [
-                            'action' => 'deleted',
-                            'url' => '/users/stakeholders',
-                        ],
-                    ]);
-
-                    // Broadcast notification in real-time
-                    broadcast(new NotificationCreated($notification));
-                });
+            // Notify administrators (exclude actor)
+            app(\App\Services\NotificationService::class)->notifyAdmins(
+                'stakeholder_deleted',
+                'Stakeholder Removed',
+                "{$editorName} removed {$stakeholderName}",
+                [
+                    'action' => 'deleted',
+                    'url' => '/users/stakeholders',
+                ],
+                auth()->id()
+            );
 
             // Delete stakeholder and user
             $stakeholder->user->delete(); // This will cascade delete the stakeholder and vehicles
