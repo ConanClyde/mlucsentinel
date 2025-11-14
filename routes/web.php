@@ -29,7 +29,6 @@ use App\Http\Controllers\Admin\VehiclesController;
 use App\Http\Controllers\Admin\VehicleTypeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\CampusMapController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reporter\HomeController as ReporterHomeController;
@@ -137,9 +136,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/history', [\App\Http\Controllers\UserController::class, 'reports'])->name('user.reports');
     Route::get('/history/{id}', [\App\Http\Controllers\UserController::class, 'getReportDetails'])->name('user.reports.details');
     Route::get('/requests', [\App\Http\Controllers\UserController::class, 'requests'])->name('user.requests');
+    Route::get('/requests/data', [\App\Http\Controllers\UserController::class, 'getRequestsData'])->name('user.requests.data');
     Route::get('/requests/{id}', [\App\Http\Controllers\UserController::class, 'showRequest'])->name('user.requests.show');
     Route::post('/requests', [\App\Http\Controllers\UserController::class, 'storeRequest'])->name('user.requests.store');
     Route::post('/requests/{id}/cancel', [\App\Http\Controllers\UserController::class, 'cancelRequest'])->name('user.requests.cancel');
+    Route::get('/sticker-history', [\App\Http\Controllers\UserController::class, 'stickerHistory'])->name('user.stickers.history');
+    Route::get('/sticker-history/{payment}/receipt', [\App\Http\Controllers\UserController::class, 'downloadStickerReceipt'])->name('user.stickers.receipt');
 
     // Debug route to test CSRF
     Route::post('/test-csrf', function (\Illuminate\Http\Request $request) {

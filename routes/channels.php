@@ -224,3 +224,18 @@ Broadcast::channel('stickers', function ($user) {
 
     return false;
 });
+
+Broadcast::channel('admin-notifications', function ($user) {
+    // Only administrators can listen to admin notifications
+    $userType = $user->user_type->value ?? $user->user_type;
+
+    if ($userType === 'global_administrator') {
+        return true;
+    }
+
+    if ($userType === 'administrator') {
+        return true;
+    }
+
+    return false;
+});

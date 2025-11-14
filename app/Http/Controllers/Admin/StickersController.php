@@ -74,7 +74,7 @@ class StickersController extends Controller
         }
 
         $search = $request->get('search', '');
-        $status = $request->get('status', '');
+        $status = $request->get('status', 'pending');
         $page = $request->get('page', 1);
 
         $query = StickerRequest::with(['user', 'vehicle.vehicleType']);
@@ -135,6 +135,22 @@ class StickersController extends Controller
             'processed_by' => auth()->id(),
             'admin_notes' => $request->get('notes', 'Approved by admin'),
         ]);
+
+        // Create payment record for the approved request
+        $stickerFee = \App\Models\Fee::getAmount('sticker_fee', 15.00);
+        $payment = Payment::create([
+            'user_id' => $stickerRequest->user_id,
+            'vehicle_id' => $stickerRequest->vehicle_id,
+            'type' => 'sticker_fee',
+            'amount' => $stickerFee,
+            'status' => 'pending',
+            'reference' => 'STK-'.str_pad($stickerRequest->id, 6, '0', STR_PAD_LEFT).'-'.now()->format('Ymd'),
+            'vehicle_count' => 1,
+            'is_representative' => true,
+        ]);
+
+        $payment->load(['user', 'vehicle.type', 'batchVehicles']);
+        broadcast(new PaymentUpdated($payment, 'created', auth()->user()->first_name.' '.auth()->user()->last_name));
 
         // Refresh relationships after update
         $stickerRequest->load(['user', 'vehicle.vehicleType']);

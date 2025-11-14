@@ -52,7 +52,7 @@
                     <label class="form-label">Status</label>
                     <select id="statusFilter" class="form-input w-full">
                         <option value="">All Status</option>
-                        <option value="pending">Pending</option>
+                        <option value="pending" selected>Pending</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                     </select>
@@ -67,7 +67,7 @@
         </div>
 
         <!-- User Requests Table -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mt-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                 <div class="flex items-center gap-3">
                     <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">User Sticker Requests</h3>
@@ -87,10 +87,6 @@
             </div>
 
             <div id="requestsTableContainer" class="overflow-x-auto">
-                <div id="loadingSpinner" class="hidden flex justify-center items-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span class="ml-2 text-[#706f6c] dark:text-[#A1A09A]">Loading...</span>
-                </div>
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">

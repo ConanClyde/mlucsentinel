@@ -4,7 +4,7 @@ class StickerRequestsManager {
         this.searchTimeout = null;
         this.currentPage = 1;
         this.currentSearch = '';
-        this.currentStatus = '';
+        this.currentStatus = 'pending';
         this.isLoading = false;
         this.currentRequestId = null;
         
@@ -15,6 +15,12 @@ class StickerRequestsManager {
     }
 
     init() {
+        // Set initial status filter in dropdown
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            statusFilter.value = this.currentStatus;
+        }
+        
         // Load initial data
         this.loadRequests();
         
@@ -101,20 +107,27 @@ class StickerRequestsManager {
 
     setupBroadcasting() {
         if (typeof window.Echo !== 'undefined') {
-            // Listen for new sticker requests
-            window.Echo.channel('sticker-requests')
-                .listen('.sticker-request-created', (e) => {
-                    this.handleNewRequest(e);
-                })
-                .listen('.sticker-request-updated', (e) => {
-                    this.handleRequestUpdate(e);
-                });
+            try {
+                // Listen for new sticker requests
+                window.Echo.channel('sticker-requests')
+                    .listen('.sticker-request-created', (e) => {
+                        this.handleNewRequest(e);
+                    })
+                    .listen('.sticker-request-updated', (e) => {
+                        this.handleRequestUpdate(e);
+                    });
 
-            // Listen for admin notifications
-            window.Echo.private('admin-notifications')
-                .listen('.sticker-request-created', (e) => {
-                    this.showNotification('New sticker request received!', e.message, 'info');
-                });
+                // Listen for admin notifications
+                window.Echo.private('admin-notifications')
+                    .listen('.sticker-request-created', (e) => {
+                        this.showNotification('New sticker request received!', e.message, 'info');
+                    })
+                    .error((error) => {
+                        console.log('Admin notifications channel auth failed (non-critical)');
+                    });
+            } catch (error) {
+                console.log('Broadcasting setup failed (non-critical):', error);
+            }
         }
     }
 
@@ -129,10 +142,6 @@ class StickerRequestsManager {
         if (this.isLoading) return;
         
         this.isLoading = true;
-        
-        if (showLoading) {
-            this.showLoading();
-        }
 
         try {
             const params = new URLSearchParams({
@@ -161,25 +170,9 @@ class StickerRequestsManager {
             this.showError('Failed to load requests. Please try again.');
         } finally {
             this.isLoading = false;
-            this.hideLoading();
         }
     }
 
-    showLoading() {
-        const spinner = document.getElementById('loadingSpinner');
-        const tableBody = document.getElementById('requestsTableBody');
-        
-        if (spinner) spinner.classList.remove('hidden');
-        if (tableBody) tableBody.style.opacity = '0.5';
-    }
-
-    hideLoading() {
-        const spinner = document.getElementById('loadingSpinner');
-        const tableBody = document.getElementById('requestsTableBody');
-        
-        if (spinner) spinner.classList.add('hidden');
-        if (tableBody) tableBody.style.opacity = '1';
-    }
 
     renderRequests(requests) {
         const tableBody = document.getElementById('requestsTableBody');
@@ -330,6 +323,16 @@ class StickerRequestsManager {
                 this.closeApproveRequestModal();
                 this.showNotification('Success', data.message, 'success');
                 this.loadRequests();
+
+                if (typeof window.switchTab === 'function') {
+                    window.switchTab('payment');
+                } else {
+                    window.location.hash = '#payment';
+                }
+
+                if (typeof window.loadPayments === 'function') {
+                    window.loadPayments();
+                }
             } else {
                 throw new Error(data.message || 'Failed to approve request');
             }

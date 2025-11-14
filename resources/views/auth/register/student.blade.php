@@ -8,6 +8,7 @@
         <!-- Header -->
         <div class="mb-6 md:mb-8 text-center">
             <h1 class="text-xl md:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Student Registration</h1>
+            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register as student with vehicle information and account credentials</p>
         </div>
 
         <!-- Registration Form -->

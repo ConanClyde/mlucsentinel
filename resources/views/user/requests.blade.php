@@ -24,9 +24,9 @@
                 <label class="form-label">Status</label>
                 <select name="status" id="status" class="form-input w-full">
                     <option value="">All Status</option>
-                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="pending" {{ request('status', 'pending') === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="approved" {{ request('status', 'pending') === 'approved' ? 'selected' : '' }}>Approved</option>
+                    <option value="rejected" {{ request('status', 'pending') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
             </div>
 
@@ -77,102 +77,9 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Request</th>
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Vehicle</th>
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Reason</th>
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Status</th>
-                        <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Date</th>
-                        <th class="text-center py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($requests as $request)
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $request->id }}">
-                        <td class="py-2 px-3">
-                            <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">#{{ $request->id }}</div>
-                        </td>
-                        <td class="py-2 px-3">
-                            <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $request->vehicle->vehicleType->name }}</div>
-                            <div class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ $request->vehicle->plate_no ?? 'No Plate' }}</div>
-                        </td>
-                        <td class="py-2 px-3">
-                            <div class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] max-w-xs truncate">{{ $request->reason }}</div>
-                        </td>
-                        <td class="py-2 px-3">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                @if($request->status === 'pending') bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200
-                                @elseif($request->status === 'approved') bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
-                                @else bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200
-                                @endif">
-                                {{ ucfirst($request->status) }}
-                            </span>
-                        </td>
-                        <td class="py-2 px-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $request->created_at->format('M d, Y') }}</td>
-                        <td class="py-2 px-3">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="viewRequestDetails({{ $request->id }})" class="btn-view" title="View">
-                                    <x-heroicon-s-eye class="w-4 h-4" />
-                                </button>
-                                @if($request->status === 'pending')
-                                <button onclick="openCancelModal({{ $request->id }})" class="btn-delete" title="Cancel">
-                                    <x-heroicon-s-trash class="w-4 h-4" />
-                                </button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
-                            No requests found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div id="requests-table-container">
+            @include('user.partials.requests-table', ['requests' => $requests])
         </div>
-
-        <!-- Pagination Controls -->
-        @if($requests->hasPages())
-        <div class="flex items-center justify-between mt-6">
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                Showing {{ $requests->firstItem() ?? 0 }}-{{ $requests->lastItem() ?? 0 }} of {{ $requests->total() }} requests
-            </p>
-            <div class="flex space-x-2">
-                @if($requests->onFirstPage())
-                <button class="btn-pagination btn-paginationDisable" disabled>
-                    <x-heroicon-o-chevron-left class="w-4 h-4" />
-                </button>
-                @else
-                <a href="{{ $requests->previousPageUrl() }}" class="btn-pagination btn-paginationArrow">
-                    <x-heroicon-o-chevron-left class="w-4 h-4" />
-                </a>
-                @endif
-                
-                @foreach($requests->getUrlRange(1, $requests->lastPage()) as $page => $url)
-                    @if($page == $requests->currentPage())
-                    <button class="btn-pagination btn-paginationActive">{{ $page }}</button>
-                    @else
-                    <a href="{{ $url }}" class="btn-pagination">{{ $page }}</a>
-                    @endif
-                @endforeach
-                
-                @if($requests->hasMorePages())
-                <a href="{{ $requests->nextPageUrl() }}" class="btn-pagination btn-paginationArrow">
-                    <x-heroicon-o-chevron-right class="w-4 h-4" />
-                </a>
-                @else
-                <button class="btn-pagination btn-paginationDisable" disabled>
-                    <x-heroicon-o-chevron-right class="w-4 h-4" />
-                </button>
-                @endif
-            </div>
-        </div>
-        @endif
     </div>
 </div>
 @endsection
@@ -314,6 +221,65 @@
 
 @push('scripts')
 <script>
+// Real-time filtering variables
+let filterTimeout = null;
+let currentPage = 1;
+
+// Load requests with filters
+function loadRequests(page = 1) {
+    const status = document.getElementById('status').value;
+    const vehicle = document.getElementById('vehicle').value;
+    const dateFrom = document.getElementById('date_from').value;
+    
+    const params = new URLSearchParams({
+        status: status,
+        vehicle: vehicle,
+        date_from: dateFrom,
+        page: page
+    });
+    
+    // Show loading state
+    const container = document.getElementById('requests-table-container');
+    container.style.opacity = '0.6';
+    
+    fetch(`{{ route('user.requests.data') }}?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                container.innerHTML = data.html;
+                container.style.opacity = '1';
+                currentPage = page;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading requests:', error);
+            container.style.opacity = '1';
+        });
+}
+
+// Load specific page
+function loadPage(page) {
+    loadRequests(page);
+}
+
+// Setup real-time filtering
+function setupFilters() {
+    const statusFilter = document.getElementById('status');
+    const vehicleFilter = document.getElementById('vehicle');
+    const dateFilter = document.getElementById('date_from');
+    
+    [statusFilter, vehicleFilter, dateFilter].forEach(filter => {
+        if (filter) {
+            filter.addEventListener('change', () => {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(() => {
+                    loadRequests(1);
+                }, 300);
+            });
+        }
+    });
+}
+
 // Make functions globally available
 window.openRequestModal = function() {
     console.log('Opening request modal...');
@@ -507,6 +473,9 @@ console.log('openRequestModal available:', typeof window.openRequestModal);
 
 // Auto-select vehicle if provided in URL
 document.addEventListener('DOMContentLoaded', function() {
+    // Setup real-time filtering
+    setupFilters();
+    
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('vehicle_id')) {
         openRequestModal();

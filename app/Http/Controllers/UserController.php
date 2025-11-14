@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use App\Models\Report;
 use App\Models\StickerRequest;
 use App\Models\Vehicle;
+use App\Services\PaymentReceiptService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -172,9 +175,10 @@ class UserController extends Controller
         $query = StickerRequest::where('user_id', $user->id)
             ->with(['vehicle.vehicleType']);
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        // Apply filters - default to pending status
+        $status = $request->get('status', 'pending');
+        if ($status) {
+            $query->where('status', $status);
         }
 
         if ($request->filled('vehicle')) {
@@ -188,6 +192,101 @@ class UserController extends Controller
         $requests = $query->latest()->paginate(15);
 
         return view('user.requests', compact('requests', 'userVehicles'));
+    }
+
+    /**
+     * Get filtered requests data for AJAX
+     */
+    public function getRequestsData(Request $request)
+    {
+        $this->checkVehicleUserAccess();
+        $user = Auth::user();
+
+        $query = StickerRequest::where('user_id', $user->id)
+            ->with(['vehicle.vehicleType']);
+
+        // Apply filters - default to pending status
+        $status = $request->get('status', 'pending');
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($request->filled('vehicle')) {
+            $query->where('vehicle_id', $request->vehicle);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        $requests = $query->latest()->paginate(15);
+
+        return response()->json([
+            'success' => true,
+            'html' => view('user.partials.requests-table', compact('requests'))->render(),
+            'pagination' => [
+                'current_page' => $requests->currentPage(),
+                'last_page' => $requests->lastPage(),
+                'total' => $requests->total(),
+                'from' => $requests->firstItem(),
+                'to' => $requests->lastItem(),
+                'has_pages' => $requests->hasPages(),
+                'links' => $requests->links()->render()
+            ]
+        ]);
+    }
+
+    /**
+     * Show sticker payment history for the user
+     */
+    public function stickerHistory(Request $request): View
+    {
+        $this->checkVehicleUserAccess();
+        $user = Auth::user();
+
+        $status = $request->get('status', 'paid');
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        $query = Payment::batchRepresentative()
+            ->where('user_id', $user->id)
+            ->with(['vehicle.type'])
+            ->orderByDesc(DB::raw('COALESCE(paid_at, created_at)'));
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reference', 'like', "%{$search}%")
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('plate_no', 'like', "%{$search}%")
+                            ->orWhereHas('type', function ($typeQuery) use ($search) {
+                                $typeQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('paid_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('paid_at', '<=', $dateTo);
+        }
+
+        $payments = $query->paginate(10)->withQueryString();
+
+        return view('user.sticker-history', [
+            'payments' => $payments,
+            'statusFilter' => $status,
+            'searchTerm' => $search,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+        ]);
     }
 
     /**
@@ -334,6 +433,59 @@ class UserController extends Controller
     }
 
     /**
+     * View or download sticker payment receipt for the authenticated user
+     */
+    public function downloadStickerReceipt(Request $request, Payment $payment)
+    {
+        $this->checkVehicleUserAccess();
+        $user = Auth::user();
+
+        if ((int) $payment->user_id !== (int) $user->id) {
+            abort(403, 'You do not have permission to access this receipt.');
+        }
+
+        $payment->loadMissing([
+            'user',
+            'vehicle.type',
+            'batchVehicles.vehicle.type',
+        ]);
+
+        $receiptService = new PaymentReceiptService;
+
+        if (! $receiptService->receiptExists($payment)) {
+            if ($payment->batch_id) {
+                $receiptService->generateBatchReceipt($payment);
+            } else {
+                $receiptService->generateReceipt($payment);
+            }
+        }
+
+        $receiptUrl = $receiptService->getReceiptUrl($payment);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id' => $payment->id,
+                'reference' => $payment->reference,
+                'status' => $payment->status,
+                'amount' => (float) $payment->amount,
+                'paid_at' => $payment->paid_at?->toIso8601String(),
+                'created_at' => $payment->created_at->toIso8601String(),
+                'vehicle_count' => (int) $payment->vehicle_count,
+                'user' => [
+                    'first_name' => $payment->user->first_name,
+                    'last_name' => $payment->user->last_name,
+                    'full_name' => trim($payment->user->first_name.' '.$payment->user->last_name),
+                    'user_type' => $payment->user->user_type?->value,
+                ],
+                'vehicles' => $this->formatReceiptVehicles($payment),
+                'download_url' => $receiptUrl,
+            ]);
+        }
+
+        return redirect($receiptUrl);
+    }
+
+    /**
      * Get user's vehicles based on user type
      */
     private function getUserVehicles(): \Illuminate\Database\Eloquent\Collection
@@ -353,5 +505,38 @@ class UserController extends Controller
         if (! in_array($user->user_type, [\App\Enums\UserType::Student, \App\Enums\UserType::Staff, \App\Enums\UserType::Stakeholder])) {
             abort(403, 'Access denied. This area is for vehicle users only.');
         }
+    }
+
+    /**
+     * Format vehicle details for receipt rendering
+     */
+    private function formatReceiptVehicles(Payment $payment): array
+    {
+        $formatVehicle = static function (?Vehicle $vehicle): ?array {
+            if (! $vehicle) {
+                return null;
+            }
+
+            return [
+                'id' => $vehicle->id,
+                'plate_no' => $vehicle->plate_no,
+                'color' => $vehicle->color,
+                'number' => $vehicle->number,
+                'type_name' => $vehicle->type?->name,
+            ];
+        };
+
+        if (($payment->vehicle_count ?? 1) > 1) {
+            return $payment->batchVehicles
+                ->filter(fn ($batchPayment) => $batchPayment->vehicle !== null)
+                ->map(fn ($batchPayment) => $formatVehicle($batchPayment->vehicle))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        $singleVehicle = $formatVehicle($payment->vehicle);
+
+        return $singleVehicle ? [$singleVehicle] : [];
     }
 }
