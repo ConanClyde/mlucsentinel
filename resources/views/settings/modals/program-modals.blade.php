@@ -11,15 +11,27 @@
                     <select id="modal-program-college-id" class="form-input" required>
                         <option value="">Select College</option>
                     </select>
+                    <p id="modal-program-college-id-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-4">
                     <label class="form-label">Program Name <span class="text-red-500">*</span></label>
                     <input type="text" id="modal-program-name" class="form-input" placeholder="e.g. Bachelor of Science in Electrical Engineering" required>
+                    <p id="modal-program-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">Program Code <span class="text-red-500">*</span></label>
+                    <input type="text" id="modal-program-code" class="form-input uppercase" placeholder="e.g. COE-BSEE" maxlength="50" required>
+                    <p id="modal-program-code-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="modal-program-description" class="form-input" rows="3" placeholder="Brief description about the program"></textarea>
+                    <p id="modal-program-description-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeAddProgramModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="addProgram()" class="btn btn-primary">Add Program</button>
+                <button type="button" id="add-program-btn" onclick="addProgram()" class="btn btn-primary" disabled>Add Program</button>
             </div>
         </form>
     </div>
@@ -39,15 +51,27 @@
                     <select id="edit-program-college-id" class="form-input" required>
                         <option value="">Select College</option>
                     </select>
+                    <p id="edit-program-college-id-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-4">
                     <label class="form-label">Program Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit-program-name" class="form-input" placeholder="e.g. Bachelor of Science in Electrical Engineering" required>
+                    <p id="edit-program-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">Program Code <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-program-code" class="form-input uppercase" placeholder="e.g. COE-BSEE" maxlength="50" required>
+                    <p id="edit-program-code-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="edit-program-description" class="form-input" rows="3" placeholder="Brief description about the program"></textarea>
+                    <p id="edit-program-description-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeEditProgramModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="updateProgram()" class="btn btn-primary">Update Program</button>
+                <button type="button" id="update-program-btn" onclick="updateProgram()" class="btn btn-primary" disabled>Update Program</button>
             </div>
         </form>
     </div>

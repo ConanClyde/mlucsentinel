@@ -18,11 +18,12 @@
                 <div class="form-group">
                     <label class="form-label">Amount (₱) <span class="text-red-500">*</span></label>
                     <input type="number" id="edit-fee-amount" class="form-input" placeholder="0.00" step="0.01" min="0" max="99999999.99" required>
+                    <p id="edit-fee-amount-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeEditFeeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="updateFee()" class="btn btn-primary">Update Fee</button>
+                <button type="button" id="update-fee-btn" onclick="updateFee()" class="btn btn-primary" disabled>Update Fee</button>
             </div>
         </form>
     </div>

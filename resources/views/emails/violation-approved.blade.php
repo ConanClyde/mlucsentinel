@@ -22,7 +22,7 @@
             overflow: hidden;
         }
         .header {
-            background: #dc2626;
+            background: #1b1b18;
             color: white;
             padding: 30px;
             text-align: center;
@@ -37,44 +37,48 @@
         }
         .alert-box {
             background: #fef2f2;
-            border-left: 4px solid #dc2626;
-            border-radius: 6px;
+            border: 2px solid #dc2626;
+            border-radius: 8px;
             padding: 20px;
-            margin: 20px 0;
+            margin: 30px 0;
             color: #991b1b;
         }
         .alert-box strong {
             display: block;
-            margin-bottom: 8px;
-            font-size: 16px;
+            font-size: 18px;
+            margin-bottom: 10px;
         }
-        .info-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            border-radius: 4px;
+            padding: 15px;
             margin: 20px 0;
+            color: #004085;
+        }
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
         }
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #e9ecef;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 102, 204, 0.2);
         }
         .info-row:last-child {
             border-bottom: none;
         }
         .info-label {
             font-weight: 600;
-            color: #495057;
             flex: 1;
         }
         .info-value {
-            color: #1b1b18;
-            flex: 1;
             text-align: right;
+            flex: 1;
         }
         .description-box {
-            background: #fff;
+            background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 6px;
             padding: 15px;
@@ -83,16 +87,16 @@
         }
         .action-box {
             background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
             padding: 20px;
             margin: 30px 0;
             color: #856404;
         }
         .action-box strong {
             display: block;
+            font-size: 18px;
             margin-bottom: 10px;
-            font-size: 16px;
         }
         .footer {
             background: #f8f9fa;
@@ -128,11 +132,12 @@
             <h2>Violation Report Approved</h2>
             
             <div class="alert-box">
-                <strong>Action Required</strong>
+                <strong>⚠️ Action Required</strong>
                 A violation report against your vehicle has been approved and requires your attention.
             </div>
             
-            <div class="info-section">
+            <div class="info-box">
+                <strong>Report Details</strong>
                 <div class="info-row">
                     <span class="info-label">Report ID:</span>
                     <span class="info-value"><strong>#{{ $report->id }}</strong></span>
@@ -184,21 +189,23 @@
             @endif
             
             <div class="action-box">
-                <strong>Required Action</strong>
+                <strong>⚠️ Required Action</strong>
                 <p style="margin: 10px 0 0 0;">Please address this violation at your earliest convenience. Failure to address this violation may result in further actions.</p>
             </div>
             
             <p style="margin-top: 30px;">For questions or concerns regarding this violation report, please contact the administration office.</p>
             
-            <p style="margin-top: 30px; color: #6c757d; font-size: 14px;">Thank you for your attention to this matter. We appreciate your cooperation in maintaining campus safety and order.</p>
+            <p style="margin-top: 20px; color: #6c757d;">Thank you for your attention to this matter. We appreciate your cooperation in maintaining campus safety and order.</p>
         </div>
         
         <div class="footer">
-            <p><strong>MLUC Sentinel</strong></p>
-            <p>A Digital Parking Management System</p>
+            <p>This email was sent from MLUC Sentinel - A Digital Parking Management System</p>
             <p>Don Mariano Marcos Memorial State University - Mid La Union Campus</p>
+            <p>If you have any questions, please contact our support team.</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+                This is an automated notification. Please do not reply to this email.
+            </p>
         </div>
     </div>
 </body>
 </html>
-

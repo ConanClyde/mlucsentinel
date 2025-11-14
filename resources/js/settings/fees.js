@@ -81,8 +81,8 @@ export function loadFees() {
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-center gap-2">
                             <button onclick="openEditFeeModal(${fee.id}, '${escapeHtml(fee.display_name)}', '${escapeHtml(fee.description || '')}', ${fee.amount})" class="btn-edit" title="Edit">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                             </button>
                         </div>
@@ -114,12 +114,90 @@ export function loadFees() {
         });
 }
 
+// Helper functions
+function showError(inputId, errorId, message) {
+    const errorEl = document.getElementById(errorId);
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.classList.add('border-red-500');
+    }
+}
+
+function hideError(inputId, errorId) {
+    const errorEl = document.getElementById(errorId);
+    if (errorEl) {
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+    }
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.classList.remove('border-red-500');
+    }
+}
+
+function validateEditFeeForm() {
+    const amount = document.getElementById('edit-fee-amount').value;
+    const updateBtn = document.getElementById('update-fee-btn');
+    
+    if (!amount || parseFloat(amount) < 0 || isNaN(parseFloat(amount))) {
+        updateBtn.disabled = true;
+        return false;
+    }
+    
+    hideError('edit-fee-amount', 'edit-fee-amount-error');
+    updateBtn.disabled = false;
+    return true;
+}
+
 export function openEditFeeModal(id, displayName, description, currentAmount) {
+    // If only ID is provided, extract data from the table row
+    if (displayName === undefined || displayName === null) {
+        const row = document.querySelector(`tr[data-fee-id="${id}"]`);
+        if (row) {
+            // Try to get from data attributes first (more reliable)
+            displayName = row.dataset.feeDisplayName || '';
+            description = row.dataset.feeDescription || '';
+            currentAmount = row.dataset.feeAmount || 0;
+            
+            // Fallback to extracting from cells if data attributes not available
+            if (!displayName) {
+                const nameCell = row.querySelector('td:nth-child(1) span');
+                displayName = nameCell ? nameCell.textContent.trim() : '';
+            }
+            if (!description) {
+                const descCell = row.querySelector('td:nth-child(2) span');
+                description = descCell ? descCell.textContent.trim() : '';
+            }
+            if (!currentAmount || currentAmount === 0) {
+                const amountCell = row.querySelector('td:nth-child(3) span');
+                if (amountCell) {
+                    const amountText = amountCell.textContent.trim().replace(/[₱,]/g, '');
+                    currentAmount = parseFloat(amountText) || 0;
+                }
+            }
+        } else if (feesRealtimeManager) {
+            // Try to get from realtime manager
+            const fee = feesRealtimeManager.fees?.find(f => f.id === Number(id));
+            if (fee) {
+                displayName = fee.display_name || '';
+                description = fee.description || '';
+                currentAmount = fee.amount || 0;
+            }
+        }
+    }
+    
     document.getElementById('edit-fee-id').value = id;
-    document.getElementById('edit-fee-display-name').value = displayName;
-    document.getElementById('edit-fee-description').value = description;
-    document.getElementById('edit-fee-amount').value = parseFloat(currentAmount).toFixed(2);
+    document.getElementById('edit-fee-display-name').value = displayName || '';
+    document.getElementById('edit-fee-description').value = description || '';
+    document.getElementById('edit-fee-amount').value = parseFloat(currentAmount || 0).toFixed(2);
     document.getElementById('edit-fee-modal').classList.remove('hidden');
+    const amountInput = document.getElementById('edit-fee-amount');
+    if (amountInput) amountInput.addEventListener('input', validateEditFeeForm);
+    validateEditFeeForm();
 }
 
 export function closeEditFeeModal() {
@@ -128,16 +206,19 @@ export function closeEditFeeModal() {
     document.getElementById('edit-fee-display-name').value = '';
     document.getElementById('edit-fee-description').value = '';
     document.getElementById('edit-fee-amount').value = '';
+    hideError('edit-fee-amount', 'edit-fee-amount-error');
 }
 
 export function updateFee() {
     const id = document.getElementById('edit-fee-id').value;
     const amount = document.getElementById('edit-fee-amount').value;
     
-    if (!amount || parseFloat(amount) < 0) {
-        window.showErrorModal('Please enter a valid fee amount');
+    if (!amount || parseFloat(amount) < 0 || isNaN(parseFloat(amount))) {
+        showError('edit-fee-amount', 'edit-fee-amount-error', 'Please enter a valid fee amount');
         return;
     }
+    
+    hideError('edit-fee-amount', 'edit-fee-amount-error');
     
     fetch(`/api/fees/${id}`, {
         method: 'PUT',
@@ -159,12 +240,12 @@ export function updateFee() {
             feesLoaded = false;
             loadFees();
         } else {
-            window.showErrorModal(data.message || 'Failed to update fee');
+            showError('edit-fee-amount', 'edit-fee-amount-error', data.message || 'Failed to update fee');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        window.showErrorModal('An error occurred while updating the fee');
+        showError('edit-fee-amount', 'edit-fee-amount-error', 'An error occurred while updating the fee');
     });
 }
 

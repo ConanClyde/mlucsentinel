@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\StickerColor;
 use App\Events\NotificationCreated;
 use App\Events\VehicleUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\StickerRule;
 use App\Models\Vehicle;
 use App\Services\PaymentBatchService;
 use App\Services\StaticDataCacheService;
@@ -26,6 +28,9 @@ class VehiclesController extends Controller
      */
     public function index()
     {
+        if (! auth()->user()->hasPrivilege('view_vehicles')) {
+            abort(403, 'You do not have permission to view vehicles.');
+        }
         $vehicles = Vehicle::with(['user.student.college', 'type'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -33,11 +38,16 @@ class VehiclesController extends Controller
         $vehicleTypes = StaticDataCacheService::getVehicleTypes();
         $colleges = StaticDataCacheService::getColleges();
 
+        // Build sticker palette from sticker rules (fallback to enum hex)
+        $rules = StickerRule::getSingleton();
+        $palette = $rules->palette ?? collect(StickerColor::cases())->mapWithKeys(fn ($c) => [$c->value => $c->hex()])->toArray();
+
         return view('admin.vehicles', [
             'pageTitle' => 'Vehicles Management',
             'vehicles' => $vehicles,
             'vehicleTypes' => $vehicleTypes,
             'colleges' => $colleges,
+            'stickerPalette' => $palette,
         ]);
     }
 
@@ -46,6 +56,9 @@ class VehiclesController extends Controller
      */
     public function data()
     {
+        if (! auth()->user()->hasPrivilege('view_vehicles')) {
+            abort(403, 'You do not have permission to view vehicles.');
+        }
         $vehicles = Vehicle::with(['user', 'type'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -58,6 +71,9 @@ class VehiclesController extends Controller
      */
     public function destroy(Vehicle $vehicle)
     {
+        if (! auth()->user()->hasPrivilege('delete_vehicles')) {
+            abort(403, 'You do not have permission to delete vehicles.');
+        }
         DB::transaction(function () use ($vehicle) {
             $userId = $vehicle->user_id;
             $plateNo = $vehicle->plate_no ?? $vehicle->color.' '.$vehicle->number;

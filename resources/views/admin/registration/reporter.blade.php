@@ -65,16 +65,17 @@
                     </div>
                     
                     <div class="mt-4 md:mt-6">
-                        <label for="type_id" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
-                            Reporter Type <span class="text-red-500">*</span>
+                        <label for="reporter_role_id" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                            Reporter Role <span class="text-red-500">*</span>
                         </label>
-                        <select id="type_id" name="type_id" class="form-input" required>
-                            <option value="">Select a reporter type</option>
-                            @foreach($reporterTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        <select id="reporter_role_id" name="reporter_role_id" class="form-input" required>
+                            <option value="">Select a reporter role</option>
+                            @foreach($reporterRoles as $role)
+                                <option value="{{ $role->id }}">{{ $role->name }}</option>
                             @endforeach
                         </select>
-                        <div id="type_id_error" class="text-red-500 text-sm mt-1 hidden"></div>
+                        <div id="reporter_role_id_error" class="text-red-500 text-sm mt-1 hidden"></div>
+                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-1">Expiration is set by the reporter role</p>
                     </div>
                 </div>
 
@@ -312,12 +313,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let emailTimeout;
     let passwordTimeout;
     let passwordConfirmationTimeout;
-    let typeTimeout;
+    let reporterRoleTimeout;
 
     // Step 1 validation
     const firstNameInput = document.getElementById('first_name');
     const lastNameInput = document.getElementById('last_name');
-    const typeInput = document.getElementById('type_id');
+    const reporterRoleInput = document.getElementById('reporter_role_id');
 
     if (firstNameInput) {
         firstNameInput.addEventListener('input', function() {
@@ -335,10 +336,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (typeInput) {
-        typeInput.addEventListener('change', function() {
-            clearTimeout(typeTimeout);
-            typeTimeout = setTimeout(validateType, 1000);
+    if (reporterRoleInput) {
+        reporterRoleInput.addEventListener('change', function() {
+            clearTimeout(reporterRoleTimeout);
+            reporterRoleTimeout = setTimeout(validateReporterRole, 1000);
             updateButtonStates();
         });
     }
@@ -400,14 +401,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function validateType() {
-        const typeId = typeInput.value;
+    function validateReporterRole() {
+        const roleId = reporterRoleInput.value;
         
-        if (!typeId) {
-            showFieldError('type_id', 'Please select a reporter type');
+        if (!roleId) {
+            showFieldError('reporter_role_id', 'Please select a reporter role');
             return false;
         } else {
-            clearFieldError('type_id');
+            clearFieldError('reporter_role_id');
             return true;
         }
     }
@@ -518,9 +519,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function isStep1Valid() {
     const firstName = document.getElementById('first_name').value.trim();
     const lastName = document.getElementById('last_name').value.trim();
-    const typeId = document.getElementById('type_id').value;
+    const reporterRoleId = document.getElementById('reporter_role_id').value;
     
-    return firstName && lastName && typeId;
+    return firstName && lastName && reporterRoleId;
 }
 
 // Function to check if all step 2 fields are valid
@@ -611,11 +612,11 @@ function validateCurrentStep() {
     if (currentStep === 1) {
         const firstName = document.getElementById('first_name').value.trim();
         const lastName = document.getElementById('last_name').value.trim();
-        const typeId = document.getElementById('type_id').value;
+        const reporterRoleId = document.getElementById('reporter_role_id').value;
         
-        console.log('Step 1 values - First name:', firstName, 'Last name:', lastName, 'Type:', typeId);
+        console.log('Step 1 values - First name:', firstName, 'Last name:', lastName, 'Reporter Role:', reporterRoleId);
         
-        if (!firstName || !lastName || !typeId) {
+        if (!firstName || !lastName || !reporterRoleId) {
             showErrorModal('Please fill in all required fields');
             return false;
         }
@@ -693,7 +694,8 @@ function resetForm() {
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
     document.getElementById('password_confirmation').value = '';
-    document.getElementById('type_id').value = '';
+    const reporterRoleSelect = document.getElementById('reporter_role_id');
+    if (reporterRoleSelect) reporterRoleSelect.value = '';
     
     // Reset to step 1
     showStep(1);

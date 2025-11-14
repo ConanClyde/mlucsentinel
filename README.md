@@ -427,6 +427,12 @@ After running the seeder, you can log in with:
 
 ## User Roles
 
+### Post-Login Destinations
+
+- **Global Administrator, Administrator**: Dashboard (`/dashboard`)
+- **Reporter, Security**: Reporter Home (`/home`)
+- **Student, Staff, Stakeholder**: Profile (`/profile`)
+
 ### Global Administrator
 
 - Full system access without restrictions

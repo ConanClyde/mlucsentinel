@@ -12,8 +12,9 @@ class Reporter extends Model
 
     protected $fillable = [
         'user_id',
-        'type_id',
+        'reporter_role_id',
         'expiration_date',
+        'is_active',
     ];
 
     /**
@@ -25,6 +26,7 @@ class Reporter extends Model
     {
         return [
             'expiration_date' => 'date',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -37,10 +39,48 @@ class Reporter extends Model
     }
 
     /**
-     * Get the reporter type.
+     * Get the reporter role.
      */
-    public function reporterType(): BelongsTo
+    public function reporterRole(): BelongsTo
     {
-        return $this->belongsTo(ReporterType::class, 'type_id');
+        return $this->belongsTo(ReporterRole::class);
+    }
+
+    /**
+     * Check if this reporter can report a specific user.
+     */
+    public function canReportUser(User $user): bool
+    {
+        if (! $this->reporterRole) {
+            return false;
+        }
+
+        return $this->reporterRole->canReport($user->user_type->value);
+    }
+
+    /**
+     * Check if this reporter can report a specific user type.
+     */
+    public function canReportUserType(string $userType): bool
+    {
+        if (! $this->reporterRole) {
+            return false;
+        }
+
+        return $this->reporterRole->canReport($userType);
+    }
+
+    /**
+     * Check if this reporter can only report students.
+     */
+    public function canOnlyReportStudents(): bool
+    {
+        if (! $this->reporterRole) {
+            return false;
+        }
+
+        $allowedTypes = $this->reporterRole->getAllowedUserTypes();
+
+        return count($allowedTypes) === 1 && in_array('student', $allowedTypes);
     }
 }

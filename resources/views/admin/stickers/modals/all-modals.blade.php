@@ -137,3 +137,72 @@
         </div>
     </div>
 </div>
+
+<!-- View Request Details Modal -->
+<div id="viewRequestModal" class="modal-backdrop hidden z-[100]" onclick="if(event.target === this) closeViewRequestModal()">
+    <div class="modal-container flex flex-col" style="max-width: 900px; width: 95%; max-height: 90vh;">
+        <div class="modal-header flex-shrink-0 flex justify-between items-center">
+            <h2 class="modal-title">Request Details</h2>
+            <button onclick="closeViewRequestModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body flex-1 overflow-y-auto" id="viewRequestContent">
+            <!-- Content will be loaded here -->
+        </div>
+        <div class="modal-footer flex-shrink-0">
+            <button onclick="closeViewRequestModal()" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Request Modal -->
+<div id="approveRequestModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeApproveRequestModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-green-600 dark:text-green-400 flex items-center gap-2">
+                <svg class="modal-icon-success w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Approve Request
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p class="text-[#1b1b18] dark:text-[#EDEDEC]">Are you sure you want to approve this sticker request?</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeApproveRequestModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="confirmApproveRequest()" class="btn btn-success">Approve Request</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Request Modal -->
+<div id="rejectRequestModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeRejectRequestModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-red-500 flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Reject Request
+            </h2>
+        </div>
+        <form id="rejectRequestForm" method="POST">
+            @csrf
+            <div class="modal-body">
+                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-4">Please provide a reason for rejecting this request.</p>
+                <div class="form-group">
+                    <label for="rejection_reason" class="form-label">Reason for Rejection</label>
+                    <textarea id="rejection_reason" name="rejection_reason" rows="4" required
+                        class="form-input"
+                        placeholder="Please provide a reason for rejecting this request..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeRejectRequestModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Request</button>
+            </div>
+        </form>
+    </div>
+</div>

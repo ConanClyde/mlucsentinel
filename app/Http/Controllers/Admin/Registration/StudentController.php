@@ -79,7 +79,7 @@ class StudentController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make('temp_password_'.time()), // Temporary password since students don't login
+                'password' => Hash::make($request->password),
                 'user_type' => 'student',
                 'is_active' => true,
             ]);
@@ -96,6 +96,8 @@ class StudentController extends Controller
             $program = \App\Models\Program::findOrFail($request->program_id);
 
             // Create student record
+            $rules = \App\Models\StickerRule::getSingleton();
+            $years = (int) ($rules->student_expiration_years ?? 4);
             $student = Student::create([
                 'user_id' => $user->id,
                 'college_id' => $program->college_id,
@@ -103,7 +105,7 @@ class StudentController extends Controller
                 'student_id' => $request->student_id,
                 'license_no' => $request->license_no,
                 'license_image' => $licenseImagePath,
-                'expiration_date' => now()->addYears(4), // 4 years from now
+                'expiration_date' => now()->addYears($years),
             ]);
 
             // Create vehicles and generate stickers

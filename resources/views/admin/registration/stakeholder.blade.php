@@ -5,16 +5,16 @@
 
 @section('content')
 <div class="min-h-screen py-4 md:py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6 md:mb-8 text-center">
             <h1 class="text-xl md:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Stakeholder Registration</h1>
-            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register new Stakeholder users with vehicle information</p>
+            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register new Stakeholder users with vehicle information and account credentials</p>
             </div>
 
         <!-- Progress Steps -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6 overflow-x-auto">
-            <div class="flex items-center justify-center min-w-max">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6">
+            <div class="flex items-center justify-center overflow-x-auto">
                 <div class="flex items-center space-x-2 md:space-x-4">
                     <!-- Step 1 -->
                     <div class="flex items-center">
@@ -24,7 +24,7 @@
                         <span id="step-1-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline">Basic Information</span>
     </div>
 
-                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 2 -->
                     <div class="flex items-center">
@@ -34,15 +34,25 @@
                         <span id="step-2-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">License Information</span>
                     </div>
 
-                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 3 -->
                     <div class="flex items-center">
                         <div id="step-3-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
                             3
-                    </div>
+                        </div>
                         <span id="step-3-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Vehicle Information</span>
-                </div>
+                    </div>
+
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    
+                    <!-- Step 4 -->
+                    <div class="flex items-center">
+                        <div id="step-4-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
+                            4
+                        </div>
+                        <span id="step-4-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Account Information</span>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -81,7 +91,7 @@
                         <select id="type_id" name="type_id" class="form-input" required>
                             <option value="">Select Stakeholder Type</option>
                             @foreach($stakeholderTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                <option value="{{ $type->id }}" data-evidence-required="{{ $type->evidence_required ? 'true' : 'false' }}">{{ $type->name }}</option>
                             @endforeach
                         </select>
                         <div id="type_id_error" class="text-red-500 text-sm mt-1 hidden"></div>
@@ -94,6 +104,44 @@
                         <input type="email" id="email" name="email" class="form-input" placeholder="john.doe@gmail.com or john.doe@dmmmsu.edu.ph" required>
                         <div class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1">Used for violation notifications</div>
                         <div id="email_error" class="text-red-500 text-sm mt-1 hidden"></div>
+                    </div>
+                    
+                    <!-- Guardian Evidence Upload (Conditional) -->
+                    <div id="guardian_evidence_section" class="mt-4 md:mt-6 hidden">
+                        <label class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                            Guardian Evidence <span class="text-red-500">*</span>
+                        </label>
+                        <div class="bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <!-- Upload Options -->
+                            <div class="flex gap-4 mb-4">
+                                <button type="button" class="btn btn-secondary" onclick="openGuardianCameraModal()">
+                                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    Take Photo
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('guardian_evidence').click()">
+                                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" /></svg>
+                                    Upload File
+                                </button>
+                            </div>
+
+                            <!-- Hidden File Input -->
+                            <input type="file" id="guardian_evidence" name="guardian_evidence" accept="image/*" class="hidden" onchange="handleGuardianFileUpload(event)">
+
+                            <!-- Image Preview -->
+                            <div id="guardianEvidencePreview" class="hidden mt-4">
+                                <div class="relative inline-block">
+                                    <div id="guardianPreviewContent">
+                                        <!-- Content will be populated dynamically -->
+                                    </div>
+                                    <button type="button" onclick="removeGuardianPreview()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-2">Upload a clear photo of children's university ID or enrollment documents (JPG, PNG - max 10MB)</p>
+                            <div id="guardian_evidence_error" class="text-red-500 text-sm mt-1 hidden"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -180,7 +228,7 @@
                                 </select>
                             </div>
                                 <div class="form-group plate-number-group">
-                                    <label class="form-label">Plate Number <span class="text-red-500">*</span></label>
+                                    <label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>
                                 <input 
                                     name="vehicles[0][plate_no]" 
                                     type="text" 
@@ -198,6 +246,43 @@
                     Maximum of 3 vehicles allowed per Stakeholder member
                 </p>
             </div>
+
+                <!-- Step 4: Account Information -->
+                <div id="step-4" class="step-content p-4 md:p-6 hidden">
+                    <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4 md:mb-6">Account Information</h3>
+                    <p class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A] mb-4 md:mb-6">Create login credentials for the stakeholder</p>
+                    
+                    <div class="space-y-4 md:space-y-6">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" class="form-input pr-10" placeholder="Enter password (minimum 8 characters)" required>
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="togglePasswordVisibility('password')">
+                                    <x-heroicon-c-eye id="password-eye-icon" class="w-5 h-5" />
+                                    <x-heroicon-c-eye-slash id="password-eye-off-icon" class="w-5 h-5 hidden" />
+                                </button>
+                            </div>
+                            <div class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1">Minimum 8 characters</div>
+                            <div id="password_error" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+                        </div>
+                        
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                Confirm Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="password_confirmation" name="password_confirmation" class="form-input pr-10" placeholder="Re-enter password" required>
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="togglePasswordVisibility('password_confirmation')">
+                                    <x-heroicon-c-eye id="password_confirmation-eye-icon" class="w-5 h-5" />
+                                    <x-heroicon-c-eye-slash id="password_confirmation-eye-off-icon" class="w-5 h-5 hidden" />
+                                </button>
+                            </div>
+                            <div id="password_confirmation_error" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Form Actions -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 md:pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-4 md:px-6 pb-4 md:pb-6">
@@ -221,6 +306,16 @@
                     <!-- Step 3 Buttons -->
                     <div id="step-3-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                         <button type="button" id="prev-step-2" class="btn btn-secondary w-full sm:w-auto">
+                            Previous
+                        </button>
+                        <button type="button" id="next-step-3" class="btn btn-primary w-full sm:w-auto" disabled>
+                            Next
+                        </button>
+                    </div>
+                    
+                    <!-- Step 4 Buttons -->
+                    <div id="step-4-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button type="button" id="prev-step-3" class="btn btn-secondary w-full sm:w-auto">
                             Previous
                         </button>
                         <button type="submit" id="submit-form" class="btn btn-primary w-full sm:w-auto" disabled>
@@ -248,6 +343,27 @@
         </div>
         <div class="modal-footer">
             <button class="btn-camera" onclick="captureLicensePhoto()">
+                <svg class="w-6 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Guardian Camera Modal -->
+<div id="guardianCameraModal" class="modal-backdrop hidden">
+    <div class="camera-container max-w-4xl">
+        <div class="modal-header flex justify-between items-center">
+            <h2 class="modal-title">Camera - Guardian Evidence</h2>
+            <button onclick="closeGuardianCameraModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="modal-body p-0">
+            <video id="guardianCameraVideo" autoplay playsinline class="w-full h-auto bg-black max-h-[70vh] sm:max-h-[80vh] object-cover"></video>
+            <canvas id="guardianCameraCanvas" class="hidden"></canvas>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-camera" onclick="captureGuardianPhoto()">
                 <svg class="w-6 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
         </div>
@@ -342,11 +458,21 @@ const availabilityErrors = {
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
     
+    // Stakeholder type change handler for guardian evidence
+    const typeSelect = document.getElementById('type_id');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            updateGuardianEvidenceVisibility();
+        });
+    }
+    
     // Step navigation
     const nextButton = document.getElementById('next-step');
     const nextButton2 = document.getElementById('next-step-2');
+    const nextButton3 = document.getElementById('next-step-3');
     const prevButton = document.getElementById('prev-step');
     const prevButton2 = document.getElementById('prev-step-2');
+    const prevButton3 = document.getElementById('prev-step-3');
     
     if (nextButton) {
         nextButton.addEventListener('click', function() {
@@ -364,6 +490,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    if (nextButton3) {
+        nextButton3.addEventListener('click', function() {
+            if (validateCurrentStep()) {
+                showStep(4);
+            }
+        });
+    }
+    
     if (prevButton) {
         prevButton.addEventListener('click', function() {
             showStep(1);
@@ -373,6 +507,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prevButton2) {
         prevButton2.addEventListener('click', function() {
             showStep(2);
+        });
+    }
+    
+    if (prevButton3) {
+        prevButton3.addEventListener('click', function() {
+            showStep(3);
         });
     }
     
@@ -501,16 +641,32 @@ document.addEventListener('DOMContentLoaded', function() {
             updateButtonStates();
         });
     }
+    
+    // Step 4 validation
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmationInput = document.getElementById('password_confirmation');
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            updateButtonStates();
+        });
+    }
+    
+    if (passwordConfirmationInput) {
+        passwordConfirmationInput.addEventListener('input', function() {
+            updateButtonStates();
+        });
+    }
 
     // Individual validation functions
     function validateFirstName() {
         const firstName = firstNameInput.value.trim();
         
         if (!firstName) {
-            showFieldError('first_name', 'First name is required');
+            window.showFieldError('first_name', 'First name is required');
             return false;
         } else {
-            clearFieldError('first_name');
+            window.clearFieldError('first_name');
             return true;
         }
     }
@@ -519,10 +675,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastName = lastNameInput.value.trim();
         
         if (!lastName) {
-            showFieldError('last_name', 'Last name is required');
+            window.showFieldError('last_name', 'Last name is required');
             return false;
         } else {
-            clearFieldError('last_name');
+            window.clearFieldError('last_name');
             return true;
         }
     }
@@ -531,10 +687,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const typeId = typeIdInput.value.trim();
         
         if (!typeId) {
-            showFieldError('type_id', 'Stakeholder Type is required');
+            window.showFieldError('type_id', 'Stakeholder Type is required');
             return false;
         } else {
-            clearFieldError('type_id');
+            window.clearFieldError('type_id');
             return true;
         }
     }
@@ -543,10 +699,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = emailInput.value.trim();
         
         if (!email) {
-            showFieldError('email', 'Email is required');
+            window.showFieldError('email', 'Email is required');
             return false;
         } else if (!isValidEmail(email)) {
-            showFieldError('email', 'Please enter a valid email from Gmail (@gmail.com) or Stakeholder DMMMSU (@dmmmsu.edu.ph)');
+            window.showFieldError('email', 'Please enter a valid email from Gmail (@gmail.com) or Stakeholder DMMMSU (@dmmmsu.edu.ph)');
             return false;
         } else {
             // Check email availability
@@ -567,17 +723,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.available) {
-                clearFieldError('email');
+                window.clearFieldError('email');
                 availabilityErrors.email = false;
                     } else {
-                showFieldError('email', data.message);
+                window.showFieldError('email', data.message);
                 availabilityErrors.email = true;
                     }
                     updateButtonStates();
                 })
                 .catch(error => {
             console.error('Email check error:', error);
-            clearFieldError('email');
+            window.clearFieldError('email');
             availabilityErrors.email = false;
             updateButtonStates();
         });
@@ -596,17 +752,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.available) {
-                clearFieldError('license_no');
+                window.clearFieldError('license_no');
                 availabilityErrors.licenseNo = false;
             } else {
-                showFieldError('license_no', data.message);
+                window.showFieldError('license_no', data.message);
                 availabilityErrors.licenseNo = true;
             }
             updateButtonStates();
         })
         .catch(error => {
             console.error('License No check error:', error);
-            clearFieldError('license_no');
+            window.clearFieldError('license_no');
             availabilityErrors.licenseNo = false;
             updateButtonStates();
         });
@@ -623,13 +779,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    function showFieldError(fieldName, message) {
+    window.showFieldError = function(fieldName, message) {
         const errorElement = document.getElementById(fieldName + '_error');
         const inputElement = document.getElementById(fieldName);
         
         if (errorElement) {
-            errorElement.textContent = message;
             errorElement.classList.remove('hidden');
+            errorElement.textContent = message;
         }
         
         if (inputElement) {
@@ -638,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function clearFieldError(fieldName) {
+    window.clearFieldError = function(fieldName) {
         const errorElement = document.getElementById(fieldName + '_error');
         const inputElement = document.getElementById(fieldName);
         
@@ -768,10 +924,28 @@ function isStep3Valid() {
     return isValid && vehicles.length > 0;
 }
 
+function isStep4Valid() {
+    const password = document.getElementById('password').value.trim();
+    const passwordConfirmation = document.getElementById('password_confirmation').value.trim();
+    
+    // Password must be at least 8 characters
+    if (password.length < 8) {
+        return false;
+    }
+    
+    // Passwords must match
+    if (password !== passwordConfirmation) {
+        return false;
+    }
+    
+    return true;
+}
+
 // Function to update button states
 function updateButtonStates() {
     const nextButton = document.getElementById('next-step');
     const nextButton2 = document.getElementById('next-step-2');
+    const nextButton3 = document.getElementById('next-step-3');
     const submitButton = document.getElementById('submit-form');
     
     if (currentStep === 1) {
@@ -779,7 +953,9 @@ function updateButtonStates() {
     } else if (currentStep === 2) {
         nextButton2.disabled = !isStep2Valid();
     } else if (currentStep === 3) {
-        submitButton.disabled = !isStep3Valid();
+        nextButton3.disabled = !isStep3Valid();
+    } else if (currentStep === 4) {
+        submitButton.disabled = !isStep4Valid();
     }
 }
 
@@ -801,16 +977,16 @@ function showStep(step) {
     }
     
     // Update step indicators
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
         const indicator = document.getElementById(`step-${i}-indicator`);
         const label = document.getElementById(`step-${i}-label`);
         
         if (i <= currentStep) {
-            indicator.className = 'w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium';
-            label.className = 'ml-2 text-sm font-medium text-blue-600 dark:text-blue-400';
+            indicator.className = 'w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-medium';
+            label.className = 'ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline';
         } else {
-            indicator.className = 'w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium';
-            label.className = 'ml-2 text-sm font-medium text-gray-500 dark:text-gray-400';
+            indicator.className = 'w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium';
+            label.className = 'ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline';
         }
     }
     
@@ -818,19 +994,28 @@ function showStep(step) {
     const step1Buttons = document.getElementById('step-1-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const step3Buttons = document.getElementById('step-3-buttons');
+    const step4Buttons = document.getElementById('step-4-buttons');
     
     if (currentStep === 1) {
         step1Buttons.classList.remove('hidden');
         step2Buttons.classList.add('hidden');
         step3Buttons.classList.add('hidden');
+        step4Buttons.classList.add('hidden');
     } else if (currentStep === 2) {
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
         step3Buttons.classList.add('hidden');
+        step4Buttons.classList.add('hidden');
     } else if (currentStep === 3) {
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.add('hidden');
         step3Buttons.classList.remove('hidden');
+        step4Buttons.classList.add('hidden');
+    } else if (currentStep === 4) {
+        step1Buttons.classList.add('hidden');
+        step2Buttons.classList.add('hidden');
+        step3Buttons.classList.add('hidden');
+        step4Buttons.classList.remove('hidden');
     }
     
     // Update button states after step change
@@ -857,6 +1042,13 @@ function validateCurrentStep() {
         
         return true;
     } else if (currentStep === 2) {
+        // Guardian evidence is required for stakeholders
+        const guardianEvidence = document.getElementById('guardian_evidence').files[0];
+        if (!guardianEvidence) {
+            showErrorModal('Guardian evidence is required for stakeholder registration');
+            return false;
+        }
+        
         // License information is optional (for users with only electric vehicles)
         return true;
     } else if (currentStep === 3) {
@@ -891,6 +1083,26 @@ function validateCurrentStep() {
         }
         
         return true;
+    } else if (currentStep === 4) {
+        const password = document.getElementById('password').value.trim();
+        const passwordConfirmation = document.getElementById('password_confirmation').value.trim();
+        
+        if (!password || !passwordConfirmation) {
+            showErrorModal('Please fill in all password fields');
+            return false;
+        }
+        
+        if (password.length < 8) {
+            showErrorModal('Password must be at least 8 characters');
+            return false;
+        }
+        
+        if (password !== passwordConfirmation) {
+            showErrorModal('Passwords do not match');
+            return false;
+        }
+        
+        return true;
     }
     return false;
 }
@@ -913,6 +1125,31 @@ function showErrorModal(message) {
 // Close error modal - using window function
 function closeErrorModal() {
     window.closeErrorModal();
+}
+
+// Toggle password visibility (called via onclick)
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    // Find the button that was clicked using the global event object
+    const button = event ? event.target.closest('button') : null;
+    if (!button) return;
+    
+    // Get all SVG elements (Blade components render as SVG)
+    const svgs = button.querySelectorAll('svg');
+    const eyeIcon = svgs[0]; // First SVG is the eye icon
+    const eyeOffIcon = svgs[1]; // Second SVG is the eye-slash icon
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('hidden');
+        if (eyeOffIcon) eyeOffIcon.classList.remove('hidden');
+    } else {
+        input.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('hidden');
+        if (eyeOffIcon) eyeOffIcon.classList.add('hidden');
+    }
 }
 
 // Reset form to initial state
@@ -945,6 +1182,8 @@ function resetForm() {
     document.getElementById('email').value = '';
     document.getElementById('license_no').value = '';
     document.getElementById('license_image').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('password_confirmation').value = '';
     
     // Reset license image preview
     document.getElementById('licenseImagePreview').classList.add('hidden');
@@ -986,7 +1225,7 @@ function resetForm() {
                 '</select>' +
             '</div>' +
             '<div class="form-group plate-number-group">' +
-                '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                 '<input name="vehicles[0][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                 '<div class="plate_no_0_error text-red-500 text-sm mt-1 hidden"></div>' +
             '</div>' +
@@ -1107,7 +1346,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '</select>' +
                 '</div>' +
                     '<div class="form-group plate-number-group">' +
-                        '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                        '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                     '<input name="vehicles[' + (vehicleCount - 1) + '][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                     '<div class="plate_no_' + (vehicleCount - 1) + '_error text-red-500 text-sm mt-1 hidden"></div>' +
                 '</div>' +
@@ -1237,6 +1476,7 @@ function handleVehicleTypeChange(e) {
     const vehicleItem = e.target.closest('.vehicle-item');
     const plateNumberGroup = vehicleItem.querySelector('.plate-number-group');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
+    const plateAsterisk = vehicleItem.querySelector('.plate-required-asterisk');
     
     if (!plateNumberGroup || !plateNumberInput) {
         return; // Safety check
@@ -1249,12 +1489,18 @@ function handleVehicleTypeChange(e) {
         plateNumberGroup.style.display = 'none';
         plateNumberInput.removeAttribute('required');
         plateNumberInput.value = ''; // Clear the value
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'none';
+        }
     } else {
         plateNumberGroup.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
         // Ensure it's visible (remove any hidden classes)
         plateNumberGroup.classList.remove('hidden');
         plateNumberGroup.style.visibility = 'visible';
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'inline';
+        }
     }
     
     updateButtonStates();
@@ -1416,6 +1662,150 @@ window.removeLicensePreview = function() {
     }
     
     updateButtonStates();
+}
+
+// Guardian evidence file upload handling
+window.handleGuardianFileUpload = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Check file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            window.showFieldError('guardian_evidence', 'File size must be less than 10MB');
+            event.target.value = '';
+            return;
+        }
+
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            window.showFieldError('guardian_evidence', 'Only JPG and PNG files are allowed');
+            event.target.value = '';
+            return;
+        }
+
+        window.clearFieldError('guardian_evidence');
+        
+        const previewDiv = document.getElementById('guardianEvidencePreview');
+        const contentDiv = document.getElementById('guardianPreviewContent');
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            contentDiv.innerHTML = `<img src="${e.target.result}" alt="Guardian Evidence Preview" class="w-full max-w-md rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">`;
+        };
+        reader.readAsDataURL(file);
+        
+        previewDiv.classList.remove('hidden');
+        updateButtonStates();
+    }
+}
+
+// Remove guardian evidence preview
+window.removeGuardianPreview = function() {
+    document.getElementById('guardianEvidencePreview').classList.add('hidden');
+    document.getElementById('guardian_evidence').value = '';
+    updateButtonStates();
+}
+
+// Update guardian evidence visibility based on stakeholder type
+function updateGuardianEvidenceVisibility() {
+    const typeSelect = document.getElementById('type_id');
+    const guardianSection = document.getElementById('guardian_evidence_section');
+    
+    if (typeSelect && typeSelect.value) {
+        const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+        const evidenceRequired = selectedOption.dataset.evidenceRequired === 'true';
+        
+        if (evidenceRequired) {
+            guardianSection.classList.remove('hidden');
+            // Make field required
+            const guardianInput = document.getElementById('guardian_evidence');
+            if (guardianInput) guardianInput.required = true;
+        } else {
+            guardianSection.classList.add('hidden');
+            removeGuardianPreview();
+            // Make field optional
+            const guardianInput = document.getElementById('guardian_evidence');
+            if (guardianInput) guardianInput.required = false;
+        }
+    } else {
+        // No stakeholder type selected yet, hide for now
+        guardianSection.classList.add('hidden');
+        removeGuardianPreview();
+    }
+}
+
+// Guardian Camera Modal Functions
+let guardianCameraStream = null;
+
+window.openGuardianCameraModal = async function() {
+    try {
+        // Get camera with high resolution first
+        guardianCameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'user',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
+        });
+        const video = document.getElementById('guardianCameraVideo');
+        video.srcObject = guardianCameraStream;
+        
+        // Wait for video to load and get actual dimensions before showing modal
+        video.onloadedmetadata = function() {
+            // Set video dimensions to match camera resolution
+            video.style.width = '100%';
+            video.style.height = 'auto';
+            video.style.maxHeight = '80vh'; // Limit max height to prevent overflow
+            
+            // Only show modal when camera is ready
+            document.getElementById('guardianCameraModal').classList.remove('hidden');
+        };
+    } catch (error) {
+        alert('Error accessing camera: ' + error.message);
+    }
+}
+
+window.closeGuardianCameraModal = function() {
+    if (guardianCameraStream) {
+        guardianCameraStream.getTracks().forEach(track => track.stop());
+        guardianCameraStream = null;
+    }
+    document.getElementById('guardianCameraModal').classList.add('hidden');
+}
+
+window.captureGuardianPhoto = function() {
+    const video = document.getElementById('guardianCameraVideo');
+    const canvas = document.getElementById('guardianCameraCanvas');
+    const context = canvas.getContext('2d');
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the video frame to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob and create file
+    canvas.toBlob(function(blob) {
+        // Create a file from the blob
+        const file = new File([blob], 'guardian_evidence_photo.jpg', { type: 'image/jpeg' });
+        
+        // Create a FileList-like object
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        
+        // Set the file input value
+        const fileInput = document.getElementById('guardian_evidence');
+        fileInput.files = dataTransfer.files;
+        
+        // Trigger the change event to show preview
+        const event = new Event('change', { bubbles: true });
+        fileInput.dispatchEvent(event);
+        
+        // Close the camera modal
+        closeGuardianCameraModal();
+    }, 'image/jpeg', 0.8);
 }
 
 // License Camera Modal Functions

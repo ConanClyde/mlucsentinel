@@ -9,6 +9,7 @@
                 <div class="form-group">
                     <label class="form-label">Location Type Name <span class="text-red-500">*</span></label>
                     <input type="text" id="modal-location-type-name" class="form-input" placeholder="Enter location type name" required>
+                    <p id="modal-location-type-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Default Color <span class="text-red-500">*</span></label>
@@ -16,6 +17,7 @@
                         <input type="color" id="modal-location-type-color" class="h-10 w-20 rounded border border-[#e3e3e0] dark:border-[#3E3E3A]" value="#3B82F6">
                         <input type="text" id="modal-location-type-color-hex" class="form-input flex-1" placeholder="#3B82F6" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" required>
                     </div>
+                    <p id="modal-location-type-color-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Description</label>
@@ -24,7 +26,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeAddLocationTypeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="addLocationType()" class="btn btn-primary">Add Location Type</button>
+                <button type="button" id="add-location-type-btn" onclick="addLocationType()" class="btn btn-primary" disabled>Add Location Type</button>
             </div>
         </form>
     </div>
@@ -42,6 +44,7 @@
                 <div class="form-group">
                     <label class="form-label">Location Type Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit-location-type-name" class="form-input" placeholder="Enter location type name" required>
+                    <p id="edit-location-type-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Default Color <span class="text-red-500">*</span></label>
@@ -49,6 +52,7 @@
                         <input type="color" id="edit-location-type-color" class="h-10 w-20 rounded border border-[#e3e3e0] dark:border-[#3E3E3A]" value="#3B82F6">
                         <input type="text" id="edit-location-type-color-hex" class="form-input flex-1" placeholder="#3B82F6" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" required>
                     </div>
+                    <p id="edit-location-type-color-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Description</label>
@@ -57,7 +61,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeEditLocationTypeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="updateLocationType()" class="btn btn-primary">Update Location Type</button>
+                <button type="button" id="update-location-type-btn" onclick="updateLocationType()" class="btn btn-primary" disabled>Update Location Type</button>
             </div>
         </form>
     </div>

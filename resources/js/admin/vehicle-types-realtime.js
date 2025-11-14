@@ -121,7 +121,7 @@ class VehicleTypesRealtime {
                 this.addVehicleType(vehicleType);
                 this.showBrowserNotification(
                     'Vehicle Type Created',
-                    `${editor} added ${vehicleType.name}`,
+                    `${editor} added ${vehicleType.name || 'a vehicle type'}`,
                     vehicleType.id,
                     'created'
                 );
@@ -130,7 +130,7 @@ class VehicleTypesRealtime {
                 this.updateVehicleType(vehicleType);
                 this.showBrowserNotification(
                     'Vehicle Type Updated',
-                    `${editor} updated ${vehicleType.name}`,
+                    `${editor} updated ${vehicleType.name || 'a vehicle type'}`,
                     vehicleType.id,
                     'updated'
                 );
@@ -139,7 +139,7 @@ class VehicleTypesRealtime {
                 this.removeVehicleType(vehicleType);
                 this.showBrowserNotification(
                     'Vehicle Type Removed',
-                    `${editor} removed ${vehicleType.name}`,
+                    `${editor} removed ${vehicleType.name || 'a vehicle type'}`,
                     null,
                     'deleted'
                 );
@@ -154,7 +154,7 @@ class VehicleTypesRealtime {
      */
     addVehicleType(vehicleType) {
         // Check if vehicle type already exists
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"], tr[data-vehicle-type-id="${vehicleType.id}"]`);
         
         if (existingRow) {
             this.updateVehicleType(vehicleType);
@@ -189,7 +189,7 @@ class VehicleTypesRealtime {
      * Update an existing vehicle type row
      */
     updateVehicleType(vehicleType) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"], tr[data-vehicle-type-id="${vehicleType.id}"]`);
         
         if (!existingRow) {
             console.log('Vehicle type not found in table, adding instead');
@@ -221,7 +221,7 @@ class VehicleTypesRealtime {
      * Remove a vehicle type row from the table
      */
     removeVehicleType(vehicleType) {
-        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"]`);
+        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${vehicleType.id}"], tr[data-vehicle-type-id="${vehicleType.id}"]`);
         
         if (!rowToRemove) {
             console.log('Vehicle type not found in table');
@@ -252,27 +252,29 @@ class VehicleTypesRealtime {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 dark:hover:bg-[#161615]';
         row.setAttribute('data-id', vehicleType.id);
+        row.setAttribute('data-vehicle-type-id', vehicleType.id);
 
-        const createdDate = new Date(vehicleType.created_at).toLocaleDateString();
+        const createdDate = vehicleType.created_at ? new Date(vehicleType.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
         const requiresPlate = vehicleType.requires_plate !== undefined ? vehicleType.requires_plate : true;
         const requiresPlateBadge = requiresPlate 
             ? '<span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 rounded-full">Yes</span>'
             : '<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-400 rounded-full">No</span>';
 
+        const vehicleTypeName = vehicleType.name || '';
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(vehicleType.name)}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(vehicleTypeName)}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${requiresPlateBadge}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button onclick="editVehicleType(${vehicleType.id}, '${vehicleType.name.replace(/'/g, "\\'")}', ${requiresPlate})" class="btn-edit" title="Edit">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                    <button onclick="editVehicleType(${vehicleType.id}, '${vehicleTypeName.replace(/'/g, "\\'")}', ${requiresPlate})" class="btn-edit" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
                     <button onclick="deleteVehicleType(${vehicleType.id})" class="btn-delete" title="Delete">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>

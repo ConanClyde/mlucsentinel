@@ -19,18 +19,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
-
-        // Insert default fees
-        DB::table('fees')->insert([
-            [
-                'name' => 'sticker_fee',
-                'display_name' => 'Sticker Fee',
-                'amount' => 15.00,
-                'description' => 'Fee for vehicle sticker registration',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
     }
 
     /**

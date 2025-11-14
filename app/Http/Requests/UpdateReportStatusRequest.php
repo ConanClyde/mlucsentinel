@@ -19,11 +19,9 @@ class UpdateReportStatusRequest extends FormRequest
             return true;
         }
 
-        // Administrators with Chancellor or SAS role can update reports
-        if ($user->user_type === UserType::Administrator && $user->administrator) {
-            $adminRole = $user->administrator->adminRole->name ?? '';
-
-            return in_array($adminRole, ['Chancellor', 'SAS (Student Affairs & Services)']);
+        // Privilege-based: administrators with 'manage_reports' can update
+        if (method_exists($user, 'hasPrivilege') && $user->hasPrivilege('manage_reports')) {
+            return true;
         }
 
         return false;
@@ -62,7 +60,7 @@ class UpdateReportStatusRequest extends FormRequest
     protected function failedAuthorization(): void
     {
         throw new \Illuminate\Auth\Access\AuthorizationException(
-            'Only Chancellor and SAS administrators can update report status.'
+            'You do not have permission to update report status.'
         );
     }
 }

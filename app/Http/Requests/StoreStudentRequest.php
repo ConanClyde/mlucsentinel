@@ -59,6 +59,8 @@ class StoreStudentRequest extends FormRequest
             'vehicles' => ['required', 'array', 'min:1', 'max:3'],
             'vehicles.*.type_id' => ['required', 'exists:vehicle_types,id'],
             'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required'],
         ];
     }
 
@@ -79,6 +81,8 @@ class StoreStudentRequest extends FormRequest
             'vehicles.min' => 'At least one vehicle is required.',
             'vehicles.max' => 'Maximum of 3 vehicles allowed per student.',
             'license_image.max' => 'License image size cannot exceed 2MB.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.confirmed' => 'Password confirmation does not match.',
         ];
     }
 

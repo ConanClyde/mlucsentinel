@@ -18,6 +18,10 @@ class MapLocationController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        if (! $user->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to view the campus map.');
+        }
         $locationTypes = MapLocationType::where('is_active', true)
             ->orderBy('display_order')
             ->get();
@@ -39,6 +43,9 @@ class MapLocationController extends Controller
      */
     public function getLocations(): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to view the campus map.');
+        }
         $locations = MapLocation::with('type')
             ->active()
             ->ordered()
@@ -55,6 +62,9 @@ class MapLocationController extends Controller
      */
     public function getTypes(): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to view the campus map.');
+        }
         $types = MapLocationType::where('is_active', true)
             ->orderBy('display_order')
             ->get();
@@ -70,6 +80,9 @@ class MapLocationController extends Controller
      */
     public function store(StoreMapLocationRequest $request): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to modify the campus map.');
+        }
         try {
             $data = $request->validated();
 
@@ -104,6 +117,9 @@ class MapLocationController extends Controller
      */
     public function show(MapLocation $location): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to view the campus map.');
+        }
         $location->load('type');
 
         return response()->json([
@@ -117,6 +133,9 @@ class MapLocationController extends Controller
      */
     public function update(StoreMapLocationRequest $request, MapLocation $location): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to modify the campus map.');
+        }
         try {
             $data = $request->validated();
 
@@ -151,6 +170,9 @@ class MapLocationController extends Controller
      */
     public function destroy(MapLocation $location): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to modify the campus map.');
+        }
         try {
             // Broadcast the event before deletion
             broadcast(new MapLocationUpdated($location, 'deleted'))->toOthers();
@@ -174,6 +196,9 @@ class MapLocationController extends Controller
      */
     public function toggleActive(MapLocation $location): JsonResponse
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to modify the campus map.');
+        }
         try {
             $location->is_active = ! $location->is_active;
             $location->save();
@@ -200,6 +225,9 @@ class MapLocationController extends Controller
      */
     public function downloadAllStickers()
     {
+        if (! auth()->user()->hasPrivilege('manage_campus_map')) {
+            abort(403, 'You do not have permission to modify the campus map.');
+        }
         try {
             $locations = MapLocation::with('type')
                 ->active()

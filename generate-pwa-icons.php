@@ -1,14 +1,14 @@
 <?php
+
 /**
  * Quick PWA Icon Generator Script
  * Run: php generate-pwa-icons.php
  */
-
 $sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-$outputDir = __DIR__ . '/public/images/icons/';
+$outputDir = __DIR__.'/public/images/icons/';
 
 // Ensure directory exists
-if (!is_dir($outputDir)) {
+if (! is_dir($outputDir)) {
     mkdir($outputDir, 0755, true);
 }
 
@@ -16,22 +16,22 @@ echo "🎨 Generating PWA Icons...\n\n";
 
 foreach ($sizes as $size) {
     $filename = "icon-{$size}x{$size}.png";
-    $filepath = $outputDir . $filename;
-    
+    $filepath = $outputDir.$filename;
+
     // Create image
     $image = imagecreatetruecolor($size, $size);
-    
+
     // Background gradient (simulate with dark color)
     $bgColor = imagecolorallocate($image, 27, 27, 24); // #1b1b18
     imagefill($image, 0, 0, $bgColor);
-    
+
     // Text color
     $textColor = imagecolorallocate($image, 237, 237, 236); // #EDEDEC
-    
+
     // Draw "M" letter
     $fontSize = $size * 0.5;
     $fontFile = null;
-    
+
     // Try to use system font
     $systemFonts = [
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
@@ -39,14 +39,14 @@ foreach ($sizes as $size) {
         'C:/Windows/Fonts/arialbd.ttf',
         'C:/Windows/Fonts/arial.ttf',
     ];
-    
+
     foreach ($systemFonts as $font) {
         if (file_exists($font)) {
             $fontFile = $font;
             break;
         }
     }
-    
+
     if ($fontFile) {
         // Calculate text position for centering
         $bbox = imagettfbbox($fontSize, 0, $fontFile, 'M');
@@ -54,9 +54,9 @@ foreach ($sizes as $size) {
         $textHeight = abs($bbox[5] - $bbox[1]);
         $x = ($size - $textWidth) / 2;
         $y = ($size + $textHeight) / 2;
-        
+
         imagettftext($image, $fontSize, 0, $x, $y, $textColor, $fontFile, 'M');
-        
+
         // Add "SENTINEL" for larger icons
         if ($size >= 192) {
             $subtitleSize = $size * 0.08;
@@ -74,14 +74,13 @@ foreach ($sizes as $size) {
         $y = ($size - imagefontheight(5)) / 2;
         imagestring($image, 5, $x, $y, $text, $textColor);
     }
-    
+
     // Save image
     imagepng($image, $filepath);
     imagedestroy($image);
-    
+
     echo "✅ Created: {$filename}\n";
 }
 
 echo "\n🎉 Done! All icons generated in: {$outputDir}\n";
 echo "📱 Now test your PWA at: http://127.0.0.1:8000\n";
-

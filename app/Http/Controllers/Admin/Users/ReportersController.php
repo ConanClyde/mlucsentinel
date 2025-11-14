@@ -7,7 +7,7 @@ use App\Events\ReporterUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Reporter;
-use App\Models\ReporterType;
+use App\Models\ReporterRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,12 +20,12 @@ class ReportersController extends Controller
      */
     public function index()
     {
-        $reporters = Reporter::with(['user', 'reporterType'])->get();
-        $reporterTypes = ReporterType::all();
+        $reporters = Reporter::with(['user', 'reporterRole'])->get();
+        $reporterRoles = ReporterRole::orderBy('name')->get();
 
         return view('admin.users.reporters', [
             'reporters' => $reporters,
-            'reporterTypes' => $reporterTypes,
+            'reporterRoles' => $reporterRoles,
         ]);
     }
 
@@ -34,19 +34,18 @@ class ReportersController extends Controller
      */
     public function update(Request $request, Reporter $reporter)
     {
-        // Check authorization: Only Global Admin, SAS Admin, or DRRM Admin can update reporters
+        // Authorization: Global Admin or admins with 'edit_reporters' privilege
         $user = auth()->user();
-        if (! $user->isGlobalAdministrator() && ! $user->isSasOrDrrmAdmin()) {
-            abort(403, 'Access denied. Global Administrator, SAS Administrator, or DRRM Administrator access required.');
+        if (! $user->isGlobalAdministrator() && ! $user->hasPrivilege('edit_reporters')) {
+            abort(403, 'You do not have permission to update reporters.');
         }
 
         $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$reporter->user_id,
-            'type_id' => 'required|exists:reporter_types,id',
+            'reporter_role_id' => 'required|exists:reporter_roles,id',
             'is_active' => 'required|boolean',
-            'expiration_date' => 'nullable|date',
         ];
 
         // Only validate password if provided
@@ -78,12 +77,11 @@ class ReportersController extends Controller
 
             // Update reporter
             $reporter->update([
-                'type_id' => $validated['type_id'],
-                'expiration_date' => $validated['expiration_date'] ?? null,
+                'reporter_role_id' => $validated['reporter_role_id'],
             ]);
 
             // Broadcast the event with fresh relationships
-            broadcast(new ReporterUpdated($reporter->fresh(['user', 'reporterType']), 'updated'));
+            broadcast(new ReporterUpdated($reporter->fresh(['user', 'reporterRole']), 'updated'));
 
             // Broadcast status change directly to the user if is_active changed
             if ($oldIsActive !== $validated['is_active']) {
@@ -127,10 +125,10 @@ class ReportersController extends Controller
      */
     public function destroy(Reporter $reporter)
     {
-        // Check authorization: Only Global Admin, SAS Admin, or DRRM Admin can delete reporters
+        // Authorization: Global Admin or admins with 'delete_reporters' privilege
         $user = auth()->user();
-        if (! $user->isGlobalAdministrator() && ! $user->isSasOrDrrmAdmin()) {
-            abort(403, 'Access denied. Global Administrator, SAS Administrator, or DRRM Administrator access required.');
+        if (! $user->isGlobalAdministrator() && ! $user->hasPrivilege('delete_reporters')) {
+            abort(403, 'You do not have permission to delete reporters.');
         }
 
         $editorName = auth()->user()->first_name.' '.auth()->user()->last_name;

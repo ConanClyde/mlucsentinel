@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,20 +14,13 @@ return new class extends Migration
         Schema::create('admin_roles', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('can_register_users')->default(false);
+            $table->boolean('can_edit_users')->default(false);
+            $table->boolean('can_delete_users')->default(false);
             $table->timestamps();
         });
-
-        // Insert default admin roles
-        $now = now();
-        DB::table('admin_roles')->insert([
-            ['name' => 'Chancellor', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'DRRM', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Planning', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Security', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Auxiliary Services', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'SAS (Student Affairs & Services)', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Marketing', 'created_at' => $now, 'updated_at' => $now],
-        ]);
     }
 
     /**

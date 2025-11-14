@@ -19,16 +19,34 @@
         <table class="w-full">
             <thead class="bg-gray-50 dark:bg-[#161615] border-y border-[#e3e3e0] dark:border-[#3E3E3A]">
                 <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Code</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">College Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Type</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Description</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Created At</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody id="college-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                 @forelse($colleges as $college)
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-college-id="{{ $college->id }}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors"
+                    data-college-id="{{ $college->id }}"
+                    data-college-code="{{ $college->code }}"
+                    data-college-name="{{ $college->name }}"
+                    data-college-type="{{ $college->type }}"
+                    data-college-description="{{ $college->description }}"
+                    data-college-created-at="{{ $college->created_at }}">
+                    <td class="px-4 py-3">
+                        <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $college->code }}</span>
+                    </td>
                     <td class="px-4 py-3">
                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $college->name }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A] capitalize">{{ $college->type }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $college->description }}</span>
                     </td>
                     <td class="px-4 py-3">
                         <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $college->created_at->format('M d, Y') }}</span>
@@ -50,7 +68,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                    <td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                         No colleges found.
                     </td>
                 </tr>

@@ -23,10 +23,15 @@ export function loadColleges() {
         // Initialize realtime manager with server-rendered data
         if (window.CollegesRealtime && !collegesRealtimeManager) {
             const colleges = Array.from(existingRows).map(row => {
-                const id = row.getAttribute('data-college-id');
-                const name = row.querySelector('td:nth-child(1) span').textContent;
-                const createdAt = row.querySelector('td:nth-child(2) span').textContent;
-                return { id: parseInt(id), name, created_at: createdAt };
+                const id = parseInt(row.getAttribute('data-college-id'), 10);
+                return {
+                    id,
+                    code: row.dataset.collegeCode || '',
+                    name: row.dataset.collegeName || '',
+                    type: row.dataset.collegeType || 'college',
+                    description: row.dataset.collegeDescription || '',
+                    created_at: row.dataset.collegeCreatedAt,
+                };
             });
             collegesRealtimeManager = new window.CollegesRealtime();
             collegesRealtimeManager.init(colleges);
@@ -35,7 +40,7 @@ export function loadColleges() {
     }
     
     collegesLoaded = true;
-    tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">Loading colleges...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">Loading colleges...</td></tr>';
     
     fetch('/api/colleges', {
         headers: {
@@ -48,28 +53,9 @@ export function loadColleges() {
             const colleges = data.data;
             
             if (colleges.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No colleges found. Click Add button to create one.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">No colleges found. Click Add button to create one.</td></tr>';
             } else {
-                tableBody.innerHTML = colleges.map(college => `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="${college.id}">
-                        <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${college.name}</td>
-                        <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${new Date(college.created_at).toLocaleDateString()}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="editCollege(${college.id}, '${college.name.replace(/'/g, "\\'")}')" class="btn-edit" title="Edit">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
-                                    </svg>
-                                </button>
-                                <button onclick="deleteCollege(${college.id})" class="btn-delete" title="Delete">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
+                tableBody.innerHTML = colleges.map(renderCollegeRow).join('');
             }
             
             // Initialize realtime manager
@@ -81,27 +67,178 @@ export function loadColleges() {
     })
     .catch(error => {
         console.error('Error loading colleges:', error);
-        tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading colleges. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">Error loading colleges. Please try again.</td></tr>';
     });
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return value
+        .toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(value) {
+    return escapeHtml(value);
+}
+
+function formatType(type) {
+    if (!type) return '';
+
+    return type
+        .toString()
+        .toLowerCase()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function renderCollegeRow(college) {
+    const createdDate = college.created_at ? new Date(college.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const description = college.description ? escapeHtml(college.description) : '—';
+    const typeLabel = formatType(college.type) || 'College';
+
+    return `
+        <tr class="hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="${college.id}" data-college-id="${college.id}"
+            data-college-code="${escapeAttr(college.code || '')}"
+            data-college-name="${escapeAttr(college.name || '')}"
+            data-college-type="${escapeAttr(college.type || 'college')}"
+            data-college-description="${escapeAttr(college.description || '')}"
+            data-college-created-at="${escapeAttr(college.created_at || '')}">
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${escapeHtml(college.code || '')}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${escapeHtml(college.name || '')}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${typeLabel}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${description}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
+            <td class="px-4 py-3">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="editCollege(${college.id})" class="btn-edit" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="deleteCollege(${college.id})" class="btn-delete" title="Delete">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// Helper function to show error message
+function showError(inputId, errorId, message) {
+    const errorEl = document.getElementById(errorId);
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.classList.add('border-red-500');
+    }
+}
+
+// Helper function to hide error message
+function hideError(inputId, errorId) {
+    const errorEl = document.getElementById(errorId);
+    if (errorEl) {
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+    }
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.classList.remove('border-red-500');
+    }
+}
+
+// Validate add college form
+function validateAddCollegeForm() {
+    const name = document.getElementById('modal-college-name').value.trim();
+    const code = document.getElementById('modal-college-code').value.trim();
+    const addBtn = document.getElementById('add-college-btn');
+    
+    if (!name || !code) {
+        addBtn.disabled = true;
+        return false;
+    }
+    
+    hideError('modal-college-name', 'modal-college-name-error');
+    hideError('modal-college-code', 'modal-college-code-error');
+    addBtn.disabled = false;
+    return true;
+}
+
+// Validate edit college form
+function validateEditCollegeForm() {
+    const name = document.getElementById('edit-college-name').value.trim();
+    const code = document.getElementById('edit-college-code').value.trim();
+    const updateBtn = document.getElementById('update-college-btn');
+    
+    if (!name || !code) {
+        updateBtn.disabled = true;
+        return false;
+    }
+    
+    hideError('edit-college-name', 'edit-college-name-error');
+    hideError('edit-college-code', 'edit-college-code-error');
+    updateBtn.disabled = false;
+    return true;
 }
 
 // Modal functions
 export function openAddCollegeModal() {
     document.getElementById('add-college-modal').classList.remove('hidden');
+    const nameInput = document.getElementById('modal-college-name');
+    const codeInput = document.getElementById('modal-college-code');
+    const typeInput = document.getElementById('modal-college-type');
+    document.getElementById('modal-college-type').value = 'college';
+    if (nameInput) {
+        nameInput.addEventListener('input', validateAddCollegeForm);
+    }
+    if (codeInput) {
+        codeInput.addEventListener('input', validateAddCollegeForm);
+    }
+    if (typeInput) {
+        typeInput.addEventListener('input', validateAddCollegeForm);
+    }
+    validateAddCollegeForm();
 }
 
 export function closeAddCollegeModal() {
     document.getElementById('add-college-modal').classList.add('hidden');
     document.getElementById('modal-college-name').value = '';
+    document.getElementById('modal-college-code').value = '';
+    document.getElementById('modal-college-type').value = 'college';
+    document.getElementById('modal-college-description').value = '';
+    hideError('modal-college-name', 'modal-college-name-error');
+    hideError('modal-college-code', 'modal-college-code-error');
 }
 
 export function addCollege() {
     const collegeName = document.getElementById('modal-college-name').value.trim();
+    const collegeCode = document.getElementById('modal-college-code').value.trim();
+    const collegeType = document.getElementById('modal-college-type').value.trim() || 'college';
+    const collegeDescription = document.getElementById('modal-college-description').value.trim();
     
     if (!collegeName) {
-        window.showErrorModal('Please enter a college name');
+        showError('modal-college-name', 'modal-college-name-error', 'Please enter a college name');
         return;
     }
+    if (!collegeCode) {
+        showError('modal-college-code', 'modal-college-code-error', 'Please enter a college code');
+        return;
+    }
+    
+    hideError('modal-college-name', 'modal-college-name-error');
+    hideError('modal-college-code', 'modal-college-code-error');
     
     fetch('/api/colleges', {
         method: 'POST',
@@ -110,7 +247,12 @@ export function addCollege() {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ name: collegeName })
+        body: JSON.stringify({
+            name: collegeName,
+            code: collegeCode.toUpperCase(),
+            type: collegeType || 'college',
+            description: collegeDescription || null,
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -121,35 +263,92 @@ export function addCollege() {
                 collegesRealtimeManager.addCollege(data.data);
             }
         } else {
-            window.showErrorModal(data.message || 'Failed to add college');
+            showError('modal-college-name', 'modal-college-name-error', data.message || 'Failed to add college');
         }
     })
     .catch(error => {
         console.error('Error adding college:', error);
-        window.showErrorModal('Error adding college. Please try again.');
+        showError('modal-college-name', 'modal-college-name-error', 'Error adding college. Please try again.');
     });
 }
 
-export function editCollege(id, currentName) {
+export function editCollege(id) {
+    const row = document.querySelector(`tr[data-college-id="${id}"]`);
+
+    let name = '';
+    let code = '';
+    let type = 'college';
+    let description = '';
+
+    if (row) {
+        name = row.dataset.collegeName || '';
+        code = row.dataset.collegeCode || '';
+        type = row.dataset.collegeType || 'college';
+        description = row.dataset.collegeDescription || '';
+    } else if (collegesRealtimeManager) {
+        const fallback = collegesRealtimeManager.colleges.find(c => c.id === Number(id));
+        if (fallback) {
+            name = fallback.name || '';
+            code = fallback.code || '';
+            type = fallback.type || 'college';
+            description = fallback.description || '';
+        }
+    }
+
     document.getElementById('edit-college-id').value = id;
-    document.getElementById('edit-college-name').value = currentName;
+    document.getElementById('edit-college-name').value = name;
+    document.getElementById('edit-college-code').value = code;
+    document.getElementById('edit-college-type').value = type;
+    document.getElementById('edit-college-description').value = description;
     document.getElementById('edit-college-modal').classList.remove('hidden');
+    const nameInput = document.getElementById('edit-college-name');
+    const codeInput = document.getElementById('edit-college-code');
+    const typeInput = document.getElementById('edit-college-type');
+    const descriptionInput = document.getElementById('edit-college-description');
+    if (nameInput) {
+        nameInput.addEventListener('input', validateEditCollegeForm);
+    }
+    if (codeInput) {
+        codeInput.addEventListener('input', validateEditCollegeForm);
+    }
+    if (typeInput) {
+        typeInput.addEventListener('input', validateEditCollegeForm);
+    }
+    if (descriptionInput) {
+        descriptionInput.addEventListener('input', () => hideError('edit-college-description', 'edit-college-description-error'));
+    }
+    validateEditCollegeForm();
 }
 
 export function closeEditCollegeModal() {
     document.getElementById('edit-college-modal').classList.add('hidden');
     document.getElementById('edit-college-id').value = '';
     document.getElementById('edit-college-name').value = '';
+    document.getElementById('edit-college-code').value = '';
+    document.getElementById('edit-college-type').value = 'college';
+    document.getElementById('edit-college-description').value = '';
+    hideError('edit-college-name', 'edit-college-name-error');
+    hideError('edit-college-code', 'edit-college-code-error');
 }
 
 export function updateCollege() {
     const id = document.getElementById('edit-college-id').value;
     const name = document.getElementById('edit-college-name').value.trim();
+    const code = document.getElementById('edit-college-code').value.trim();
+    const type = document.getElementById('edit-college-type').value.trim() || 'college';
+    const description = document.getElementById('edit-college-description').value.trim();
     
     if (!name) {
-        window.showErrorModal('Please enter a college name');
+        showError('edit-college-name', 'edit-college-name-error', 'Please enter a college name');
         return;
     }
+    if (!code) {
+        showError('edit-college-code', 'edit-college-code-error', 'Please enter a college code');
+        return;
+    }
+    
+    hideError('edit-college-name', 'edit-college-name-error');
+    hideError('edit-college-code', 'edit-college-code-error');
     
     fetch(`/api/colleges/${id}`, {
         method: 'PUT',
@@ -158,7 +357,12 @@ export function updateCollege() {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ name: name })
+        body: JSON.stringify({
+            name: name,
+            code: code.toUpperCase(),
+            type: type || 'college',
+            description: description || null,
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -169,12 +373,12 @@ export function updateCollege() {
                 collegesRealtimeManager.updateCollege(data.data);
             }
         } else {
-            window.showErrorModal(data.message || 'Failed to update college');
+            showError('edit-college-name', 'edit-college-name-error', data.message || 'Failed to update college');
         }
     })
     .catch(error => {
         console.error('Error updating college:', error);
-        window.showErrorModal('Error updating college. Please try again.');
+        showError('edit-college-name', 'edit-college-name-error', 'Error updating college. Please try again.');
     });
 }
 

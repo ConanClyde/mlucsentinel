@@ -25,21 +25,34 @@ class StickersRealtime {
             return;
         }
 
-        // Listen to private payments channel
-        window.Echo.private('payments')
-            .listen('.payment.updated', (event) => {
-                console.log('Received payment update:', event);
-                this.handlePaymentUpdate(event);
-            });
+        // Try to listen to private payments channel (only for authorized users)
+        try {
+            window.Echo.private('payments')
+                .listen('.payment.updated', (event) => {
+                    console.log('Received payment update:', event);
+                    this.handlePaymentUpdate(event);
+                })
+                .error((error) => {
+                    console.warn('Cannot access payments channel (insufficient permissions):', error);
+                    // Continue without payments channel - user can still see vehicles
+                });
+        } catch (error) {
+            console.warn('Failed to connect to payments channel:', error);
+        }
 
-        // Listen to vehicles channel for new stickers
+        // Listen to vehicles channel for new stickers (public channel)
         window.Echo.channel('vehicles')
             .listen('.vehicle.updated', (event) => {
                 console.log('Received vehicle update:', event);
                 this.handleVehicleUpdate(event);
+            })
+            .error((error) => {
+                console.error('Failed to connect to vehicles channel:', error);
+                this.updateConnectionStatus(false);
+                return;
             });
 
-        console.log('Stickers real-time listening on payments and vehicles channels');
+        console.log('Stickers real-time listening on available channels');
         this.updateConnectionStatus(true);
     }
 
@@ -496,8 +509,17 @@ class StickersRealtime {
 
     disconnect() {
         if (window.Echo) {
-            window.Echo.leaveChannel('payments');
-            window.Echo.leaveChannel('vehicles');
+            try {
+                window.Echo.leaveChannel('payments');
+            } catch (error) {
+                console.warn('Error leaving payments channel:', error);
+            }
+            
+            try {
+                window.Echo.leaveChannel('vehicles');
+            } catch (error) {
+                console.warn('Error leaving vehicles channel:', error);
+            }
         }
         this.isInitialized = false;
     }

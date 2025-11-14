@@ -26,7 +26,7 @@ class TestViolationEmail extends Command
     {
         $email = $this->argument('email');
 
-        $this->info("Testing violation email notification...");
+        $this->info('Testing violation email notification...');
 
         // Find or create a test user
         $testUser = User::firstOrCreate(
@@ -47,13 +47,14 @@ class TestViolationEmail extends Command
             ->where('status', 'approved')
             ->first();
 
-        if (!$report) {
-            $this->warn("No approved reports found. Using first available report...");
+        if (! $report) {
+            $this->warn('No approved reports found. Using first available report...');
             $report = Report::with(['violationType', 'violatorVehicle.type', 'violatorVehicle.user'])->first();
         }
 
-        if (!$report) {
-            $this->error("No reports found in the database. Please create a test report first.");
+        if (! $report) {
+            $this->error('No reports found in the database. Please create a test report first.');
+
             return self::FAILURE;
         }
 
@@ -64,17 +65,18 @@ class TestViolationEmail extends Command
         // Send the notification
         try {
             $testUser->notify(new ViolationApprovedNotification($report));
-            
+
             $this->newLine();
-            $this->info("✓ Email notification queued successfully!");
+            $this->info('✓ Email notification queued successfully!');
             $this->info("✓ Sent to: {$email}");
             $this->newLine();
             $this->warn("Note: Make sure to run 'php artisan queue:work' to process the email.");
-            $this->warn("Check your email inbox (including spam folder) for the notification.");
-            
+            $this->warn('Check your email inbox (including spam folder) for the notification.');
+
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error("Failed to send email: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }

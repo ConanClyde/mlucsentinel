@@ -28,7 +28,7 @@ class ReportStatusUpdatedNotification extends Notification implements ShouldQueu
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', \App\Notifications\Channels\CustomDatabaseChannel::class];
     }
 
     /**
@@ -59,13 +59,21 @@ class ReportStatusUpdatedNotification extends Notification implements ShouldQueu
      */
     public function toArray(object $notifiable): array
     {
+        $statusLabel = ucfirst($this->newStatus);
+
         return [
-            'report_id' => $this->report->id,
-            'old_status' => $this->oldStatus,
-            'new_status' => $this->newStatus,
-            'remarks' => $this->report->remarks,
-            'violator_vehicle_id' => $this->report->violator_vehicle_id,
-            'violation_type' => $this->report->violationType->name ?? null,
+            'type' => 'report_status_updated',
+            'title' => "Report #{$this->report->id} Status Updated",
+            'message' => "The status of your violation report has been updated to {$statusLabel}.",
+            'data' => [
+                'report_id' => $this->report->id,
+                'old_status' => $this->oldStatus,
+                'new_status' => $this->newStatus,
+                'remarks' => $this->report->remarks,
+                'violator_vehicle_id' => $this->report->violator_vehicle_id,
+                'violation_type' => $this->report->violationType->name ?? null,
+                'url' => route('reporter.my-reports'),
+            ],
         ];
     }
 }

@@ -64,6 +64,49 @@
                     <div id="connectionStatus" class="w-3 h-3 rounded-full bg-red-500"></div>
                 </div>
                 <button onclick="exportToCSV()" class="btn btn-csv !text-xs md:!text-sm">CSV</button>
+                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSecurityAdmin())
+                @endif
+            </div>
+        </div>
+
+        <!-- Bulk Actions Bar (Floating Lower Center) -->
+        <div id="bulk-actions-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1a1a1a] px-6 py-4">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 pr-4 border-r border-[#e3e3e0] dark:border-[#3E3E3A]">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                            <span id="selected-count">0</span> selected
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="clearSelection()" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button onclick="bulkActivate()" class="btn btn-success !inline-flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>Activate</span>
+                    </button>
+                    <button onclick="bulkDeactivate()" class="btn btn-warning !inline-flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span>Deactivate</span>
+                    </button>
+                    <button onclick="confirmBulkDelete()" class="btn btn-danger !inline-flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        <span>Delete</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -71,6 +114,11 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_students', 'delete_students']))
+                        <th class="text-center py-2 px-3 w-12">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        </th>
+                        @endif
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Name</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Email</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Student ID</th>
@@ -82,7 +130,12 @@
                 </thead>
                 <tbody id="studentsTableBody">
                     @forelse($students as $student)
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $student->id }}">
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $student->user_id }}">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_students', 'delete_students']))
+                        <td class="text-center py-2 px-3">
+                            <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" value="{{ $student->user_id }}" onchange="updateBulkActions()">
+                        </td>
+                        @endif
                         <td class="py-2 px-3">
                             <div class="flex items-center">
                                 @php
@@ -133,7 +186,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                        <td colspan="{{ Auth::user()->hasAnyPrivilege(['edit_students', 'delete_students']) ? '8' : '7' }}" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
                             No students found.
                         </td>
                     </tr>
@@ -354,6 +407,64 @@
     </div>
 </div>
 
+<!-- Bulk Activate Confirmation Modal -->
+<div id="bulkActivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkActivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-check-circle class="modal-icon-success" />
+                Activate Students
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkActivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkActivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkActivate()" class="btn btn-success">Activate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Deactivate Confirmation Modal -->
+<div id="bulkDeactivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeactivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                Deactivate Students
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeactivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeactivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDeactivate()" class="btn btn-warning">Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulkDeleteModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeleteModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Delete Students
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeleteMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeleteModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDelete()" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+
 @endsection
 
 @push('scripts')
@@ -364,6 +475,11 @@ let students = @json($students->items());
 let vehicleTypes = @json($vehicleTypes);
 let deleteStudentId = null;
 window.currentUserId = {{ auth()->id() }};
+window.currentUser = {
+    id: {{ auth()->id() }},
+    first_name: '{{ auth()->user()->first_name }}',
+    last_name: '{{ auth()->user()->last_name }}'
+};
 
 
 // Process students data to add proper image paths
@@ -392,7 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update local students array when real-time updates occur
         window.Echo.channel('students').listen('.student.updated', (event) => {
-            const index = students.findIndex(s => s.id === event.student.id);
+            // Use user_id to find the student (consistent with table rows)
+            const index = students.findIndex(s => s.user_id === event.student.user_id || s.user?.id === event.student.user_id);
             
             // Process license_image path
             const processedStudent = {
@@ -420,8 +537,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 }) : []
             };
             
+            // Check if this is from current user's action (avoid duplicate notifications)
+            const isCurrentUserAction = realtimeManager && realtimeManager.isCurrentUserAction(event.student.id);
+            const editorName = event.editor?.first_name && event.editor?.last_name 
+                ? `${event.editor.first_name} ${event.editor.last_name}` 
+                : 'System';
+            const isCurrentUser = editorName === (window.currentUser?.first_name + ' ' + window.currentUser?.last_name);
+            
+            if (event.action === 'deleted') {
+                // Remove from array
             if (index !== -1) {
+                    students.splice(index, 1);
+                }
+                // Remove from DOM using user_id (consistent with table rows)
+                const row = document.querySelector(`tr[data-id="${event.student.user_id}"]`);
+                if (row) {
+                    row.style.transition = 'opacity 0.3s ease-out';
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                }
+                
+                // Show browser notification if not current user's action
+                if (realtimeManager && !isCurrentUserAction && !isCurrentUser) {
+                    realtimeManager.showBrowserNotification(
+                        'Student Removed',
+                        `${editorName} removed ${processedStudent.user?.first_name} ${processedStudent.user?.last_name}`,
+                        null,
+                        'deleted'
+                    );
+                }
+            } else if (index !== -1) {
+                // Update existing student in array
                 students[index] = processedStudent;
+                
+                // Update the row in the table using user_id (consistent with table rows)
+                const row = document.querySelector(`tr[data-id="${event.student.user_id}"]`);
+                if (row) {
+                    // Determine column index based on whether checkbox column exists
+                    const hasCheckbox = !!document.getElementById('select-all');
+                    const statusColIndex = hasCheckbox ? 6 : 5;
+                    
+                    // Update status badge
+                    const statusCell = row.querySelector(`td:nth-child(${statusColIndex})`);
+                    if (statusCell) {
+                        const isActive = processedStudent.user?.is_active ?? false;
+                        statusCell.innerHTML = `
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                                ${isActive ? 'Active' : 'Inactive'}
+                            </span>
+                        `;
+                    }
+                    
+                    // Highlight the row briefly to show it was updated
+                    row.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                    setTimeout(() => {
+                        row.style.backgroundColor = '';
+                    }, 1000);
+                }
+                
+                // Show browser notification if not current user's action
+                if (realtimeManager && !isCurrentUserAction && !isCurrentUser && event.action === 'updated') {
+                    realtimeManager.showBrowserNotification(
+                        'Student Updated',
+                        `${editorName} updated Student ${processedStudent.user?.first_name} ${processedStudent.user?.last_name}`,
+                        processedStudent.id,
+                        'updated'
+                    );
+                }
                 
                 // If view modal is open for this student, refresh it
                 const viewModal = document.getElementById('viewModal');
@@ -520,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const collegeValue = collegeFilter.value;
             
             const studentRowId = row.getAttribute('data-id');
-            const student = students.find(s => s.id == studentRowId);
+            const student = students.find(s => s.user_id == studentRowId || s.user?.id == studentRowId);
             
             const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || studentId.includes(searchTerm);
             const matchesStatus = statusValue === '' || 
@@ -552,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const collegeValue = collegeFilter.value;
             
             const studentRowId = row.getAttribute('data-id');
-            const student = students.find(s => s.id == studentRowId);
+            const student = students.find(s => s.user_id == studentRowId || s.user?.id == studentRowId);
             
             const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || studentId.includes(searchTerm);
             const matchesStatus = statusValue === '' || 
@@ -646,7 +828,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const collegeValue = collegeFilter.value;
             
             const studentRowId = row.getAttribute('data-id');
-            const student = students.find(s => s.id == studentRowId);
+            const student = students.find(s => s.user_id == studentRowId || s.user?.id == studentRowId);
             
             const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || studentId.includes(searchTerm);
             const matchesStatus = statusValue === '' || 
@@ -1135,7 +1317,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function exportToCSV() {
     const visibleStudents = students.filter(student => {
-        const row = document.querySelector(`tr[data-id="${student.id}"]`);
+        const userId = student.user_id || student.user?.id;
+        const row = document.querySelector(`tr[data-id="${userId}"]`);
         return row && row.style.display !== 'none';
     });
 
@@ -1334,6 +1517,251 @@ window.removeEditLicensePreview = function() {
     }
 }
 
+// Bulk Operations Functions
+function toggleSelectAll(checkbox) {
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    rowCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const count = selected.length;
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (count > 0) {
+        bulkBar.classList.remove('hidden');
+        countSpan.textContent = count;
+    } else {
+        bulkBar.classList.add('hidden');
+    }
+    
+    // Update select-all checkbox
+    const selectAll = document.getElementById('select-all');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    selectAll.checked = allCheckboxes.length > 0 && selected.length === allCheckboxes.length;
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox, #select-all').forEach(cb => cb.checked = false);
+    updateBulkActions();
+}
+
+function getSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+
+function bulkActivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one student');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to activate 1 student?'
+        : `Are you sure you want to activate ${count} students?`;
+    
+    document.getElementById('bulkActivateMessage').textContent = message;
+    document.getElementById('bulkActivateModal').classList.remove('hidden');
+}
+
+function closeBulkActivateModal() {
+    document.getElementById('bulkActivateModal').classList.add('hidden');
+}
+
+function executeBulkActivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    // Mark these actions as current user actions to prevent duplicate notifications
+    if (realtimeManager) {
+        selected.forEach(userId => {
+            const student = students.find(s => s.user_id === userId);
+            if (student) {
+                realtimeManager.markUserAction(student.id);
+            }
+        });
+    }
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: true,
+            user_type: 'student'
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeBulkActivateModal();
+            clearSelection();
+            // Real-time updates will handle the UI refresh via broadcasts
+            // System notifications are sent from backend
+            // Browser notifications will be shown via Echo listeners for other users
+        } else {
+            alert('Error: ' + (data.message || 'Failed to activate students'));
+            bulkBar.style.opacity = '1';
+            bulkBar.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error activating students');
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+    });
+}
+
+function bulkDeactivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one student');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to deactivate 1 student?'
+        : `Are you sure you want to deactivate ${count} students?`;
+    
+    document.getElementById('bulkDeactivateMessage').textContent = message;
+    document.getElementById('bulkDeactivateModal').classList.remove('hidden');
+}
+
+function closeBulkDeactivateModal() {
+    document.getElementById('bulkDeactivateModal').classList.add('hidden');
+}
+
+function executeBulkDeactivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    // Mark these actions as current user actions to prevent duplicate notifications
+    if (realtimeManager) {
+        selected.forEach(userId => {
+            const student = students.find(s => s.user_id === userId);
+            if (student) {
+                realtimeManager.markUserAction(student.id);
+            }
+        });
+    }
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: false,
+            user_type: 'student'
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeBulkDeactivateModal();
+            clearSelection();
+            // Real-time updates will handle the UI refresh via broadcasts
+            // System notifications are sent from backend
+            // Browser notifications will be shown via Echo listeners for other users
+        } else {
+            alert('Error: ' + (data.message || 'Failed to deactivate students'));
+            bulkBar.style.opacity = '1';
+            bulkBar.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error deactivating students');
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+    });
+}
+
+function confirmBulkDelete() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one student');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to delete 1 student? This action cannot be undone.'
+        : `Are you sure you want to delete ${count} students? This action cannot be undone.`;
+    
+    document.getElementById('bulkDeleteMessage').textContent = message;
+    document.getElementById('bulkDeleteModal').classList.remove('hidden');
+}
+
+function closeBulkDeleteModal() {
+    document.getElementById('bulkDeleteModal').classList.add('hidden');
+}
+
+function executeBulkDelete() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    // Mark these actions as current user actions to prevent duplicate notifications
+    if (realtimeManager) {
+        selected.forEach(userId => {
+            const student = students.find(s => s.user_id === userId);
+            if (student) {
+                realtimeManager.markUserAction(student.id);
+            }
+        });
+    }
+    
+    fetch('/api/bulk/users/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            user_type: 'student'
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeBulkDeleteModal();
+            clearSelection();
+            // Real-time updates will handle the UI refresh via broadcasts
+            // System notifications are sent from backend
+            // Browser notifications will be shown via Echo listeners for other users
+        } else {
+            alert('Error: ' + (data.message || 'Failed to delete students'));
+            bulkBar.style.opacity = '1';
+            bulkBar.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error deleting students');
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+    });
+}
+
 // Expose functions to global scope for onclick handlers
 window.viewStudent = viewStudent;
 window.openEditModal = openEditModal;
@@ -1345,6 +1773,18 @@ window.exportToCSV = exportToCSV;
 window.closeEditModal = closeEditModal;
 window.addEditVehicle = addEditVehicle;
 window.removeEditVehicle = removeEditVehicle;
+window.toggleSelectAll = toggleSelectAll;
+window.updateBulkActions = updateBulkActions;
+window.clearSelection = clearSelection;
+window.bulkActivate = bulkActivate;
+window.closeBulkActivateModal = closeBulkActivateModal;
+window.executeBulkActivate = executeBulkActivate;
+window.bulkDeactivate = bulkDeactivate;
+window.closeBulkDeactivateModal = closeBulkDeactivateModal;
+window.executeBulkDeactivate = executeBulkDeactivate;
+window.confirmBulkDelete = confirmBulkDelete;
+window.closeBulkDeleteModal = closeBulkDeleteModal;
+window.executeBulkDelete = executeBulkDelete;
 
 window.addEventListener('beforeunload', function() {
     if (realtimeManager) {

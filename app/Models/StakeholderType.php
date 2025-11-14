@@ -12,6 +12,12 @@ class StakeholderType extends Model
 
     protected $fillable = [
         'name',
+        'description',
+        'evidence_required',
+    ];
+
+    protected $casts = [
+        'evidence_required' => 'boolean',
     ];
 
     public function stakeholders(): HasMany

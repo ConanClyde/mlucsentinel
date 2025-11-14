@@ -59,6 +59,7 @@ class StakeholdersController extends Controller
                     ] : null,
                     'license_no' => $stakeholder->license_no,
                     'license_image' => $stakeholder->license_image ? '/storage/'.$stakeholder->license_image : null,
+                    'guardian_evidence' => $stakeholder->guardian_evidence ? $stakeholder->guardian_evidence : null,
                     'user' => [
                         'id' => $stakeholder->user->id,
                         'first_name' => $stakeholder->user->first_name,
@@ -109,6 +110,7 @@ class StakeholdersController extends Controller
             'vehicles_to_delete' => ['nullable', 'array'],
             'vehicles_to_delete.*' => ['integer', 'exists:vehicles,id'],
             'license_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,heic,heif', 'max:5120'], // 5MB max
+            'guardian_evidence' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10240'], // 10MB max
         ]);
 
         // Additional validation for plate numbers - check for duplicates
@@ -172,7 +174,7 @@ class StakeholdersController extends Controller
             }
 
             // Handle license image upload if provided
-            $licenseImageData = [];
+            $updateData = [];
             if ($request->hasFile('license_image')) {
                 // Delete old license image if exists
                 if ($stakeholder->license_image) {
@@ -186,14 +188,31 @@ class StakeholdersController extends Controller
                 $file = $request->file('license_image');
                 $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
                 $path = $file->storeAs('licenses', $filename, 'public');
-                $licenseImageData['license_image'] = $path;
+                $updateData['license_image'] = $path;
+            }
+
+            // Handle guardian evidence upload if provided
+            if ($request->hasFile('guardian_evidence')) {
+                // Delete old guardian evidence if exists
+                if ($stakeholder->guardian_evidence) {
+                    $oldPath = storage_path('app/public/'.$stakeholder->guardian_evidence);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                }
+
+                // Store new guardian evidence
+                $file = $request->file('guardian_evidence');
+                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('guardian_evidence', $filename, 'public');
+                $updateData['guardian_evidence'] = $path;
             }
 
             // Update stakeholder
             $stakeholder->update(array_merge([
                 'type_id' => $validated['type_id'],
                 'license_no' => $validated['license_no'],
-            ], $licenseImageData));
+            ], $updateData));
 
             // Delete vehicles marked for deletion via service
             if (! empty($vehiclesToDelete)) {

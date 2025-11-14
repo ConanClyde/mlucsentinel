@@ -185,7 +185,7 @@
                                 </select>
                             </div>
                                 <div class="form-group plate-number-group">
-                                    <label class="form-label">Plate Number <span class="text-red-500">*</span></label>
+                                    <label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>
                                 <input 
                                     name="vehicles[0][plate_no]" 
                                     type="text" 
@@ -1186,7 +1186,7 @@ function resetForm() {
                 '</select>' +
             '</div>' +
             '<div class="form-group plate-number-group">' +
-                '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                 '<input name="vehicles[0][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                 '<div class="plate_no_0_error text-red-500 text-sm mt-1 hidden"></div>' +
             '</div>' +
@@ -1307,7 +1307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '</select>' +
                 '</div>' +
                     '<div class="form-group plate-number-group">' +
-                        '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                        '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                     '<input name="vehicles[' + (vehicleCount - 1) + '][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                     '<div class="plate_no_' + (vehicleCount - 1) + '_error text-red-500 text-sm mt-1 hidden"></div>' +
                 '</div>' +
@@ -1437,6 +1437,7 @@ function handleVehicleTypeChange(e) {
     const vehicleItem = e.target.closest('.vehicle-item');
     const plateNumberGroup = vehicleItem.querySelector('.plate-number-group');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
+    const plateAsterisk = vehicleItem.querySelector('.plate-required-asterisk');
     
     if (!plateNumberGroup || !plateNumberInput) {
         return; // Safety check
@@ -1449,12 +1450,18 @@ function handleVehicleTypeChange(e) {
         plateNumberGroup.style.display = 'none';
         plateNumberInput.removeAttribute('required');
         plateNumberInput.value = ''; // Clear the value
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'none';
+        }
     } else {
         plateNumberGroup.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
         // Ensure it's visible (remove any hidden classes)
         plateNumberGroup.classList.remove('hidden');
         plateNumberGroup.style.visibility = 'visible';
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'inline';
+        }
     }
     
     updateButtonStates();

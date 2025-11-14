@@ -71,12 +71,16 @@ class StaffController extends Controller
                 'vehicles' => ['required', 'array', 'min:1', 'max:3'],
                 'vehicles.*.type_id' => ['required', 'exists:vehicle_types,id'],
                 'vehicles.*.plate_no' => ['nullable', 'string', 'max:255'],
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'password_confirmation' => ['required'],
             ], [
                 'email.unique' => 'Email is already registered',
                 'email.regex' => 'Email must be from Gmail (@gmail.com) or DMMMSU (@dmmmsu.edu.ph)',
                 'staff_id.unique' => 'Staff ID is already registered',
                 'license_no.unique' => 'License number is already registered',
                 'vehicles.max' => 'Maximum of 3 vehicles allowed per staff member',
+                'password.min' => 'Password must be at least 8 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
             ]);
 
             // Idempotency: prevent duplicate submissions
@@ -141,7 +145,7 @@ class StaffController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make('temp_password_'.time()), // Temporary password
+                'password' => Hash::make($request->password),
                 'user_type' => 'staff',
                 'is_active' => true,
             ]);
@@ -155,12 +159,14 @@ class StaffController extends Controller
             }
 
             // Create staff record
+            $rules = \App\Models\StickerRule::getSingleton();
+            $years = (int) ($rules->staff_expiration_years ?? 4);
             $staff = Staff::create([
                 'user_id' => $user->id,
                 'staff_id' => $request->staff_id,
                 'license_no' => $request->license_no,
                 'license_image' => $licenseImagePath,
-                'expiration_date' => now()->addYears(4), // 4 years from now
+                'expiration_date' => now()->addYears($years),
             ]);
 
             // Create vehicles and generate stickers (MAROON for staff)
@@ -177,8 +183,8 @@ class StaffController extends Controller
                     $plateNumber = ! empty($plateNumber) ? $plateNumber : null;
                 }
 
-                // Staff always gets maroon stickers
-                $color = 'maroon';
+                // Staff color from settings
+                $color = $this->stickerGenerator->determineStickerColor('staff', null, $plateNumber);
                 $stickerNumber = $this->stickerGenerator->generateNextStickerNumber($color);
 
                 $vehicle = Vehicle::create([

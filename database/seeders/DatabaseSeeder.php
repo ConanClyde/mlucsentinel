@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -17,16 +16,20 @@ class DatabaseSeeder extends Seeder
     {
         // Seed reference data first
         $this->call([
+            AdminRolesSeeder::class,
+            VehicleTypesSeeder::class,
+            ViolationTypesSeeder::class,
             MapLocationTypeSeeder::class,
             StickerCounterSeeder::class,
+            StakeholderTypesSeeder::class,
+            PrivilegesSeeder::class,
+            RolePrivilegesSeeder::class,
+            FeesSeeder::class,
+            CollegesSeeder::class,
+            ProgramsSeeder::class,
+            ReporterRolesSeeder::class,
+            StickerRulesSeeder::class,
             UsersSeeder::class,
         ]);
-
-        // Optional: Uncomment to create test user
-        // User::factory()->create([
-        //     'first_name' => 'Test',
-        //     'last_name' => 'User',
-        //     'email' => 'test@example.com',
-        // ]);
     }
 }

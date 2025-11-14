@@ -13,9 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust all proxies for Railway/Sevalla deployment
-        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR | 
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST | 
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT | 
+        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
 
@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Route middleware aliases
         $middleware->alias([
             'user.type' => \App\Http\Middleware\CheckUserType::class,
+            'privilege' => \App\Http\Middleware\PrivilegeMiddleware::class,
             'global.admin' => \App\Http\Middleware\GlobalAdminMiddleware::class,
             'security.admin' => \App\Http\Middleware\SecurityAdminMiddleware::class,
             'sas.drrm.admin' => \App\Http\Middleware\SasOrDrrmAdminMiddleware::class,

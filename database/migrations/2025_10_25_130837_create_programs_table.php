@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('college_id')->constrained('colleges')->onDelete('cascade');
+            $table->string('code', 50)->unique();
             $table->string('name');
+            $table->string('description')->nullable();
             $table->timestamps();
 
             // Performance indexes

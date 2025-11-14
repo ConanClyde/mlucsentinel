@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\PaymentUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\StickerRequest;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\AuditLogService;
@@ -14,6 +15,7 @@ use App\Services\PaymentReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use ZipArchive;
 
 class StickersController extends Controller
@@ -21,8 +23,11 @@ class StickersController extends Controller
     /**
      * Show the stickers page.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
+        if (! auth()->user()->hasPrivilege('view_stickers')) {
+            abort(403, 'You do not have permission to view stickers.');
+        }
         $statusFilter = $request->get('status', 'paid');
         $pendingPaymentsCount = Cache::remember('payments.pending.count', 30, function () {
             return Payment::batchRepresentative()
@@ -44,13 +49,165 @@ class StickersController extends Controller
             ->latest()
             ->paginate(10);
 
+        // Load recent sticker requests from users
+        $stickerRequests = StickerRequest::with(['user', 'vehicle.vehicleType'])
+            ->latest()
+            ->paginate(10);
+
         return view('admin.stickers', [
             'pageTitle' => 'Stickers Management',
             'payments' => $payments,
             'transactions' => $transactions,
+            'stickerRequests' => $stickerRequests,
             'statusFilter' => $statusFilter,
             'pendingPaymentsCount' => $pendingPaymentsCount,
         ]);
+    }
+
+    /**
+     * Get sticker requests data for AJAX requests with search and filter
+     */
+    public function getRequestsData(Request $request)
+    {
+        if (! auth()->user()->hasPrivilege('view_stickers')) {
+            abort(403, 'You do not have permission to view stickers.');
+        }
+
+        $search = $request->get('search', '');
+        $status = $request->get('status', '');
+        $page = $request->get('page', 1);
+
+        $query = StickerRequest::with(['user', 'vehicle.vehicleType']);
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })
+                    ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('plate_no', 'like', "%{$search}%")
+                            ->orWhereHas('vehicleType', function ($typeQuery) use ($search) {
+                                $typeQuery->where('name', 'like', "%{$search}%");
+                            });
+                    })
+                    ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply status filter
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $requests = $query->latest()->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data' => $requests->items(),
+            'pagination' => [
+                'current_page' => $requests->currentPage(),
+                'last_page' => $requests->lastPage(),
+                'per_page' => $requests->perPage(),
+                'total' => $requests->total(),
+                'links' => $requests->links()->render(),
+            ],
+        ]);
+    }
+
+    /**
+     * Approve a sticker request
+     */
+    public function approveRequest(Request $request, $id)
+    {
+        if (! auth()->user()->hasPrivilege('edit_stickers')) {
+            abort(403, 'You do not have permission to approve requests.');
+        }
+
+        $stickerRequest = StickerRequest::with(['user', 'vehicle.vehicleType'])->findOrFail($id);
+        $oldStatus = $stickerRequest->status;
+
+        $stickerRequest->update([
+            'status' => 'approved',
+            'processed_at' => now(),
+            'processed_by' => auth()->id(),
+            'admin_notes' => $request->get('notes', 'Approved by admin'),
+        ]);
+
+        // Refresh relationships after update
+        $stickerRequest->load(['user', 'vehicle.vehicleType']);
+
+        // Send notification to user
+        $stickerRequest->user->notify(new \App\Notifications\StickerRequestStatusNotification(
+            $stickerRequest,
+            $oldStatus,
+            'approved'
+        ));
+
+        // Broadcast real-time update
+        broadcast(new \App\Events\StickerRequestUpdated($stickerRequest))->toOthers();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request approved successfully',
+            'request' => $stickerRequest->load(['user', 'vehicle.vehicleType']),
+        ]);
+    }
+
+    /**
+     * Reject a sticker request
+     */
+    public function rejectRequest(Request $request, $id)
+    {
+        if (! auth()->user()->hasPrivilege('edit_stickers')) {
+            abort(403, 'You do not have permission to reject requests.');
+        }
+
+        $stickerRequest = StickerRequest::with(['user', 'vehicle.vehicleType'])->findOrFail($id);
+        $oldStatus = $stickerRequest->status;
+
+        $stickerRequest->update([
+            'status' => 'rejected',
+            'processed_at' => now(),
+            'processed_by' => auth()->id(),
+            'admin_notes' => $request->get('notes', 'Rejected by admin'),
+        ]);
+
+        // Refresh relationships after update
+        $stickerRequest->load(['user', 'vehicle.vehicleType']);
+
+        // Send notification to user
+        $stickerRequest->user->notify(new \App\Notifications\StickerRequestStatusNotification(
+            $stickerRequest,
+            $oldStatus,
+            'rejected'
+        ));
+
+        // Broadcast real-time update
+        broadcast(new \App\Events\StickerRequestUpdated($stickerRequest))->toOthers();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request rejected successfully',
+            'request' => $stickerRequest->load(['user', 'vehicle.vehicleType']),
+        ]);
+    }
+
+    /**
+     * Show a specific sticker request
+     */
+    public function showRequest($id)
+    {
+        if (! auth()->user()->hasPrivilege('view_stickers')) {
+            abort(403, 'You do not have permission to view requests.');
+        }
+
+        $stickerRequest = StickerRequest::with(['user', 'vehicle.vehicleType', 'processedBy'])
+            ->findOrFail($id);
+
+        return response()->json($stickerRequest);
     }
 
     /**
@@ -58,6 +215,9 @@ class StickersController extends Controller
      */
     public function data(Request $request)
     {
+        if (! auth()->user()->hasPrivilege('view_stickers')) {
+            abort(403, 'You do not have permission to view stickers.');
+        }
         $tab = $request->get('tab', 'payment');
         $search = $request->get('search', '');
         $statusFilter = $request->get('status', 'paid');
@@ -456,6 +616,9 @@ class StickersController extends Controller
      */
     public function getIssuedStickers(Request $request)
     {
+        if (! auth()->user()->hasPrivilege('view_stickers')) {
+            abort(403, 'You do not have permission to view stickers.');
+        }
         $perPage = max(1, (int) $request->get('per_page', 24));
         $page = max(1, (int) $request->get('page', 1));
 
@@ -518,6 +681,9 @@ class StickersController extends Controller
      */
     public function downloadSticker(Vehicle $vehicle)
     {
+        if (! auth()->user()->hasPrivilege('download_stickers')) {
+            abort(403, 'You do not have permission to download stickers.');
+        }
         if (! $vehicle->sticker) {
             return response()->json(['error' => 'No sticker available for this vehicle'], 404);
         }
@@ -530,7 +696,7 @@ class StickersController extends Controller
 
         $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
         $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
-        $filename = "sticker_{$ownerName}_{$plateNo}.png";
+        $filename = "sticker_{$ownerName}_{$plateNo}.svg";
 
         return response()->download($stickerPath, $filename);
     }
@@ -540,6 +706,9 @@ class StickersController extends Controller
      */
     public function downloadFilteredStickers(Request $request)
     {
+        if (! auth()->user()->hasPrivilege('download_stickers')) {
+            abort(403, 'You do not have permission to download stickers.');
+        }
         $query = Vehicle::with(['user', 'type'])
             ->whereNotNull('sticker');
 
@@ -588,7 +757,7 @@ class StickersController extends Controller
                 if (file_exists($stickerPath)) {
                     $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
                     $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
-                    $filename = "sticker_{$ownerName}_{$plateNo}.png";
+                    $filename = "sticker_{$ownerName}_{$plateNo}.svg";
 
                     $zip->addFile($stickerPath, $filename);
                 }

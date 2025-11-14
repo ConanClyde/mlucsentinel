@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,15 +14,9 @@ return new class extends Migration
         Schema::create('vehicle_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->boolean('requires_plate')->default(true);
             $table->timestamps();
         });
-
-        $now = now();
-        DB::table('vehicle_types')->insert([
-            ['name' => 'Motorcycle', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Car', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Electric Vehicle', 'created_at' => $now, 'updated_at' => $now],
-        ]);
     }
 
     /**

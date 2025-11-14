@@ -42,6 +42,47 @@
         </div>
     </div>
 
+    <!-- Bulk Actions Bar -->
+    <div id="bulk-actions-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1a1a1a] px-6 py-4">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 pr-4 border-r border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                        <span id="selected-count">0</span> selected
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearSelection()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button onclick="bulkActivate()" class="btn btn-success !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Activate</span>
+                </button>
+                <button onclick="bulkDeactivate()" class="btn btn-warning !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Deactivate</span>
+                </button>
+                <button onclick="confirmBulkDelete()" class="btn btn-danger !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Stakeholders Table -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
@@ -68,6 +109,11 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_stakeholders', 'delete_stakeholders']))
+                        <th class="text-center py-2 px-3 w-12">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        </th>
+                        @endif
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Name</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Email</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Type</th>
@@ -78,7 +124,12 @@
                 </thead>
                 <tbody id="stakeholdersTableBody">
                     @forelse($stakeholders as $stakeholder)
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $stakeholder->id }}">
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $stakeholder->user_id }}">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_stakeholders', 'delete_stakeholders']))
+                        <td class="text-center py-2 px-3">
+                            <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" value="{{ $stakeholder->user_id }}" onchange="updateBulkActions()">
+                        </td>
+                        @endif
                         <td class="py-2 px-3">
                             <div class="flex items-center">
                                 @php
@@ -128,7 +179,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                        <td colspan="{{ Auth::user()->hasAnyPrivilege(['edit_stakeholders', 'delete_stakeholders']) ? '7' : '6' }}" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
                             No stakeholders found.
                         </td>
                     </tr>
@@ -283,6 +334,50 @@
                     </div>
                 </div>
                 
+                <!-- Guardian Evidence Upload -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Guardian Evidence</label>
+                    <div class="bg-gray-50 dark:bg-[#161615] p-4 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        <!-- Upload Options -->
+                        <div id="editGuardianUploadOptions" class="flex gap-4 mb-4">
+                            <button type="button" class="btn btn-secondary" onclick="openEditGuardianCameraModal()">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                Take Photo
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit_guardian_evidence').click()">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" /></svg>
+                                Upload File
+                            </button>
+                        </div>
+
+                        <!-- Hidden File Input -->
+                        <input type="file" id="edit_guardian_evidence" name="guardian_evidence" accept="image/*" class="hidden" onchange="handleEditGuardianFileUpload(event)">
+
+                        <!-- Current Guardian Evidence Preview -->
+                        <div id="editCurrentGuardianEvidence" class="hidden mb-4">
+                            <h4 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">Current Guardian Evidence</h4>
+                            <div id="editCurrentGuardianContent" class="relative inline-block">
+                                <!-- Content will be populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- New Guardian Evidence Preview -->
+                        <div id="editGuardianEvidencePreview" class="hidden">
+                            <h4 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">New Guardian Evidence</h4>
+                            <div class="relative inline-block">
+                                <div id="editGuardianPreviewContent">
+                                    <!-- Content will be populated dynamically -->
+                                </div>
+                                <button type="button" onclick="removeEditGuardianPreview()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-2">Upload proof of children's university ID or enrollment documents (JPG, PNG, PDF - max 10MB). Leave empty to keep current file.</p>
+                    </div>
+                </div>
+                
                 <hr class="my-6 border-[#e3e3e0] dark:border-[#3E3E3A]">
                 
                 <!-- Existing Vehicles (Read-only) -->
@@ -335,6 +430,84 @@
             <button class="btn-camera" onclick="captureEditLicensePhoto()">
                 <svg class="w-6 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Guardian Camera Modal -->
+<div id="editGuardianCameraModal" class="modal-backdrop hidden">
+    <div class="camera-container max-w-4xl">
+        <div class="modal-header flex justify-between items-center">
+            <h2 class="modal-title">Camera - Guardian Evidence</h2>
+            <button onclick="closeEditGuardianCameraModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="modal-body p-0">
+            <video id="editGuardianCameraVideo" autoplay playsinline class="w-full h-auto bg-black max-h-[70vh] sm:max-h-[80vh] object-cover"></video>
+            <canvas id="editGuardianCameraCanvas" class="hidden"></canvas>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-camera" onclick="captureEditGuardianPhoto()">
+                <svg class="w-6 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Activate Confirmation Modal -->
+<div id="bulkActivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkActivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-check-circle class="modal-icon-success" />
+                Activate Stakeholders
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkActivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkActivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkActivate()" class="btn btn-success">Activate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Deactivate Confirmation Modal -->
+<div id="bulkDeactivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeactivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                Deactivate Stakeholders
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeactivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeactivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDeactivate()" class="btn btn-warning">Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulkDeleteModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeleteModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Delete Stakeholders
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeleteMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeleteModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDelete()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -730,6 +903,26 @@ function viewStakeholder(id) {
                 <h3 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">License Image</h3>
                 <div class="image-container">
                     <img src="${stakeholder.license_image}" alt="License" class="license-image">
+                </div>
+            </div>
+            ` : ''}
+            ${stakeholder.guardian_evidence ? `
+            <div>
+                <h3 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-2">Guardian Evidence</h3>
+                <div class="image-container">
+                    ${stakeholder.guardian_evidence.toLowerCase().endsWith('.pdf') ? 
+                        `<div class="flex items-center p-4 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg bg-gray-50 dark:bg-[#161615]">
+                            <svg class="w-10 h-10 text-red-600 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Guardian Evidence PDF</p>
+                                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mb-2">University ID or enrollment documents</p>
+                                <a href="/storage/${stakeholder.guardian_evidence}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">View Document</a>
+                            </div>
+                        </div>` :
+                        `<img src="/storage/${stakeholder.guardian_evidence}" alt="Guardian Evidence" class="license-image">`
+                    }
                 </div>
             </div>
             ` : ''}
@@ -1185,6 +1378,36 @@ function openEditModal(id) {
     document.getElementById('editLicenseImagePreview').classList.add('hidden');
     document.getElementById('edit_license_image').value = '';
     
+    // Display current guardian evidence if exists
+    if (stakeholder.guardian_evidence) {
+        const currentDiv = document.getElementById('editCurrentGuardianEvidence');
+        const contentDiv = document.getElementById('editCurrentGuardianContent');
+        
+        if (stakeholder.guardian_evidence.toLowerCase().endsWith('.pdf')) {
+            contentDiv.innerHTML = `
+                <div class="flex items-center p-4 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg bg-gray-50 dark:bg-[#161615] max-w-md">
+                    <svg class="w-10 h-10 text-red-600 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Guardian Evidence PDF</p>
+                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mb-2">University ID or enrollment documents</p>
+                        <a href="/storage/${stakeholder.guardian_evidence}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">View Document</a>
+                    </div>
+                </div>
+            `;
+        } else {
+            contentDiv.innerHTML = `<img src="/storage/${stakeholder.guardian_evidence}" alt="Guardian Evidence" class="w-full max-w-md rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">`;
+        }
+        currentDiv.classList.remove('hidden');
+    } else {
+        document.getElementById('editCurrentGuardianEvidence').classList.add('hidden');
+    }
+    
+    // Reset new guardian evidence preview
+    document.getElementById('editGuardianEvidencePreview').classList.add('hidden');
+    document.getElementById('edit_guardian_evidence').value = '';
+    
     // Store existing vehicles
     currentEditStakeholderVehicles = stakeholder.vehicles || [];
     
@@ -1275,6 +1498,68 @@ window.captureEditLicensePhoto = function() {
     }, 'image/jpeg', 0.8);
 }
 
+// Edit Guardian Camera Modal Functions
+let editGuardianCameraStream = null;
+
+window.openEditGuardianCameraModal = async function() {
+    try {
+        editGuardianCameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'user',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
+        });
+        const video = document.getElementById('editGuardianCameraVideo');
+        video.srcObject = editGuardianCameraStream;
+        
+        video.onloadedmetadata = function() {
+            video.style.width = '100%';
+            video.style.height = 'auto';
+            video.style.maxHeight = '80vh';
+            
+            document.getElementById('editGuardianCameraModal').classList.remove('hidden');
+        };
+    } catch (error) {
+        alert('Error accessing camera: ' + error.message);
+    }
+}
+
+window.closeEditGuardianCameraModal = function() {
+    if (editGuardianCameraStream) {
+        editGuardianCameraStream.getTracks().forEach(track => track.stop());
+        editGuardianCameraStream = null;
+    }
+    document.getElementById('editGuardianCameraModal').classList.add('hidden');
+}
+
+window.captureEditGuardianPhoto = function() {
+    const video = document.getElementById('editGuardianCameraVideo');
+    const canvas = document.getElementById('editGuardianCameraCanvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'guardian_evidence_photo.jpg', { type: 'image/jpeg' });
+        
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        
+        const guardianInput = document.getElementById('edit_guardian_evidence');
+        guardianInput.files = dataTransfer.files;
+        
+        // Trigger the change event to show preview
+        const event = new Event('change', { bubbles: true });
+        guardianInput.dispatchEvent(event);
+        
+        closeEditGuardianCameraModal();
+    }, 'image/jpeg', 0.8);
+}
+
 window.handleEditLicenseFileUpload = function(event) {
     const file = event.target.files[0];
     if (file) {
@@ -1316,6 +1601,53 @@ window.removeEditLicensePreview = function() {
     }
 }
 
+window.handleEditGuardianFileUpload = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            alert('File size must be less than 10MB');
+            event.target.value = '';
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Only JPG and PNG files are allowed');
+            event.target.value = '';
+            return;
+        }
+
+        const previewDiv = document.getElementById('editGuardianEvidencePreview');
+        const currentDiv = document.getElementById('editCurrentGuardianEvidence');
+        const contentDiv = document.getElementById('editGuardianPreviewContent');
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            contentDiv.innerHTML = `<img src="${e.target.result}" alt="Guardian Evidence Preview" class="w-full max-w-md rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A]">`;
+        };
+        reader.readAsDataURL(file);
+        
+        previewDiv.classList.remove('hidden');
+        if (currentDiv) {
+            currentDiv.classList.add('hidden');
+        }
+    }
+};
+
+window.removeEditGuardianPreview = function() {
+    const imagePreview = document.getElementById('editGuardianEvidencePreview');
+    const currentGuardianEvidence = document.getElementById('editCurrentGuardianEvidence');
+    
+    imagePreview.classList.add('hidden');
+    document.getElementById('edit_guardian_evidence').value = '';
+    
+    // Show current guardian evidence again when new preview is removed
+    if (currentGuardianEvidence) {
+        currentGuardianEvidence.classList.remove('hidden');
+    }
+}
+
 // Expose functions to global scope for onclick handlers
 window.viewStakeholder = viewStakeholder;
 window.openEditModal = openEditModal;
@@ -1333,6 +1665,229 @@ window.addEventListener('beforeunload', function() {
         realtimeManager.disconnect();
     }
 });
+
+// Bulk Operations Functions
+function toggleSelectAll(checkbox) {
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    rowCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const count = selected.length;
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (count > 0) {
+        bulkBar.classList.remove('hidden');
+        countSpan.textContent = count;
+    } else {
+        bulkBar.classList.add('hidden');
+    }
+    
+    const selectAll = document.getElementById('select-all');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    if (selectAll) {
+        selectAll.checked = allCheckboxes.length > 0 && selected.length === allCheckboxes.length;
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox, #select-all').forEach(cb => cb.checked = false);
+    updateBulkActions();
+}
+
+function getSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+function bulkActivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one stakeholder');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to activate 1 stakeholder?'
+        : `Are you sure you want to activate ${count} stakeholders?`;
+    
+    document.getElementById('bulkActivateMessage').textContent = message;
+    document.getElementById('bulkActivateModal').classList.remove('hidden');
+}
+
+function closeBulkActivateModal() {
+    document.getElementById('bulkActivateModal').classList.add('hidden');
+}
+
+function executeBulkActivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: true,
+            user_type: 'stakeholder'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkActivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error activating stakeholders');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error activating stakeholders');
+    });
+}
+
+function bulkDeactivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one stakeholder');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to deactivate 1 stakeholder?'
+        : `Are you sure you want to deactivate ${count} stakeholders?`;
+    
+    document.getElementById('bulkDeactivateMessage').textContent = message;
+    document.getElementById('bulkDeactivateModal').classList.remove('hidden');
+}
+
+function closeBulkDeactivateModal() {
+    document.getElementById('bulkDeactivateModal').classList.add('hidden');
+}
+
+function executeBulkDeactivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: false,
+            user_type: 'stakeholder'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeactivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deactivating stakeholders');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deactivating stakeholders');
+    });
+}
+
+function confirmBulkDelete() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one stakeholder');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to delete 1 stakeholder? This action cannot be undone.'
+        : `Are you sure you want to delete ${count} stakeholders? This action cannot be undone.`;
+    
+    document.getElementById('bulkDeleteMessage').textContent = message;
+    document.getElementById('bulkDeleteModal').classList.remove('hidden');
+}
+
+function closeBulkDeleteModal() {
+    document.getElementById('bulkDeleteModal').classList.add('hidden');
+}
+
+function executeBulkDelete() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            user_type: 'stakeholder'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeleteModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deleting stakeholders');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deleting stakeholders');
+    });
+}
+
+// Expose bulk operation functions
+window.toggleSelectAll = toggleSelectAll;
+window.updateBulkActions = updateBulkActions;
+window.clearSelection = clearSelection;
+window.bulkActivate = bulkActivate;
+window.bulkDeactivate = bulkDeactivate;
+window.confirmBulkDelete = confirmBulkDelete;
+window.closeBulkActivateModal = closeBulkActivateModal;
+window.closeBulkDeactivateModal = closeBulkDeactivateModal;
+window.closeBulkDeleteModal = closeBulkDeleteModal;
+window.executeBulkActivate = executeBulkActivate;
+window.executeBulkDeactivate = executeBulkDeactivate;
+window.executeBulkDelete = executeBulkDelete;
 </script>
 
 <style>

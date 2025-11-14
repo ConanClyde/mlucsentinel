@@ -121,7 +121,7 @@ class LocationTypesRealtime {
                 this.addLocationType(locationType);
                 this.showBrowserNotification(
                     'Location Type Created',
-                    `${editor} added ${locationType.name}`,
+                    `${editor} added ${locationType.name || 'a location type'}`,
                     locationType.id,
                     'created'
                 );
@@ -130,7 +130,7 @@ class LocationTypesRealtime {
                 this.updateLocationType(locationType);
                 this.showBrowserNotification(
                     'Location Type Updated',
-                    `${editor} updated ${locationType.name}`,
+                    `${editor} updated ${locationType.name || 'a location type'}`,
                     locationType.id,
                     'updated'
                 );
@@ -139,7 +139,7 @@ class LocationTypesRealtime {
                 this.removeLocationType(locationType);
                 this.showBrowserNotification(
                     'Location Type Removed',
-                    `${editor} removed ${locationType.name}`,
+                    `${editor} removed ${locationType.name || 'a location type'}`,
                     null,
                     'deleted'
                 );
@@ -154,7 +154,7 @@ class LocationTypesRealtime {
      */
     addLocationType(locationType) {
         // Check if location type already exists
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${locationType.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${locationType.id}"], tr[data-location-type-id="${locationType.id}"]`);
         
         if (existingRow) {
             this.updateLocationType(locationType);
@@ -189,7 +189,7 @@ class LocationTypesRealtime {
      * Update an existing location type row
      */
     updateLocationType(locationType) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${locationType.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${locationType.id}"], tr[data-location-type-id="${locationType.id}"]`);
         
         if (!existingRow) {
             console.log('Location type not found in table, adding instead');
@@ -221,7 +221,7 @@ class LocationTypesRealtime {
      * Remove a location type row from the table
      */
     removeLocationType(locationType) {
-        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${locationType.id}"]`);
+        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${locationType.id}"], tr[data-location-type-id="${locationType.id}"]`);
         
         if (!rowToRemove) {
             console.log('Location type not found in table');
@@ -252,11 +252,13 @@ class LocationTypesRealtime {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 dark:hover:bg-[#161615]';
         row.setAttribute('data-id', locationType.id);
+        row.setAttribute('data-location-type-id', locationType.id);
 
-        const createdDate = new Date(locationType.created_at).toLocaleDateString();
+        const createdDate = locationType.created_at ? new Date(locationType.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
+        const locationTypeName = locationType.name || '';
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(locationType.name)}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(locationTypeName)}</td>
             <td class="px-4 py-3 text-sm">
                 <div class="flex items-center gap-2">
                     <div class="w-4 h-4 rounded" style="background-color: ${locationType.default_color || '#3B82F6'}"></div>
@@ -266,14 +268,14 @@ class LocationTypesRealtime {
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button onclick="editLocationType(${locationType.id}, '${locationType.name.replace(/'/g, "\\'")}', '${(locationType.default_color || '#3B82F6').replace(/'/g, "\\'")}', '${(locationType.description || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}')" class="btn-edit" title="Edit">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                    <button onclick="editLocationType(${locationType.id}, '${locationTypeName.replace(/'/g, "\\'")}', '${(locationType.default_color || '#3B82F6').replace(/'/g, "\\'")}', '${(locationType.description || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}')" class="btn-edit" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
                     <button onclick="deleteLocationType(${locationType.id})" class="btn-delete" title="Delete">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>
@@ -346,6 +348,7 @@ class LocationTypesRealtime {
      * Escape HTML to prevent XSS
      */
     escapeHtml(text) {
+        if (text === null || text === undefined) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;

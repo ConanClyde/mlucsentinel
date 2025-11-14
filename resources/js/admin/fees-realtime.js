@@ -121,7 +121,7 @@ class FeesRealtime {
                 this.updateFee(fee);
                 this.showBrowserNotification(
                     'Fee Updated',
-                    `${editor} updated ${fee.display_name} to ₱${parseFloat(fee.amount).toFixed(2)}`,
+                    `${editor} updated ${fee.display_name || 'a fee'} to ₱${parseFloat(fee.amount || 0).toFixed(2)}`,
                     fee.id,
                     'updated'
                 );
@@ -186,13 +186,8 @@ class FeesRealtime {
      * Display in-page notification
      */
     displayNotification(title, message, action) {
-        if (typeof showNotification === 'function') {
-            const actionIcons = {
-                updated: '✏️',
-            };
-            const icon = actionIcons[action] || 'ℹ️';
-            showNotification(`${icon} ${message}`, 'success');
-        }
+        // No toast notification - only browser notifications
+        // This matches the pattern used by other realtime managers
     }
 
     /**

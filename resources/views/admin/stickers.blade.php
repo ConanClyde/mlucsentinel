@@ -53,4 +53,5 @@ window.currentUserId = {{ auth()->id() }};
 window.currentUserName = '{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}';
 </script>
 @vite('resources/js/admin/stickers-page.js')
+@vite('resources/js/admin/sticker-requests-realtime.js')
 @endpush

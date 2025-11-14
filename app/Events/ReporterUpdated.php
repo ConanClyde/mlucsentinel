@@ -56,8 +56,7 @@ class ReporterUpdated implements ShouldBroadcastNow
             'reporter' => [
                 'id' => $this->reporter->id,
                 'user_id' => $this->reporter->user_id,
-                'type_id' => $this->reporter->type_id,
-                'expiration_date' => $this->reporter->expiration_date,
+                'reporter_role_id' => $this->reporter->reporter_role_id,
                 'user' => [
                     'id' => $this->reporter->user->id,
                     'first_name' => $this->reporter->user->first_name,
@@ -65,9 +64,9 @@ class ReporterUpdated implements ShouldBroadcastNow
                     'email' => $this->reporter->user->email,
                     'is_active' => $this->reporter->user->is_active,
                 ],
-                'reporter_type' => $this->reporter->reporterType ? [
-                    'id' => $this->reporter->reporterType->id,
-                    'name' => $this->reporter->reporterType->name,
+                'reporter_role' => $this->reporter->reporterRole ? [
+                    'id' => $this->reporter->reporterRole->id,
+                    'name' => $this->reporter->reporterRole->name,
                 ] : null,
                 'created_at' => $this->reporter->created_at,
                 'updated_at' => $this->reporter->updated_at,

@@ -159,12 +159,14 @@ class SecurityController extends Controller
             }
 
             // Create security record
+            $rules = \App\Models\StickerRule::getSingleton();
+            $years = (int) ($rules->security_expiration_years ?? 4);
             $security = Security::create([
                 'user_id' => $user->id,
                 'security_id' => $request->security_id,
                 'license_no' => $request->license_no,
                 'license_image' => $licenseImagePath,
-                'expiration_date' => now()->addYears(4), // 4 years from now
+                'expiration_date' => now()->addYears($years),
             ]);
 
             // Create vehicles and generate stickers (GREEN for security)
@@ -181,8 +183,8 @@ class SecurityController extends Controller
                     $plateNumber = ! empty($plateNumber) ? $plateNumber : null;
                 }
 
-                // Security always gets maroon stickers
-                $color = 'maroon';
+                // Security color from settings
+                $color = $this->stickerGenerator->determineStickerColor('security', null, $plateNumber);
                 $stickerNumber = $this->stickerGenerator->generateNextStickerNumber($color);
 
                 $vehicle = Vehicle::create([

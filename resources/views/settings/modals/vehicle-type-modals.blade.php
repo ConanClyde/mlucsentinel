@@ -9,6 +9,7 @@
                 <div class="form-group">
                     <label class="form-label">Vehicle Type Name <span class="text-red-500">*</span></label>
                     <input type="text" id="modal-vehicle-type-name" class="form-input" placeholder="Enter vehicle type name" required>
+                    <p id="modal-vehicle-type-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="flex items-center space-x-2 cursor-pointer">
@@ -20,7 +21,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeAddVehicleTypeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="addVehicleType()" class="btn btn-primary">Add Vehicle Type</button>
+                <button type="button" id="add-vehicle-type-btn" onclick="addVehicleType()" class="btn btn-primary" disabled>Add Vehicle Type</button>
             </div>
         </form>
     </div>
@@ -38,6 +39,7 @@
                 <div class="form-group">
                     <label class="form-label">Vehicle Type Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit-vehicle-type-name" class="form-input" placeholder="Enter vehicle type name" required>
+                    <p id="edit-vehicle-type-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div class="form-group">
                     <label class="flex items-center space-x-2 cursor-pointer">
@@ -49,7 +51,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeEditVehicleTypeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="updateVehicleType()" class="btn btn-primary">Update Vehicle Type</button>
+                <button type="button" id="update-vehicle-type-btn" onclick="updateVehicleType()" class="btn btn-primary" disabled>Update Vehicle Type</button>
             </div>
         </form>
     </div>

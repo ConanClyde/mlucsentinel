@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\Registration\StaffController as AdminRegistration
 use App\Http\Controllers\Admin\Registration\StakeholderController;
 use App\Http\Controllers\Admin\Registration\StudentController;
 use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\StakeholderTypeController;
 use App\Http\Controllers\Admin\StickersController;
 use App\Http\Controllers\Admin\Users\AdministratorsController;
 use App\Http\Controllers\Admin\Users\ReportersController;
@@ -28,11 +29,11 @@ use App\Http\Controllers\Admin\VehiclesController;
 use App\Http\Controllers\Admin\VehicleTypeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\CampusMapController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Reporter\HomeController as ReporterHomeController;
 use App\Http\Controllers\Reporter\MyReportController;
-use App\Http\Controllers\Reporter\MyVehiclesController;
 use App\Http\Controllers\Reporter\ReportUserController;
 use App\Http\Controllers\Security\PatrolCheckinController;
 use App\Http\Controllers\SettingsController;
@@ -47,6 +48,19 @@ Route::get('/', [AuthController::class, 'landing'])->name('landing');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
+    // Registration - Rate limit: max 3 attempts per minute
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:3,1')
+        ->name('register.post');
+
+    // Availability check routes for registration
+    Route::post('/check-email-availability', [AuthController::class, 'checkEmailAvailability'])->name('check.email.availability');
+    Route::post('/check-student-id-availability', [AuthController::class, 'checkStudentIdAvailability'])->name('check.student.id.availability');
+    Route::post('/check-plate-no-availability', [AuthController::class, 'checkPlateNoAvailability'])->name('check.plate.availability');
+    Route::post('/check-staff-id-availability', [AuthController::class, 'checkStaffIdAvailability'])->name('check.staff.id.availability');
+    Route::post('/check-security-id-availability', [AuthController::class, 'checkSecurityIdAvailability'])->name('check.security.id.availability');
+
     // Login - Rate limit: max 5 attempts per minute
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])
@@ -108,11 +122,56 @@ Route::get('/home', function () {
         return app(AdminHomeController::class)->index();
     } elseif (in_array($user->user_type, [\App\Enums\UserType::Reporter, \App\Enums\UserType::Security])) {
         return app(ReporterHomeController::class)->index();
+    } elseif (in_array($user->user_type, [\App\Enums\UserType::Student, \App\Enums\UserType::Staff, \App\Enums\UserType::Stakeholder])) {
+        return app(\App\Http\Controllers\UserController::class)->home();
     } else {
-        // For other user types, redirect to admin home as fallback
-        return app(AdminHomeController::class)->index();
+        // For other user types, redirect to profile to avoid exposing admin home
+        return redirect()->route('profile');
     }
 })->middleware('auth')->name('home');
+
+// User Dashboard Routes (Protected Route) - for students, staff, and stakeholders
+Route::middleware(['auth'])->group(function () {
+    // User dashboard routes with new URLs
+    Route::get('/user/dashboard', [\App\Http\Controllers\UserController::class, 'home'])->name('user.home');
+    Route::get('/history', [\App\Http\Controllers\UserController::class, 'reports'])->name('user.reports');
+    Route::get('/history/{id}', [\App\Http\Controllers\UserController::class, 'getReportDetails'])->name('user.reports.details');
+    Route::get('/requests', [\App\Http\Controllers\UserController::class, 'requests'])->name('user.requests');
+    Route::get('/requests/{id}', [\App\Http\Controllers\UserController::class, 'showRequest'])->name('user.requests.show');
+    Route::post('/requests', [\App\Http\Controllers\UserController::class, 'storeRequest'])->name('user.requests.store');
+    Route::post('/requests/{id}/cancel', [\App\Http\Controllers\UserController::class, 'cancelRequest'])->name('user.requests.cancel');
+
+    // Debug route to test CSRF
+    Route::post('/test-csrf', function (\Illuminate\Http\Request $request) {
+        return response()->json(['success' => true, 'data' => $request->all()]);
+    })->name('test.csrf');
+
+    // Campus Map (View Only) - for reporters, security, and users with vehicles
+    Route::get('/map', [\App\Http\Controllers\CampusMapController::class, 'index'])
+        ->middleware('user.type:reporter,security,student,staff,stakeholder')
+        ->name('campus-map');
+});
+
+// Vehicle users (students, staff, stakeholders) - shared route with security
+Route::middleware(['auth'])->group(function () {
+    Route::get('/my-vehicles', function () {
+        $user = auth()->user();
+
+        // Route to appropriate controller based on user type
+        if ($user->user_type === \App\Enums\UserType::Security || $user->user_type === \App\Enums\UserType::Reporter) {
+            return app(\App\Http\Controllers\Reporter\MyVehiclesController::class)->index();
+        } elseif (in_array($user->user_type, [\App\Enums\UserType::Student, \App\Enums\UserType::Staff, \App\Enums\UserType::Stakeholder])) {
+            return app(\App\Http\Controllers\UserController::class)->vehicles();
+        } else {
+            abort(403, 'Access denied. User type: '.$user->user_type->value);
+        }
+    })->name('user.vehicles');
+});
+
+// CSRF Token Route (simple, following admin pattern)
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->middleware('auth');
 
 // Profile Route (Protected Route) - available to all authenticated users
 Route::get('/profile', [ProfileController::class, 'index'])->middleware('auth')->name('profile');
@@ -127,6 +186,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/activity-logs', [SettingsController::class, 'getActivityLogs'])->name('settings.activity-logs');
     Route::post('/settings/2fa/enable', [SettingsController::class, 'enable2FA'])->name('settings.2fa.enable');
     Route::post('/settings/2fa/confirm', [SettingsController::class, 'confirm2FA'])->name('settings.2fa.confirm');
+
+    // Admin Role Management (Global Admin only)
+    Route::middleware('global.admin')->get('/settings/roles', [\App\Http\Controllers\Admin\AdminRoleController::class, 'index'])->name('settings.roles');
     Route::post('/settings/2fa/disable', [SettingsController::class, 'disable2FA'])->name('settings.2fa.disable');
     Route::post('/settings/2fa/recovery-codes', [SettingsController::class, 'getRecoveryCodes'])->name('settings.2fa.recovery-codes');
     Route::post('/settings/2fa/recovery-codes/regenerate', [SettingsController::class, 'regenerateRecoveryCodes'])->name('settings.2fa.recovery-codes.regenerate');
@@ -134,73 +196,140 @@ Route::middleware('auth')->group(function () {
 
 // Admin Routes
 Route::middleware(['auth', 'user.type:global_administrator,administrator'])->group(function () {
+    // Pending Registrations Routes (Global Admin only)
+    Route::middleware('user.type:global_administrator')->group(function () {
+        Route::get('/admin/pending-registrations', [\App\Http\Controllers\Admin\PendingRegistrationController::class, 'index'])->name('admin.pending-registrations');
+        Route::get('/admin/pending-registrations/{pendingRegistration}', [\App\Http\Controllers\Admin\PendingRegistrationController::class, 'show'])->name('admin.pending-registrations.show');
+        Route::post('/admin/pending-registrations/{pendingRegistration}/approve', [\App\Http\Controllers\Admin\PendingRegistrationController::class, 'approve'])->name('admin.pending-registrations.approve');
+        Route::post('/admin/pending-registrations/{pendingRegistration}/reject', [\App\Http\Controllers\Admin\PendingRegistrationController::class, 'reject'])->name('admin.pending-registrations.reject');
+        Route::delete('/admin/pending-registrations/{pendingRegistration}', [\App\Http\Controllers\Admin\PendingRegistrationController::class, 'destroy'])->name('admin.pending-registrations.destroy');
+    });
+
     // Campus Map Routes
-    Route::get('/campus-map', [MapLocationController::class, 'index'])->name('admin.campus-map');
-    Route::get('/campus-map/download-stickers', [MapLocationController::class, 'downloadAllStickers'])->name('admin.campus-map.download-stickers');
-    Route::get('/api/map-locations', [MapLocationController::class, 'getLocations'])->name('api.map-locations.index');
-    Route::get('/api/map-location-types', [MapLocationController::class, 'getTypes'])->name('api.map-location-types.index');
-    Route::post('/api/map-locations', [MapLocationController::class, 'store'])->name('api.map-locations.store');
-    Route::get('/api/map-locations/{location}', [MapLocationController::class, 'show'])->name('api.map-locations.show');
-    Route::put('/api/map-locations/{location}', [MapLocationController::class, 'update'])->name('api.map-locations.update');
-    Route::delete('/api/map-locations/{location}', [MapLocationController::class, 'destroy'])->name('api.map-locations.destroy');
-    Route::post('/api/map-locations/{location}/toggle-active', [MapLocationController::class, 'toggleActive'])->name('api.map-locations.toggle-active');
+    Route::get('/campus-map', [MapLocationController::class, 'index'])->middleware('privilege:manage_campus_map')->name('admin.campus-map');
+    Route::get('/campus-map/download-stickers', [MapLocationController::class, 'downloadAllStickers'])->middleware('privilege:manage_campus_map')->name('admin.campus-map.download-stickers');
+    Route::get('/api/map-locations', [MapLocationController::class, 'getLocations'])->middleware('privilege:manage_campus_map')->name('api.map-locations.index');
+    Route::get('/api/map-location-types', [MapLocationController::class, 'getTypes'])->middleware('privilege:manage_campus_map')->name('api.map-location-types.index');
+    Route::post('/api/map-locations', [MapLocationController::class, 'store'])->middleware('privilege:manage_campus_map')->name('api.map-locations.store');
+    Route::get('/api/map-locations/{location}', [MapLocationController::class, 'show'])->middleware('privilege:manage_campus_map')->name('api.map-locations.show');
+    Route::put('/api/map-locations/{location}', [MapLocationController::class, 'update'])->middleware('privilege:manage_campus_map')->name('api.map-locations.update');
+    Route::delete('/api/map-locations/{location}', [MapLocationController::class, 'destroy'])->middleware('privilege:manage_campus_map')->name('api.map-locations.destroy');
+    Route::post('/api/map-locations/{location}/toggle-active', [MapLocationController::class, 'toggleActive'])->middleware('privilege:manage_campus_map')->name('api.map-locations.toggle-active');
 
     // API Routes - Rate limit: max 60 requests per minute per user
     Route::middleware('throttle:60,1')->group(function () {
         // College Routes
-        Route::get('/api/colleges', [CollegeController::class, 'index'])->name('api.colleges.index');
-        Route::post('/api/colleges', [CollegeController::class, 'store'])->name('api.colleges.store');
-        Route::put('/api/colleges/{college}', [CollegeController::class, 'update'])->name('api.colleges.update');
-        Route::delete('/api/colleges/{college}', [CollegeController::class, 'destroy'])->name('api.colleges.destroy');
-        Route::get('/api/colleges/{college}/programs', [CollegeController::class, 'programs'])->name('api.colleges.programs');
+        Route::get('/api/colleges', [CollegeController::class, 'index'])->middleware('privilege:view_settings_college')->name('api.colleges.index');
+        Route::post('/api/colleges', [CollegeController::class, 'store'])->middleware('privilege:view_settings_college')->name('api.colleges.store');
+        Route::put('/api/colleges/{college}', [CollegeController::class, 'update'])->middleware('privilege:view_settings_college')->name('api.colleges.update');
+        Route::delete('/api/colleges/{college}', [CollegeController::class, 'destroy'])->middleware('privilege:view_settings_college')->name('api.colleges.destroy');
+        Route::get('/api/colleges/{college}/programs', [CollegeController::class, 'programs'])->middleware('privilege:view_settings_college')->name('api.colleges.programs');
 
         // Program Routes
-        Route::get('/api/programs', [ProgramController::class, 'index'])->name('api.programs.index');
-        Route::post('/api/programs', [ProgramController::class, 'store'])->name('api.programs.store');
-        Route::put('/api/programs/{program}', [ProgramController::class, 'update'])->name('api.programs.update');
-        Route::delete('/api/programs/{program}', [ProgramController::class, 'destroy'])->name('api.programs.destroy');
+        Route::get('/api/programs', [ProgramController::class, 'index'])->middleware('privilege:view_settings_program')->name('api.programs.index');
+        Route::post('/api/programs', [ProgramController::class, 'store'])->middleware('privilege:view_settings_program')->name('api.programs.store');
+        Route::put('/api/programs/{program}', [ProgramController::class, 'update'])->middleware('privilege:view_settings_program')->name('api.programs.update');
+        Route::delete('/api/programs/{program}', [ProgramController::class, 'destroy'])->middleware('privilege:view_settings_program')->name('api.programs.destroy');
 
         // Fee Routes
-        Route::get('/api/fees', [FeeController::class, 'index'])->name('api.fees.index');
+        Route::get('/api/fees', [FeeController::class, 'index'])->middleware('privilege:view_settings_fees')->name('api.fees.index');
 
         // Vehicle Type Routes
-        Route::get('/api/vehicle-types', [VehicleTypeController::class, 'index'])->name('api.vehicle-types.index');
-        Route::post('/api/vehicle-types', [VehicleTypeController::class, 'store'])->name('api.vehicle-types.store');
-        Route::put('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'update'])->name('api.vehicle-types.update');
-        Route::delete('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'destroy'])->name('api.vehicle-types.destroy');
+        Route::get('/api/vehicle-types', [VehicleTypeController::class, 'index'])->middleware('privilege:view_settings_vehicle_type')->name('api.vehicle-types.index');
+        Route::post('/api/vehicle-types', [VehicleTypeController::class, 'store'])->middleware('privilege:view_settings_vehicle_type')->name('api.vehicle-types.store');
+        Route::put('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'update'])->middleware('privilege:view_settings_vehicle_type')->name('api.vehicle-types.update');
+
+        // Admin Role & Privilege Routes (Global Admin only)
+        Route::middleware('global.admin')->prefix('api/admin-roles')->name('api.admin-roles.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AdminRoleController::class, 'getRoles'])->name('index');
+            Route::get('/privileges', [\App\Http\Controllers\Admin\AdminRoleController::class, 'getPrivileges'])->name('privileges');
+            Route::post('/', [\App\Http\Controllers\Admin\AdminRoleController::class, 'store'])->name('store');
+            Route::put('/{role}', [\App\Http\Controllers\Admin\AdminRoleController::class, 'update'])->name('update');
+            Route::delete('/{role}', [\App\Http\Controllers\Admin\AdminRoleController::class, 'destroy'])->name('destroy');
+        });
+
+        // Reporter Role Routes (Global Admin only)
+        Route::middleware('global.admin')->prefix('api/reporter-roles')->name('api.reporter-roles.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'index'])->name('index');
+            Route::get('/user-types', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'getAvailableUserTypes'])->name('user-types');
+            Route::post('/', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'store'])->name('store');
+            Route::put('/{role}', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'update'])->name('update');
+            Route::delete('/{role}', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'destroy'])->name('destroy');
+            Route::post('/{role}/toggle-active', [\App\Http\Controllers\Admin\ReporterRoleController::class, 'toggleActive'])->name('toggle-active');
+        });
+        Route::delete('/api/vehicle-types/{vehicleType}', [VehicleTypeController::class, 'destroy'])->middleware('privilege:view_settings_vehicle_type')->name('api.vehicle-types.destroy');
 
         // Map Location Type Routes
-        Route::get('/api/map-location-types', [MapLocationTypeController::class, 'index'])->name('api.map-location-types.index');
-        Route::post('/api/map-location-types', [MapLocationTypeController::class, 'store'])->name('api.map-location-types.store');
-        Route::put('/api/map-location-types/{mapLocationType}', [MapLocationTypeController::class, 'update'])->name('api.map-location-types.update');
-        Route::delete('/api/map-location-types/{mapLocationType}', [MapLocationTypeController::class, 'destroy'])->name('api.map-location-types.destroy');
+        Route::get('/api/map-location-types', [MapLocationTypeController::class, 'index'])->middleware('privilege:view_settings_location_type')->name('api.map-location-types.index');
+        Route::post('/api/map-location-types', [MapLocationTypeController::class, 'store'])->middleware('privilege:view_settings_location_type')->name('api.map-location-types.store');
+        Route::put('/api/map-location-types/{mapLocationType}', [MapLocationTypeController::class, 'update'])->middleware('privilege:view_settings_location_type')->name('api.map-location-types.update');
+        Route::delete('/api/map-location-types/{mapLocationType}', [MapLocationTypeController::class, 'destroy'])->middleware('privilege:view_settings_location_type')->name('api.map-location-types.destroy');
+
+        // Stakeholder Types & Sticker Config (Global Admin only)
+        Route::middleware('global.admin')->group(function () {
+            // Stakeholder Types
+            Route::get('/api/stakeholder-types', [StakeholderTypeController::class, 'index'])->name('api.stakeholder-types.index');
+            Route::post('/api/stakeholder-types', [StakeholderTypeController::class, 'store'])->name('api.stakeholder-types.store');
+            Route::put('/api/stakeholder-types/{stakeholderType}', [StakeholderTypeController::class, 'update'])->name('api.stakeholder-types.update');
+            Route::delete('/api/stakeholder-types/{stakeholderType}', [StakeholderTypeController::class, 'destroy'])->name('api.stakeholder-types.destroy');
+
+            // Sticker Configuration (rules + expiration)
+            Route::get('/api/settings/sticker-config', [SettingsController::class, 'getStickerConfig'])->name('api.settings.sticker-config');
+            Route::put('/api/settings/sticker-config', [SettingsController::class, 'updateStickerConfig'])->name('api.settings.sticker-config.update');
+
+            // Sticker Palette CRUD
+            Route::get('/api/settings/sticker-palette', [SettingsController::class, 'getStickerPalette'])->name('api.settings.sticker-palette');
+            Route::post('/api/settings/sticker-palette', [SettingsController::class, 'addStickerColor'])->name('api.settings.sticker-palette.store');
+            Route::put('/api/settings/sticker-palette/{key}', [SettingsController::class, 'updateStickerColor'])->name('api.settings.sticker-palette.update');
+            Route::delete('/api/settings/sticker-palette/{key}', [SettingsController::class, 'deleteStickerColor'])->name('api.settings.sticker-palette.destroy');
+        });
     });
 
     // Fee Update Route - Rate limit: max 10 updates per minute per admin
     Route::put('/api/fees/{fee}', [FeeController::class, 'update'])
-        ->middleware('throttle:10,1')
+        ->middleware(['throttle:10,1', 'privilege:manage_fees'])
         ->name('api.fees.update');
 
-    Route::get('/users', [UsersController::class, 'index'])->name('admin.users');
-    Route::get('/vehicles', [VehiclesController::class, 'index'])->name('admin.vehicles');
-    Route::get('/vehicles/data', [VehiclesController::class, 'data'])->name('admin.vehicles.data');
-    Route::delete('/vehicles/{vehicle}', [VehiclesController::class, 'destroy'])->name('admin.vehicles.destroy');
-    Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports');
-    Route::get('/reports/export', [ReportsController::class, 'export'])->name('admin.reports.export');
-    Route::put('/reports/{report}/status', [ReportsController::class, 'updateStatus'])->name('admin.reports.status');
+    Route::get('/users', [UsersController::class, 'index'])->middleware('privilege:view_students')->name('admin.users');
+
+    // Bulk User Operations (requires edit privileges)
+    Route::prefix('api/bulk/users')->middleware('privilege:edit_students')->name('api.bulk.users.')->group(function () {
+        Route::post('/import', [\App\Http\Controllers\Admin\BulkUsersController::class, 'import'])->name('import');
+        Route::post('/update', [\App\Http\Controllers\Admin\BulkUsersController::class, 'bulkUpdate'])->name('update');
+        Route::post('/delete', [\App\Http\Controllers\Admin\BulkUsersController::class, 'bulkDelete'])->name('delete');
+        Route::post('/status', [\App\Http\Controllers\Admin\BulkUsersController::class, 'bulkStatusUpdate'])->name('status');
+    });
+
+    Route::get('/vehicles', [VehiclesController::class, 'index'])->middleware('privilege:view_vehicles')->name('admin.vehicles');
+    Route::get('/vehicles/data', [VehiclesController::class, 'data'])->middleware('privilege:view_vehicles')->name('admin.vehicles.data');
+    Route::delete('/vehicles/{vehicle}', [VehiclesController::class, 'destroy'])->middleware('privilege:delete_vehicles')->name('admin.vehicles.destroy');
+
+    // Bulk Vehicle Operations (requires edit/delete vehicle privileges)
+    Route::prefix('api/bulk/vehicles')->middleware('privilege:edit_vehicles')->name('api.bulk.vehicles.')->group(function () {
+        Route::post('/update', [\App\Http\Controllers\Admin\BulkVehiclesController::class, 'bulkUpdate'])->name('update');
+        Route::post('/delete', [\App\Http\Controllers\Admin\BulkVehiclesController::class, 'bulkDelete'])->name('delete');
+        Route::post('/status', [\App\Http\Controllers\Admin\BulkVehiclesController::class, 'bulkStatusUpdate'])->name('status');
+    });
+    Route::get('/reports', [ReportsController::class, 'index'])->middleware('privilege:manage_reports')->name('admin.reports');
+    Route::get('/reports/export', [ReportsController::class, 'export'])->middleware('privilege:manage_reports')->name('admin.reports.export');
+    Route::put('/reports/{report}/status', [ReportsController::class, 'updateStatus'])->middleware('privilege:manage_reports')->name('admin.reports.status');
 
     // Dashboard Export Route
-    Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
+    Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->middleware('privilege:export_dashboard')->name('admin.dashboard.export');
 
-    // Stickers Routes - Marketing Admin Only
-    Route::middleware(['marketing.admin'])->group(function () {
+    // Stickers Routes - Privilege-based
+    Route::middleware('privilege:view_stickers')->group(function () {
         Route::get('/stickers', [StickersController::class, 'index'])->name('admin.stickers');
         Route::get('/stickers/data', [StickersController::class, 'data'])->name('admin.stickers.data');
         Route::get('/stickers/issued', [StickersController::class, 'getIssuedStickers'])->name('admin.stickers.issued');
         Route::get('/stickers/download-filtered', [StickersController::class, 'downloadFilteredStickers'])->name('admin.stickers.download-filtered');
         Route::get('/stickers/vehicle/{vehicle}/download', [StickersController::class, 'downloadSticker'])->name('admin.stickers.download');
         Route::get('/stickers/search-users', [StickersController::class, 'searchUsers'])->name('admin.stickers.search-users');
+        Route::get('/stickers/requests-data', [StickersController::class, 'getRequestsData'])->name('admin.stickers.requests-data');
+        Route::get('/stickers/requests/{id}', [StickersController::class, 'showRequest'])->name('admin.stickers.requests.show');
         Route::post('/stickers/request', [StickersController::class, 'createRequest'])->name('admin.stickers.request');
+        Route::patch('/stickers/requests/{id}/approve', [StickersController::class, 'approveRequest'])->name('admin.stickers.requests.approve');
+        Route::patch('/stickers/requests/{id}/reject', [StickersController::class, 'rejectRequest'])->name('admin.stickers.requests.reject');
         Route::patch('/stickers/{payment}/pay', [StickersController::class, 'markAsPaid'])->name('admin.stickers.pay');
         Route::patch('/stickers/{payment}/cancel', [StickersController::class, 'cancel'])->name('admin.stickers.cancel');
         Route::delete('/stickers/{payment}', [StickersController::class, 'destroy'])->name('admin.stickers.destroy');
@@ -208,41 +337,37 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
     });
 
     // User Types Routes
-    Route::get('/users/students', [StudentsController::class, 'index'])->name('admin.users.students');
-    Route::get('/users/students/data', [StudentsController::class, 'data'])->name('admin.users.students.data');
-    Route::delete('/users/students/{student}', [StudentsController::class, 'destroy'])->name('admin.users.students.destroy');
-    Route::get('/users/staff', [StaffController::class, 'index'])->name('admin.users.staff');
-    Route::get('/users/staff/data', [StaffController::class, 'data'])->name('admin.users.staff.data');
-    Route::delete('/users/staff/{staff}', [StaffController::class, 'destroy'])->name('admin.users.staff.destroy');
-    Route::get('/users/security', [AdminUsersSecurityController::class, 'index'])->name('admin.users.security');
-    Route::get('/users/security/data', [AdminUsersSecurityController::class, 'data'])->name('admin.users.security.data');
-    Route::delete('/users/security/{security}', [AdminUsersSecurityController::class, 'destroy'])->name('admin.users.security.destroy');
-    Route::get('/users/reporters', [ReportersController::class, 'index'])->name('admin.users.reporters');
-    Route::delete('/users/reporters/{reporter}', [ReportersController::class, 'destroy'])->name('admin.users.reporters.destroy');
+    Route::get('/users/students', [StudentsController::class, 'index'])->middleware('privilege:view_students')->name('admin.users.students');
+    Route::get('/users/students/data', [StudentsController::class, 'data'])->middleware('privilege:view_students')->name('admin.users.students.data');
+    Route::delete('/users/students/{student}', [StudentsController::class, 'destroy'])->middleware('privilege:delete_students')->name('admin.users.students.destroy');
+    Route::get('/users/staff', [StaffController::class, 'index'])->middleware('privilege:view_staff')->name('admin.users.staff');
+    Route::get('/users/staff/data', [StaffController::class, 'data'])->middleware('privilege:view_staff')->name('admin.users.staff.data');
+    Route::delete('/users/staff/{staff}', [StaffController::class, 'destroy'])->middleware('privilege:delete_staff')->name('admin.users.staff.destroy');
+    Route::get('/users/security', [AdminUsersSecurityController::class, 'index'])->middleware('privilege:view_security')->name('admin.users.security');
+    Route::get('/users/security/data', [AdminUsersSecurityController::class, 'data'])->middleware('privilege:view_security')->name('admin.users.security.data');
+    Route::delete('/users/security/{security}', [AdminUsersSecurityController::class, 'destroy'])->middleware('privilege:delete_security')->name('admin.users.security.destroy');
+    Route::get('/users/reporters', [ReportersController::class, 'index'])->middleware('privilege:view_reporters')->name('admin.users.reporters');
+    Route::delete('/users/reporters/{reporter}', [ReportersController::class, 'destroy'])->middleware('privilege:delete_reporters')->name('admin.users.reporters.destroy');
 
-    Route::get('/users/stakeholders', [StakeholdersController::class, 'index'])->name('admin.users.stakeholders');
-    Route::get('/users/stakeholders/data', [StakeholdersController::class, 'data'])->name('admin.users.stakeholders.data');
-    Route::delete('/users/stakeholders/{stakeholder}', [StakeholdersController::class, 'destroy'])->name('admin.users.stakeholders.destroy');
-    Route::get('/users/administrators', [AdministratorsController::class, 'index'])->name('admin.users.administrators');
-    Route::post('/users/administrators', [AdministratorsController::class, 'store'])->name('admin.users.administrators.store');
-    Route::put('/users/administrators/{administrator}', [AdministratorsController::class, 'update'])->name('admin.users.administrators.update');
-    Route::delete('/users/administrators/{administrator}', [AdministratorsController::class, 'destroy'])->name('admin.users.administrators.destroy');
+    Route::get('/users/stakeholders', [StakeholdersController::class, 'index'])->middleware('privilege:view_stakeholders')->name('admin.users.stakeholders');
+    Route::get('/users/stakeholders/data', [StakeholdersController::class, 'data'])->middleware('privilege:view_stakeholders')->name('admin.users.stakeholders.data');
+    Route::delete('/users/stakeholders/{stakeholder}', [StakeholdersController::class, 'destroy'])->middleware('privilege:delete_stakeholders')->name('admin.users.stakeholders.destroy');
+    Route::get('/users/administrators', [AdministratorsController::class, 'index'])->middleware('privilege:view_administrators')->name('admin.users.administrators');
+    Route::post('/users/administrators', [AdministratorsController::class, 'store'])->middleware('privilege:register_administrators')->name('admin.users.administrators.store');
+    Route::put('/users/administrators/{administrator}', [AdministratorsController::class, 'update'])->middleware('privilege:edit_administrators')->name('admin.users.administrators.update');
+    Route::delete('/users/administrators/{administrator}', [AdministratorsController::class, 'destroy'])->middleware('privilege:delete_administrators')->name('admin.users.administrators.destroy');
 
-    // User Management Update Routes - Security Admin (Stakeholders, Security, Staff, Students)
-    Route::middleware(['security.admin'])->group(function () {
-        Route::put('/users/students/{student}', [StudentsController::class, 'update'])->name('admin.users.students.update');
-        Route::put('/users/staff/{staff}', [StaffController::class, 'update'])->name('admin.users.staff.update');
-        Route::put('/users/security/{security}', [AdminUsersSecurityController::class, 'update'])->name('admin.users.security.update');
-        Route::put('/users/stakeholders/{stakeholder}', [StakeholdersController::class, 'update'])->name('admin.users.stakeholders.update');
-    });
+    // User Management Update Routes - Privilege-based
+    Route::put('/users/students/{student}', [StudentsController::class, 'update'])->middleware('privilege:edit_students')->name('admin.users.students.update');
+    Route::put('/users/staff/{staff}', [StaffController::class, 'update'])->middleware('privilege:edit_staff')->name('admin.users.staff.update');
+    Route::put('/users/security/{security}', [AdminUsersSecurityController::class, 'update'])->middleware('privilege:edit_security')->name('admin.users.security.update');
+    Route::put('/users/stakeholders/{stakeholder}', [StakeholdersController::class, 'update'])->middleware('privilege:edit_stakeholders')->name('admin.users.stakeholders.update');
 
-    // User Management Update Routes - SAS/DRRM Admin (Reporters)
-    Route::middleware(['sas.drrm.admin'])->group(function () {
-        Route::put('/users/reporters/{reporter}', [ReportersController::class, 'update'])->name('admin.users.reporters.update');
-    });
+    // User Management Update Routes - Reporters
+    Route::put('/users/reporters/{reporter}', [ReportersController::class, 'update'])->middleware('privilege:edit_reporters')->name('admin.users.reporters.update');
 
-    // Registration Routes - Security Admin (Stakeholders, Security, Staff, Students)
-    Route::middleware(['security.admin'])->group(function () {
+    // Registration Routes - Privilege-based (Stakeholders, Security, Staff, Students)
+    Route::middleware('privilege:register_students')->group(function () {
         Route::get('/registration/student', [StudentController::class, 'index'])->name('admin.registration.student');
         Route::post('/registration/student', [StudentController::class, 'store'])
             ->middleware('file.upload.security')
@@ -251,6 +376,9 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/registration/student/check-student-id', [StudentController::class, 'checkStudentId'])->name('admin.registration.student.check-student-id');
         Route::post('/registration/student/check-license-no', [StudentController::class, 'checkLicenseNo'])->name('admin.registration.student.check-license-no');
         Route::post('/registration/student/check-plate-no', [StudentController::class, 'checkPlateNo'])->name('admin.registration.student.check-plate-no');
+    });
+
+    Route::middleware('privilege:register_staff')->group(function () {
         Route::get('/registration/staff', [AdminRegistrationStaffController::class, 'index'])->name('admin.registration.staff');
         Route::post('/registration/staff', [AdminRegistrationStaffController::class, 'store'])
             ->middleware('file.upload.security')
@@ -259,6 +387,9 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/registration/staff/check-staff-id', [AdminRegistrationStaffController::class, 'checkStaffId'])->name('admin.registration.staff.check-staff-id');
         Route::post('/registration/staff/check-license-no', [AdminRegistrationStaffController::class, 'checkLicenseNo'])->name('admin.registration.staff.check-license-no');
         Route::post('/registration/staff/check-plate-no', [AdminRegistrationStaffController::class, 'checkPlateNo'])->name('admin.registration.staff.check-plate-no');
+    });
+
+    Route::middleware('privilege:register_security')->group(function () {
         Route::get('/registration/security', [AdminRegistrationSecurityController::class, 'index'])->name('admin.registration.security');
         Route::post('/registration/security', [AdminRegistrationSecurityController::class, 'store'])
             ->middleware('file.upload.security')
@@ -267,6 +398,9 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/registration/security/check-security-id', [AdminRegistrationSecurityController::class, 'checkSecurityId'])->name('admin.registration.security.check-security-id');
         Route::post('/registration/security/check-license-no', [AdminRegistrationSecurityController::class, 'checkLicenseNo'])->name('admin.registration.security.check-license-no');
         Route::post('/registration/security/check-plate-no', [AdminRegistrationSecurityController::class, 'checkPlateNo'])->name('admin.registration.security.check-plate-no');
+    });
+
+    Route::middleware('privilege:register_stakeholders')->group(function () {
         Route::get('/registration/stakeholder', [StakeholderController::class, 'index'])->name('admin.registration.stakeholder');
         Route::post('/registration/stakeholder', [StakeholderController::class, 'store'])
             ->middleware('file.upload.security')
@@ -276,8 +410,8 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/registration/stakeholder/check-plate-no', [StakeholderController::class, 'checkPlateNo'])->name('admin.registration.stakeholder.check-plate-no');
     });
 
-    // Registration Routes - SAS/DRRM Admin (Reporters)
-    Route::middleware(['sas.drrm.admin'])->group(function () {
+    // Registration Routes - Reporters
+    Route::middleware('privilege:register_reporters')->group(function () {
         Route::get('/registration/reporter', [ReporterController::class, 'index'])->name('admin.registration.reporter');
         Route::post('/registration/reporter', [ReporterController::class, 'store'])
             ->name('admin.registration.reporter.store');
@@ -292,8 +426,8 @@ Route::middleware(['auth', 'user.type:global_administrator,administrator'])->gro
         Route::post('/registration/administrator/check-email', [AdministratorController::class, 'checkEmail'])->name('admin.registration.administrator.check-email');
     });
 
-    // Patrol History Routes (Security Admin & Global Admin only)
-    Route::middleware(['patrol.monitor'])->group(function () {
+    // Patrol History Routes - Privilege-based
+    Route::middleware('privilege:view_patrol_monitor')->group(function () {
         Route::get('/patrol-history', [PatrolHistoryController::class, 'index'])->name('admin.patrol-history');
         Route::get('/patrol-history/export', [PatrolHistoryController::class, 'export'])->name('admin.patrol-history.export');
     });
@@ -320,7 +454,7 @@ Route::middleware(['auth', 'user.type:reporter,security'])->group(function () {
 
 // Security-only Routes
 Route::middleware(['auth', 'user.type:security'])->group(function () {
-    Route::get('/my-vehicles', [MyVehiclesController::class, 'index'])->name('reporter.my-vehicles');
+    // My vehicles route is now handled by the consolidated route above
 
     // Patrol Routes
     Route::get('/security/patrol-scanner', [PatrolCheckinController::class, 'scanner'])->name('security.patrol-scanner');

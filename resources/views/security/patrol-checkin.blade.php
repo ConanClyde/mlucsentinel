@@ -53,6 +53,12 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Check In</h2>
             
+            @if(config('app.debug'))
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                <strong>Debug Info:</strong> Form will submit to: <code>{{ route('security.patrol-checkin.store') }}</code>
+            </div>
+            @endif
+            
             <form method="POST" action="{{ route('security.patrol-checkin.store') }}" id="checkinForm">
                 @csrf
                 <input type="hidden" name="map_location_id" value="{{ $location->id }}">
@@ -123,3 +129,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkinForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitting...');
+            console.log('Action URL:', form.action);
+            console.log('Method:', form.method);
+            console.log('CSRF Token:', document.querySelector('input[name="_token"]')?.value ? 'Present' : 'Missing');
+            console.log('Location ID:', document.querySelector('input[name="map_location_id"]')?.value);
+        });
+    }
+});
+</script>
+@endpush

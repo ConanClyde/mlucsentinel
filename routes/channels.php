@@ -204,3 +204,23 @@ Broadcast::channel('map-location-types', function ($user) {
 
     return false;
 });
+
+Broadcast::channel('notifications.user.{id}', function ($user, $id) {
+    // Users can only listen to their own notifications
+    return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('stickers', function ($user) {
+    // Only administrators can listen to sticker updates
+    $userType = $user->user_type->value ?? $user->user_type;
+
+    if ($userType === 'global_administrator') {
+        return true;
+    }
+
+    if ($userType === 'administrator') {
+        return true;
+    }
+
+    return false;
+});

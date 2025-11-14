@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\AdminRole;
 use App\Services\StaticDataCacheService;
+use Illuminate\Support\Facades\Cache;
 
 class AdminRoleObserver
 {
@@ -12,7 +13,7 @@ class AdminRoleObserver
      */
     public function created(AdminRole $adminRole): void
     {
-        StaticDataCacheService::clearCacheByModel('AdminRole');
+        $this->clearCache($adminRole);
     }
 
     /**
@@ -20,7 +21,7 @@ class AdminRoleObserver
      */
     public function updated(AdminRole $adminRole): void
     {
-        StaticDataCacheService::clearCacheByModel('AdminRole');
+        $this->clearCache($adminRole);
     }
 
     /**
@@ -28,7 +29,7 @@ class AdminRoleObserver
      */
     public function deleted(AdminRole $adminRole): void
     {
-        StaticDataCacheService::clearCacheByModel('AdminRole');
+        $this->clearCache($adminRole);
     }
 
     /**
@@ -36,7 +37,7 @@ class AdminRoleObserver
      */
     public function restored(AdminRole $adminRole): void
     {
-        StaticDataCacheService::clearCacheByModel('AdminRole');
+        $this->clearCache($adminRole);
     }
 
     /**
@@ -44,6 +45,24 @@ class AdminRoleObserver
      */
     public function forceDeleted(AdminRole $adminRole): void
     {
+        $this->clearCache($adminRole);
+    }
+
+    /**
+     * Clear all caches related to the admin role.
+     */
+    protected function clearCache(AdminRole $adminRole): void
+    {
+        // Clear static data cache
         StaticDataCacheService::clearCacheByModel('AdminRole');
+
+        // Clear privilege caches for this specific role
+        Cache::forget("admin_role_{$adminRole->id}_privileges");
+
+        // Clear all privilege check caches for this role
+        $privileges = \App\Models\Privilege::pluck('name');
+        foreach ($privileges as $privilege) {
+            Cache::forget("admin_role_{$adminRole->id}_privilege_{$privilege}");
+        }
     }
 }

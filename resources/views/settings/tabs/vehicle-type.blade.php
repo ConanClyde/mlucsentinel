@@ -27,7 +27,10 @@
             </thead>
             <tbody id="vehicle-type-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                 @forelse($vehicleTypes as $vehicleType)
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-vehicle-type-id="{{ $vehicleType->id }}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" 
+                    data-vehicle-type-id="{{ $vehicleType->id }}"
+                    data-vehicle-type-name="{{ $vehicleType->name }}"
+                    data-vehicle-type-requires-plate="{{ $vehicleType->requires_plate ? '1' : '0' }}">
                     <td class="px-4 py-3">
                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $vehicleType->name }}</span>
                     </td>

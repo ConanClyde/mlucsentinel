@@ -22,7 +22,11 @@
             </thead>
             <tbody id="fees-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                 @forelse($fees as $fee)
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-fee-id="{{ $fee->id }}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" 
+                    data-fee-id="{{ $fee->id }}"
+                    data-fee-display-name="{{ $fee->display_name }}"
+                    data-fee-description="{{ $fee->description }}"
+                    data-fee-amount="{{ $fee->amount }}">
                     <td class="px-4 py-3">
                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $fee->display_name }}</span>
                     </td>
@@ -34,7 +38,7 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-center gap-2">
-                            <button onclick="editFee({{ $fee->id }})" class="btn-edit" title="Edit Fee">
+                            <button onclick="openEditFeeModal({{ $fee->id }})" class="btn-edit" title="Edit Fee">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>

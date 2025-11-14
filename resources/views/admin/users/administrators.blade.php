@@ -42,6 +42,47 @@
         </div>
     </div>
 
+    <!-- Bulk Actions Bar -->
+    <div id="bulk-actions-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#1a1a1a] px-6 py-4">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 pr-4 border-r border-[#e3e3e0] dark:border-[#3E3E3A]">
+                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                        <span id="selected-count">0</span> selected
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearSelection()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button onclick="bulkActivate()" class="btn btn-success !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Activate</span>
+                </button>
+                <button onclick="bulkDeactivate()" class="btn btn-warning !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Deactivate</span>
+                </button>
+                <button onclick="confirmBulkDelete()" class="btn btn-danger !inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Administrators Table -->
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
@@ -68,6 +109,11 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_administrators', 'delete_administrators']))
+                        <th class="text-center py-2 px-3 w-12">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        </th>
+                        @endif
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Name</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Email</th>
                         <th class="text-left py-2 px-3 text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Role</th>
@@ -78,7 +124,12 @@
                 </thead>
                 <tbody id="administratorsTableBody">
                     @forelse($administrators as $administrator)
-                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $administrator->id }}">
+                    <tr class="border-b border-[#e3e3e0] dark:border-[#3E3E3A] hover:bg-gray-50 dark:hover:bg-[#161615]" data-id="{{ $administrator->user_id }}">
+                        @if(Auth::user()->hasAnyPrivilege(['edit_administrators', 'delete_administrators']))
+                        <td class="text-center py-2 px-3">
+                            <input type="checkbox" class="row-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" value="{{ $administrator->user_id }}" onchange="updateBulkActions()">
+                        </td>
+                        @endif
                         <td class="py-2 px-3">
                             <div class="flex items-center">
                                 @php
@@ -127,7 +178,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
+                        <td colspan="{{ Auth::user()->hasAnyPrivilege(['edit_administrators', 'delete_administrators']) ? '7' : '6' }}" class="py-8 px-4 text-center text-[#706f6c] dark:text-[#A1A09A]">
                             No administrators found.
                         </td>
                     </tr>
@@ -250,6 +301,63 @@
         <div class="modal-footer">
             <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
             <button onclick="confirmDeleteAdministrator()" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Activate Confirmation Modal -->
+<div id="bulkActivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkActivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-check-circle class="modal-icon-success" />
+                Activate Administrators
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkActivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkActivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkActivate()" class="btn btn-success">Activate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Deactivate Confirmation Modal -->
+<div id="bulkDeactivateModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeactivateModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-warning" />
+                Deactivate Administrators
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeactivateMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeactivateModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDeactivate()" class="btn btn-warning">Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulkDeleteModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeBulkDeleteModal()">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title text-[#1b1b18] dark:text-[#EDEDEC] flex items-center gap-2">
+                <x-heroicon-o-exclamation-triangle class="modal-icon-error" />
+                Delete Administrators
+            </h2>
+        </div>
+        <div class="modal-body">
+            <p id="bulkDeleteMessage" class="text-[#1b1b18] dark:text-[#EDEDEC]"></p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeBulkDeleteModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="executeBulkDelete()" class="btn btn-danger">Delete</button>
         </div>
     </div>
 </div>
@@ -802,6 +910,229 @@ window.addEventListener('beforeunload', function() {
         realtimeManager.disconnect();
     }
 });
+
+// Bulk Operations Functions
+function toggleSelectAll(checkbox) {
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    rowCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const count = selected.length;
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (count > 0) {
+        bulkBar.classList.remove('hidden');
+        countSpan.textContent = count;
+    } else {
+        bulkBar.classList.add('hidden');
+    }
+    
+    const selectAll = document.getElementById('select-all');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    if (selectAll) {
+        selectAll.checked = allCheckboxes.length > 0 && selected.length === allCheckboxes.length;
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox, #select-all').forEach(cb => cb.checked = false);
+    updateBulkActions();
+}
+
+function getSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+function bulkActivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one administrator');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to activate 1 administrator?'
+        : `Are you sure you want to activate ${count} administrators?`;
+    
+    document.getElementById('bulkActivateMessage').textContent = message;
+    document.getElementById('bulkActivateModal').classList.remove('hidden');
+}
+
+function closeBulkActivateModal() {
+    document.getElementById('bulkActivateModal').classList.add('hidden');
+}
+
+function executeBulkActivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: true,
+            user_type: 'administrator'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkActivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error activating administrators');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error activating administrators');
+    });
+}
+
+function bulkDeactivate() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one administrator');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to deactivate 1 administrator?'
+        : `Are you sure you want to deactivate ${count} administrators?`;
+    
+    document.getElementById('bulkDeactivateMessage').textContent = message;
+    document.getElementById('bulkDeactivateModal').classList.remove('hidden');
+}
+
+function closeBulkDeactivateModal() {
+    document.getElementById('bulkDeactivateModal').classList.add('hidden');
+}
+
+function executeBulkDeactivate() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            is_active: false,
+            user_type: 'administrator'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeactivateModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deactivating administrators');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deactivating administrators');
+    });
+}
+
+function confirmBulkDelete() {
+    const selected = getSelectedUserIds();
+    if (selected.length === 0) {
+        alert('Please select at least one administrator');
+        return;
+    }
+    
+    const count = selected.length;
+    const message = count === 1 
+        ? 'Are you sure you want to delete 1 administrator? This action cannot be undone.'
+        : `Are you sure you want to delete ${count} administrators? This action cannot be undone.`;
+    
+    document.getElementById('bulkDeleteMessage').textContent = message;
+    document.getElementById('bulkDeleteModal').classList.remove('hidden');
+}
+
+function closeBulkDeleteModal() {
+    document.getElementById('bulkDeleteModal').classList.add('hidden');
+}
+
+function executeBulkDelete() {
+    const selected = getSelectedUserIds();
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    bulkBar.style.opacity = '0.6';
+    bulkBar.style.pointerEvents = 'none';
+    
+    fetch('/api/bulk/users/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            user_ids: selected,
+            user_type: 'administrator'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        closeBulkDeleteModal();
+        clearSelection();
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deleting administrators');
+        }
+    })
+    .catch(error => {
+        bulkBar.style.opacity = '1';
+        bulkBar.style.pointerEvents = 'auto';
+        console.error('Error:', error);
+        alert('Error deleting administrators');
+    });
+}
+
+// Expose bulk operation functions
+window.toggleSelectAll = toggleSelectAll;
+window.updateBulkActions = updateBulkActions;
+window.clearSelection = clearSelection;
+window.bulkActivate = bulkActivate;
+window.bulkDeactivate = bulkDeactivate;
+window.confirmBulkDelete = confirmBulkDelete;
+window.closeBulkActivateModal = closeBulkActivateModal;
+window.closeBulkDeactivateModal = closeBulkDeactivateModal;
+window.closeBulkDeleteModal = closeBulkDeleteModal;
+window.executeBulkActivate = executeBulkActivate;
+window.executeBulkDeactivate = executeBulkDeactivate;
+window.executeBulkDelete = executeBulkDelete;
 </script>
 
 <style>

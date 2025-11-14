@@ -223,4 +223,91 @@ class User extends Authenticatable
     {
         return $this->hasMany(ActivityLog::class);
     }
+
+    /**
+     * Check if the user has a specific privilege.
+     */
+    public function hasPrivilege(string $privilege): bool
+    {
+        // Global administrators can do everything
+        if ($this->isGlobalAdministrator()) {
+            return true;
+        }
+
+        // Basic settings privileges are available to all authenticated users
+        $basicSettingsPrivileges = [
+            'view_settings_appearance',
+            'view_settings_notifications',
+            'view_settings_security',
+        ];
+
+        if (in_array($privilege, $basicSettingsPrivileges)) {
+            return true; // All authenticated users can access these settings
+        }
+
+        // Check if user is an administrator with the privilege
+        if ($this->user_type === UserType::Administrator && $this->administrator) {
+            $role = $this->administrator->adminRole;
+
+            if ($role && $role->is_active) {
+                return $role->hasPrivilege($privilege);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has any of the given privileges.
+     */
+    public function hasAnyPrivilege(array $privileges): bool
+    {
+        foreach ($privileges as $privilege) {
+            if ($this->hasPrivilege($privilege)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has all of the given privileges.
+     */
+    public function hasAllPrivileges(array $privileges): bool
+    {
+        foreach ($privileges as $privilege) {
+            if (! $this->hasPrivilege($privilege)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the user can report a specific user type.
+     */
+    public function canReportUserType(string $userType): bool
+    {
+        // Check if user is a reporter
+        if (! $this->reporter) {
+            return false;
+        }
+
+        return $this->reporter->canReportUserType($userType);
+    }
+
+    /**
+     * Check if the user can report another user.
+     */
+    public function canReportUser(User $targetUser): bool
+    {
+        // Check if user is a reporter
+        if (! $this->reporter) {
+            return false;
+        }
+
+        return $this->reporter->canReportUser($targetUser);
+    }
 }

@@ -82,8 +82,8 @@
             </div>
             
             <!-- Main Heading -->
-            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 leading-tight">
-                Campus parking that<br class="hidden sm:block">works like a <span class="text-blue-600 dark:text-blue-500">Sentinel</span>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6 leading-tight" style="word-break: break-word;">
+                Campus parking that<span class="sm:hidden"> </span><br class="hidden sm:block">works like a <span class="text-blue-600 dark:text-blue-500">Sentinel</span>
             </h1>
             
             <!-- Subheading -->
@@ -93,7 +93,7 @@
             
             <!-- CTA Buttons -->
             <div class="flex justify-center gap-4 flex-wrap mb-6">
-                <a href="{{ route('login') }}" class="inline-flex items-center gap-2 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] font-semibold text-base px-8 py-3.5 rounded-lg hover:bg-[#2a2a2a] dark:hover:bg-gray-100 transition-colors duration-200">
+                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] font-semibold text-base px-8 py-3.5 rounded-lg hover:bg-[#2a2a2a] dark:hover:bg-gray-100 transition-colors duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
@@ -101,7 +101,7 @@
                 </a>
             </div>
             
-            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Account creation is handled by campus administrators</p>
+            <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Join MLUC Sentinel as a student, staff member, stakeholder, or security personnel and start managing your campus parking digitally</p>
             
             <!-- Real-Time Statistics Showcase -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">
@@ -204,8 +204,8 @@
                 </div>
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="text-center md:text-left">
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Parking Permits</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Administrators register your vehicle and issue digital parking permits with QR-enabled stickers, replacing traditional paper-based parking passes.</p>
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Easy Account Creation</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Create your MLUC Sentinel account quickly and easily. Join the digital parking management system and access all campus parking services online.</p>
                     </div>
                     <div class="text-center md:text-left">
                         <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Color-Coded Parking Stickers</h4>
@@ -216,8 +216,8 @@
                         <p class="text-[#706f6c] dark:text-[#A1A09A]">Each parking sticker includes a unique QR code linking to your vehicle registration for quick verification and streamlined violation reporting.</p>
                     </div>
                     <div class="text-center md:text-left">
-                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Simplified Parking Registration</h4>
-                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Complete parking registration through campus administration, receive your parking permit sticker, and display it on your vehicle—hassle-free campus parking access.</p>
+                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Digital Parking Management</h4>
+                        <p class="text-[#706f6c] dark:text-[#A1A09A]">Once registered, visit campus administration to register your vehicle, receive your parking permit sticker, and enjoy hassle-free digital campus parking management.</p>
                     </div>
                 </div>
             </div>
@@ -302,15 +302,15 @@
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">1</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Register for Parking</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Administrators register vehicles for students, staff, security, and stakeholders through the online portal, creating digital parking records with license and program details.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Create Your Account</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Click "Get Started" to create your MLUC Sentinel account. Provide your basic information and join the digital parking management system.</p>
                 </div>
                 <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
                         <span class="text-2xl font-bold text-white dark:text-[#1b1b18]">2</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Receive Parking Permit</h3>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">System automatically generates color-coded QR-enabled parking stickers. Marketing admins process permit fees and distribute parking permits to vehicle owners.</p>
+                    <h3 class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Register Your Vehicle</h3>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">Visit campus administration to register your vehicle and receive your color-coded QR-enabled parking sticker with unique identification.</p>
                 </div>
                 <div class="text-center flex flex-col">
                     <div class="w-16 h-16 bg-[#1b1b18] dark:bg-[#eeeeec] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -342,7 +342,7 @@
             <div class="max-w-3xl mx-auto space-y-4">
                 <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">
                     <summary class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] cursor-pointer">How do I get access to MLUC Sentinel?</summary>
-                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Account creation is handled by campus administrators. Please contact your department administrator or the campus IT office to request access to the system.</p>
+                    <p class="mt-4 text-[#706f6c] dark:text-[#A1A09A]">Click "Get Started" to submit your registration. Select your user type (Student, Staff, Stakeholder, or Security) and optionally provide vehicle information. Your registration will be reviewed by an administrator before your account is activated.</p>
                 </details>
                 
                 <details class="bg-white dark:bg-[#1b1b18] rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 hover:shadow-md transition-shadow">

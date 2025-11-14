@@ -205,7 +205,7 @@
         </div>
         <div class="modal-body">
             <p id="successMessage">Your report has been submitted and assigned to the appropriate administrator.</p>
-            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div id="assignedToContainer" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p class="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Assigned to:</strong> <span id="assignedToRole"></span>
                 </p>
@@ -379,8 +379,17 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show success modal with assigned role
-            document.getElementById('assignedToRole').textContent = data.assigned_to_role;
+            // Show success modal; assigned role section is optional
+            const assignedEl = document.getElementById('assignedToRole');
+            const assignedContainer = document.getElementById('assignedToContainer');
+            if (assignedContainer) {
+                if (data.assigned_to_role) {
+                    if (assignedEl) assignedEl.textContent = data.assigned_to_role;
+                    assignedContainer.classList.remove('hidden');
+                } else {
+                    assignedContainer.classList.add('hidden');
+                }
+            }
             showSuccessModal();
         } else {
             alert(data.message || 'Failed to submit report');

@@ -64,7 +64,7 @@
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage your vehicles</p>
                     </div>
                 </div>
-                <a href="{{ route('reporter.my-vehicles') }}" class="btn bg-green-600 hover:bg-green-700 text-white border-green-600 w-full text-center">
+                <a href="{{ route('user.vehicles') }}" class="btn bg-green-600 hover:bg-green-700 text-white border-green-600 w-full text-center">
                     Manage Vehicles
                 </a>
             </div>

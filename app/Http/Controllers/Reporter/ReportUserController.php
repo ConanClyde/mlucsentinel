@@ -12,14 +12,17 @@ use App\Models\Report;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\StaticDataCacheService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ReportUserController extends Controller
 {
     /**
      * Show the report user page with QR scan and manual entry options.
      */
-    public function index()
+    public function index(): View
     {
         return view('reporter.report-user', [
             'pageTitle' => 'Report User',
@@ -29,20 +32,16 @@ class ReportUserController extends Controller
     /**
      * Show the report form for a specific vehicle.
      */
-    public function showReportForm($vehicleId)
+    public function showReportForm($vehicleId): View|RedirectResponse
     {
         $user = auth()->user();
         $vehicle = Vehicle::with(['user', 'type'])->findOrFail($vehicleId);
 
-        // Check if SBO is trying to report a non-student vehicle
-        if ($user->user_type === UserType::Reporter && $user->reporter) {
-            $reporterType = $user->reporter->reporterType->name ?? '';
-
-            if ($reporterType === 'SBO' && $vehicle->user->user_type !== UserType::Student) {
-                return redirect()
-                    ->route('reporter.report-user')
-                    ->with('error', 'SBO can only report student vehicles.');
-            }
+        // Check if reporter has permission to report this user type
+        if (! $user->canReportUser($vehicle->user)) {
+            return redirect()
+                ->route('reporter.report-user')
+                ->with('error', 'You are not authorized to report this user type.');
         }
 
         $violationTypes = StaticDataCacheService::getViolationTypes();
@@ -59,24 +58,23 @@ class ReportUserController extends Controller
     /**
      * Search for vehicle by sticker number and color or plate number.
      */
-    public function searchVehicle(Request $request)
+    public function searchVehicle(Request $request): JsonResponse
     {
         $user = auth()->user();
         $query = Vehicle::with(['user', 'type']);
 
-        // Apply role-based filtering
-        if ($user->user_type === UserType::Reporter && $user->reporter) {
-            $reporterType = $user->reporter->reporterType->name ?? '';
+        // Apply role-based filtering based on reporter role permissions
+        if ($user->reporter && $user->reporter->reporterRole) {
+            $allowedUserTypes = $user->reporter->reporterRole->getAllowedUserTypes();
 
-            // SBO can only report students
-            if ($reporterType === 'SBO') {
-                $query->whereHas('user', function ($q) {
-                    $q->where('user_type', 'student');
+            // Filter vehicles to only show those the reporter can report
+            if (! empty($allowedUserTypes)) {
+                $query->whereHas('user', function ($q) use ($allowedUserTypes) {
+                    $q->whereIn('user_type', $allowedUserTypes);
                 });
             }
-            // Other reporter types can report all users with vehicles
         }
-        // Security can report all users with vehicles (no additional filtering)
+        // If no reporter role, allow all (for security or backward compatibility)
 
         if ($request->has('plate_no') && $request->plate_no) {
             $vehicle = $query->where('plate_no', $request->plate_no)->first();
@@ -89,6 +87,14 @@ class ReportUserController extends Controller
         }
 
         if ($vehicle) {
+            // Double-check authorization before returning vehicle
+            if (! $user->canReportUser($vehicle->user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to report this user type.',
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'vehicle_id' => $vehicle->id,
@@ -96,38 +102,25 @@ class ReportUserController extends Controller
             ]);
         }
 
-        $user = auth()->user();
-        $isSBO = $user->user_type === UserType::Reporter &&
-                 $user->reporter &&
-                 ($user->reporter->reporterType->name ?? '') === 'SBO';
-
-        $message = $isSBO
-            ? 'Student vehicle not found. SBO can only report student vehicles.'
-            : 'Vehicle not found';
-
-        return response()->json(['success' => false, 'message' => $message]);
+        return response()->json(['success' => false, 'message' => 'Vehicle not found']);
     }
 
     /**
      * Store a new report.
      */
-    public function store(StoreReportRequest $request)
+    public function store(StoreReportRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         $vehicle = Vehicle::with('user')->findOrFail($request->vehicle_id);
         $user = auth()->user();
 
-        // Check if SBO is trying to report a non-student vehicle (extra validation)
-        if ($user->user_type === UserType::Reporter && $user->reporter) {
-            $reporterType = $user->reporter->reporterType->name ?? '';
-
-            if ($reporterType === 'SBO' && $vehicle->user->user_type !== UserType::Student) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'SBO can only report student vehicles.',
-                ], 403);
-            }
+        // Check if reporter has permission to report this user (extra validation)
+        if (! $user->canReportUser($vehicle->user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to report this user type.',
+            ], 403);
         }
 
         // Handle evidence image upload (store without optimization to avoid GD dependency)
@@ -161,138 +154,59 @@ class ReportUserController extends Controller
         // Broadcast the report creation event for real-time updates
         broadcast(new ReportCreated($report))->toOthers();
 
-        // Send notifications based on violator type
+        // Send notifications based on admin role report targets (configured under Admin Roles)
         $violatorName = "{$vehicle->user->first_name} {$vehicle->user->last_name}";
         $reporterName = "{$user->first_name} {$user->last_name}";
         $violationType = $report->violationType->name ?? 'Unknown';
         $violatorType = $vehicle->user->user_type->label();
+        $violatorTypeValue = $vehicle->user->user_type->value; // e.g., 'student', 'staff'
 
-        // Get Global Administrator (always notified)
-        $globalAdmin = User::where('user_type', UserType::GlobalAdministrator)->first();
+        // Collect recipients
+        $recipients = collect();
 
-        if ($vehicle->user->user_type === UserType::Student) {
-            // Get SAS Administrator for student violations
-            $sasAdmin = User::where('user_type', UserType::Administrator)
-                ->whereHas('administrator.adminRole', function ($query) {
-                    $query->where('name', 'SAS (Student Affairs & Services)');
-                })
-                ->first();
+        // Always include Global Administrator(s)
+        $globalAdmins = User::where('user_type', UserType::GlobalAdministrator)->get();
+        $recipients = $recipients->merge($globalAdmins);
 
-            // Notify Global Admin
-            if ($globalAdmin) {
-                $notification = Notification::create([
-                    'user_id' => $globalAdmin->id,
-                    'type' => 'report_created',
-                    'title' => 'New Student Violation Report',
-                    'message' => "A new violation report has been submitted by {$reporterName} against student {$violatorName} for {$violationType}.",
-                    'data' => [
-                        'report_id' => $report->id,
-                        'violator_name' => $violatorName,
-                        'reporter_name' => $reporterName,
-                        'violation_type' => $violationType,
-                        'violator_type' => $violatorType,
-                    ],
-                    'is_read' => false,
-                ]);
-                broadcast(new NotificationCreated($notification));
+        // Include Administrators whose role wants notifications for this violator user type
+        $adminUsers = User::where('user_type', UserType::Administrator)
+            ->whereHas('administrator.adminRole', function ($q) {
+                $q->where('is_active', true);
+            })->with(['administrator.adminRole'])->get();
+
+        foreach ($adminUsers as $admin) {
+            $role = $admin->administrator->adminRole ?? null;
+            if ($role && $role->wantsReportFor($violatorTypeValue)) {
+                $recipients->push($admin);
             }
+        }
 
-            // Notify SAS Admin
-            if ($sasAdmin) {
-                $notification = Notification::create([
-                    'user_id' => $sasAdmin->id,
-                    'type' => 'report_created',
-                    'title' => 'New Student Violation Report',
-                    'message' => "A new violation report has been submitted by {$reporterName} against student {$violatorName} for {$violationType}.",
-                    'data' => [
-                        'report_id' => $report->id,
-                        'violator_name' => $violatorName,
-                        'reporter_name' => $reporterName,
-                        'violation_type' => $violationType,
-                        'violator_type' => $violatorType,
-                    ],
-                    'is_read' => false,
-                ]);
-                broadcast(new NotificationCreated($notification));
-            }
-        } else {
-            // Get Chancellor Administrator for non-student violations
-            $chancellorAdmin = User::where('user_type', UserType::Administrator)
-                ->whereHas('administrator.adminRole', function ($query) {
-                    $query->where('name', 'Chancellor');
-                })
-                ->first();
+        // De-duplicate recipients by user ID
+        $recipients = $recipients->unique('id');
 
-            // Get Security Administrator for non-student violations
-            $securityAdmin = User::where('user_type', UserType::Administrator)
-                ->whereHas('administrator.adminRole', function ($query) {
-                    $query->where('name', 'Security');
-                })
-                ->first();
-
-            // Notify Global Admin
-            if ($globalAdmin) {
-                $notification = Notification::create([
-                    'user_id' => $globalAdmin->id,
-                    'type' => 'report_created',
-                    'title' => 'New Violation Report',
-                    'message' => "A new violation report has been submitted by {$reporterName} against {$violatorType} {$violatorName} for {$violationType}.",
-                    'data' => [
-                        'report_id' => $report->id,
-                        'violator_name' => $violatorName,
-                        'reporter_name' => $reporterName,
-                        'violation_type' => $violationType,
-                        'violator_type' => $violatorType,
-                    ],
-                    'is_read' => false,
-                ]);
-                broadcast(new NotificationCreated($notification));
-            }
-
-            // Notify Chancellor Admin
-            if ($chancellorAdmin) {
-                $notification = Notification::create([
-                    'user_id' => $chancellorAdmin->id,
-                    'type' => 'report_created',
-                    'title' => 'New Violation Report',
-                    'message' => "A new violation report has been submitted by {$reporterName} against {$violatorType} {$violatorName} for {$violationType}.",
-                    'data' => [
-                        'report_id' => $report->id,
-                        'violator_name' => $violatorName,
-                        'reporter_name' => $reporterName,
-                        'violation_type' => $violationType,
-                        'violator_type' => $violatorType,
-                    ],
-                    'is_read' => false,
-                ]);
-                broadcast(new NotificationCreated($notification));
-            }
-
-            // Notify Security Admin
-            if ($securityAdmin) {
-                $notification = Notification::create([
-                    'user_id' => $securityAdmin->id,
-                    'type' => 'report_created',
-                    'title' => 'New Violation Report',
-                    'message' => "A new violation report has been submitted by {$reporterName} against {$violatorType} {$violatorName} for {$violationType}.",
-                    'data' => [
-                        'report_id' => $report->id,
-                        'violator_name' => $violatorName,
-                        'reporter_name' => $reporterName,
-                        'violation_type' => $violationType,
-                        'violator_type' => $violatorType,
-                    ],
-                    'is_read' => false,
-                ]);
-                broadcast(new NotificationCreated($notification));
-            }
+        // Create and broadcast notifications
+        foreach ($recipients as $recipient) {
+            $notification = Notification::create([
+                'user_id' => $recipient->id,
+                'type' => 'report_created',
+                'title' => 'New Violation Report',
+                'message' => "A new violation report has been submitted by {$reporterName} against {$violatorType} {$violatorName} for {$violationType}.",
+                'data' => [
+                    'report_id' => $report->id,
+                    'violator_name' => $violatorName,
+                    'reporter_name' => $reporterName,
+                    'violation_type' => $violationType,
+                    'violator_type' => $violatorType,
+                ],
+                'is_read' => false,
+            ]);
+            broadcast(new NotificationCreated($notification));
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Report submitted successfully',
             'report_id' => $report->id,
-            'assigned_to_role' => $vehicle->user->user_type === UserType::Student ? 'SAS Admin' : 'Chancellor Admin',
         ]);
     }
 }

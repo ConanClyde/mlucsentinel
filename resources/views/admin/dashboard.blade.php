@@ -13,11 +13,14 @@
         </div>
         
         <div>
+            @if(Auth::user()->hasPrivilege('export_dashboard'))
             <a href="{{ route('admin.dashboard.export') }}" class="btn btn-csv">CSV</a>
+            @endif
         </div>
     </div>
 
     <!-- Dashboard Stats Cards -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_stats'))
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <!-- Total Users Card -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
@@ -71,10 +74,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <!-- Additional Stats Row (Revenue, Payments, etc.) - Only for Global Admin & Marketing Admin -->
-    @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator || 
-        (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->isMarketingAdmin()))
+    <!-- Additional Stats Row (Revenue, Payments, etc.) -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_revenue'))
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <!-- Total Revenue Card -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
@@ -130,18 +133,8 @@
     </div>
     @endif
 
-    <!-- Patrol Statistics (Global Admin & Security Admin only) -->
-    @php
-        $canViewPatrolStats = false;
-        if (Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator) {
-            $canViewPatrolStats = true;
-        } elseif (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator) {
-            $adminRole = Auth::user()->administrator->adminRole->name ?? '';
-            $canViewPatrolStats = ($adminRole === 'Security');
-        }
-    @endphp
-
-    @if($canViewPatrolStats)
+    <!-- Patrol Statistics -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_patrol'))
     <div>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <h2 class="text-lg md:text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Patrol Statistics (Last 24 Hours)</h2>
@@ -222,8 +215,8 @@
     </div>
     @endif
 
-    <!-- Patrol Coverage Widget (Global Admin & Security Admin only) -->
-    @if($canViewPatrolStats)
+    <!-- Patrol Coverage Widget -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_patrol'))
     <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <h2 class="text-lg md:text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Patrol Coverage (Last 7 Days)</h2>
@@ -265,6 +258,7 @@
     @endif
 
     <!-- Charts Section -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_analytics'))
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Violations Per Day Chart -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
@@ -302,8 +296,10 @@
             <div class="hidden mt-2 text-sm text-red-600 dark:text-red-400" data-error="vehicleTypes"></div>
         </div>
     </div>
+    @endif
 
     <!-- Most Common Violations & Active Users Row -->
+    @if(Auth::user()->hasPrivilege('view_dashboard_analytics'))
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Most Common Violations Widget (All Admins) -->
         <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
@@ -368,10 +364,12 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Heatmap and Analytics Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Violation Heatmap (2/3 width) - Visible to all administrators -->
+        <!-- Violation Heatmap (2/3 width) -->
+        @if(Auth::user()->hasPrivilege('view_dashboard_heatmap'))
         <div class="lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
@@ -418,8 +416,7 @@
                     <!-- Campus Map Image -->
                     <img id="heatmap-map" src="{{ asset('images/campus-map.svg') }}" alt="Campus Map" 
                          class="block w-full h-auto select-none" 
-                         draggable="false"
-                         onload="initializeHeatmapDimensions()">
+                         draggable="false">
 
                     <!-- Heatmap Overlay -->
                     <svg class="absolute inset-0 w-full h-full" id="heatmap-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -436,8 +433,10 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Analytics Sidebar (1/3 width) -->
+        @if(Auth::user()->hasPrivilege('view_dashboard_analytics'))
         <div class="lg:col-span-1 space-y-6">
             <!-- Top Reporters -->
             <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6">
@@ -507,7 +506,9 @@
             </div>
             </div>
         </div>
+        @endif
     </div>
+
 
 </div>
 
@@ -519,13 +520,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize reports array for real-time updates
     window.reports = @json($reports ?? []);
 
+    // Helper function to hide skeleton loaders
+    function hideSkeleton(key) {
+        const el = document.querySelector(`[data-skeleton="${key}"]`);
+        if (el) {
+            el.classList.add('hidden');
+            console.log(`✅ Hidden skeleton: ${key}`);
+        } else {
+            console.warn(`⚠️ Skeleton not found: ${key}`);
+        }
+    }
+
+    // Helper function to show error messages
+    function showError(key, message) {
+        const err = document.querySelector(`[data-error="${key}"]`);
+        if (err) {
+            err.textContent = message || 'Failed to load.';
+            err.classList.remove('hidden');
+        }
+        hideSkeleton(key);
+    }
+
     // Violations Per Day Chart (Area Chart)
-    const violationsPerDayCtx = document.getElementById('violationsPerDayChart').getContext('2d');
+    let violationsPerDayChart;
+    const violationsPerDayChartEl = document.getElementById('violationsPerDayChart');
+    if (violationsPerDayChartEl) {
+    const violationsPerDayCtx = violationsPerDayChartEl.getContext('2d');
     const violationsPerDayData = @json($violationsPerDay);
     const violationsPerDayLabels = Object.keys(violationsPerDayData).map(date => new Date(date).toLocaleDateString());
     const violationsPerDayValues = Object.values(violationsPerDayData);
     
-    const violationsPerDayChart = new Chart(violationsPerDayCtx, {
+    violationsPerDayChart = new Chart(violationsPerDayCtx, {
         type: 'line',
         data: {
             labels: violationsPerDayLabels.length > 0 ? violationsPerDayLabels : ['No Data'],
@@ -555,16 +580,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Hide skeleton after chart is created with initial data
+    hideSkeleton('violations');
+    }
 
     // Report Status Chart (Doughnut Chart)
-    const reportStatusCtx = document.getElementById('reportStatusChart').getContext('2d');
+    let reportStatusChart;
+    const reportStatusChartEl = document.getElementById('reportStatusChart');
+    if (reportStatusChartEl) {
+    const reportStatusCtx = reportStatusChartEl.getContext('2d');
     const reportStatusData = @json($reportsByStatus ?? []);
     const reportStatusLabels = Object.keys(reportStatusData).map(status => 
         status.charAt(0).toUpperCase() + status.slice(1)
     );
     const reportStatusValues = Object.values(reportStatusData);
     
-    const reportStatusChart = new Chart(reportStatusCtx, {
+    reportStatusChart = new Chart(reportStatusCtx, {
         type: 'doughnut',
         data: {
             labels: reportStatusLabels.length > 0 ? reportStatusLabels : ['No Data'],
@@ -603,14 +635,21 @@ document.addEventListener('DOMContentLoaded', function() {
             cutout: '65%'
         }
     });
+    
+    // Hide skeleton after chart is created with initial data
+    hideSkeleton('reportStatus');
+    }
 
     // Vehicle Types Chart (Doughnut Chart - Same UI as Report Status)
-    const vehicleTypesCtx = document.getElementById('vehicleTypesChart').getContext('2d');
+    let vehicleTypesChart;
+    const vehicleTypesChartEl = document.getElementById('vehicleTypesChart');
+    if (vehicleTypesChartEl) {
+    const vehicleTypesCtx = vehicleTypesChartEl.getContext('2d');
     const vehicleTypesData = @json($vehicleTypes);
     const vehicleTypesLabels = Object.keys(vehicleTypesData);
     const vehicleTypesValues = Object.values(vehicleTypesData);
     
-    const vehicleTypesChart = new Chart(vehicleTypesCtx, {
+    vehicleTypesChart = new Chart(vehicleTypesCtx, {
         type: 'doughnut',
         data: {
             labels: vehicleTypesLabels.length > 0 ? vehicleTypesLabels : ['No Data'],
@@ -651,8 +690,14 @@ document.addEventListener('DOMContentLoaded', function() {
             cutout: '65%'
         }
     });
+    
+    // Hide skeleton after chart is created with initial data
+    hideSkeleton('vehicleTypes');
+    }
 
     // Campus Violation Heatmap - Individual Dots
+    const heatmapContainer = document.getElementById('heatmap-container');
+    if (heatmapContainer) {
     let heatmapScale = 1;
     let heatmapPanX = 0;
     let heatmapPanY = 0;
@@ -910,46 +955,58 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize heatmap
     const heatmapImg = document.getElementById('heatmap-map');
-    if (heatmapImg.complete) {
-        hideHeatmapSkeleton();
-        initializeHeatmapDimensions();
-    } else {
-        heatmapImg.addEventListener('load', function() {
+    if (heatmapImg) {
+        if (heatmapImg.complete) {
             hideHeatmapSkeleton();
             initializeHeatmapDimensions();
+        } else {
+            heatmapImg.addEventListener('load', function() {
+                hideHeatmapSkeleton();
+                initializeHeatmapDimensions();
+            });
+        }
+        // Add error handler
+        heatmapImg.addEventListener('error', function() {
+            hideHeatmapSkeleton();
+            handleHeatmapError(this);
         });
     }
-    // Add error handler
-    heatmapImg.addEventListener('error', function() {
-        hideHeatmapSkeleton();
-        handleHeatmapError(this);
-    });
     
     // Heatmap zoom and pan controls
-    document.getElementById('heatmap-zoom-in').addEventListener('click', () => {
-        heatmapScale = Math.min(3, heatmapScale + 0.2);
-        applyHeatmapTransform();
-    });
+    const zoomInBtn = document.getElementById('heatmap-zoom-in');
+    const zoomOutBtn = document.getElementById('heatmap-zoom-out');
+    const resetBtn = document.getElementById('heatmap-reset');
     
-    document.getElementById('heatmap-zoom-out').addEventListener('click', () => {
-        heatmapScale = Math.max(1, heatmapScale - 0.2);
-        applyHeatmapTransform();
-    });
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            heatmapScale = Math.min(3, heatmapScale + 0.2);
+            applyHeatmapTransform();
+        });
+    }
     
-    document.getElementById('heatmap-reset').addEventListener('click', () => {
-        heatmapScale = 1;
-        heatmapPanX = 0;
-        heatmapPanY = 0;
-        applyHeatmapTransform();
-    });
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            heatmapScale = Math.max(1, heatmapScale - 0.2);
+            applyHeatmapTransform();
+        });
+    }
+    
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            heatmapScale = 1;
+            heatmapPanX = 0;
+            heatmapPanY = 0;
+            applyHeatmapTransform();
+        });
+    }
     
     // Pan functionality
-    const heatmapContainer = document.getElementById('heatmap-container');
     const heatmapWrapper = document.getElementById('heatmap-wrapper');
     let isDragging = false;
     let dragStartX, dragStartY;
     let startPanX, startPanY;
     
+    if (heatmapContainer && heatmapWrapper) {
     heatmapContainer.addEventListener('mousedown', (e) => {
         isDragging = true;
         dragStartX = e.clientX;
@@ -1118,6 +1175,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    } // Close: if (heatmapContainer && heatmapWrapper)
+    
     function applyHeatmapTransform() {
         const container = document.getElementById('heatmap-container');
         const wrapper = document.getElementById('heatmap-wrapper');
@@ -1151,12 +1210,16 @@ document.addEventListener('DOMContentLoaded', function() {
             container.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
         }
     });
+    }
 
     // Store chart references for theme updates
     window.violationsPerDayChart = violationsPerDayChart;
     window.reportStatusChart = reportStatusChart;
     window.vehicleTypesChart = vehicleTypesChart;
-    window.dashboardCharts = [violationsPerDayChart, reportStatusChart, vehicleTypesChart];
+    window.dashboardCharts = [];
+    if (violationsPerDayChart) window.dashboardCharts.push(violationsPerDayChart);
+    if (reportStatusChart) window.dashboardCharts.push(reportStatusChart);
+    if (vehicleTypesChart) window.dashboardCharts.push(vehicleTypesChart);
     
     // Listen for real-time report updates
     if (window.Echo) {
@@ -1172,9 +1235,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update dashboard statistics (debounced)
                 scheduleStatsUpdate();
                 
-                // Update recent activity
-                updateRecentActivity(event.report);
-                
                 // Show notification
                 showReportNotification(event.report);
             });
@@ -1187,9 +1247,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchJSON(url) {
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
+        try {
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) {
+                console.error(`Failed to fetch ${url}: HTTP ${res.status}`);
+                throw new Error('HTTP ' + res.status);
+            }
+            return res.json();
+        } catch (error) {
+            console.error(`Error fetching ${url}:`, error);
+            throw error;
+        }
     }
 
     function setStat(name, value, currency = false) {
@@ -1202,20 +1270,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const num = typeof value === 'number' ? value : parseFloat(value || 0);
             el.textContent = isNaN(num) ? (value ?? '') : num.toLocaleString();
         }
-    }
-
-    function hideSkeleton(key) {
-        const el = document.querySelector(`[data-skeleton="${key}"]`);
-        if (el) el.classList.add('hidden');
-    }
-
-    function showError(key, message) {
-        const err = document.querySelector(`[data-error="${key}"]`);
-        if (err) {
-            err.textContent = message || 'Failed to load.';
-            err.classList.remove('hidden');
-        }
-        hideSkeleton(key);
     }
 
     fetchJSON('/api/metrics/overview').then(({ success, stats, reportsByStatus, vehicleTypes }) => {
@@ -1246,7 +1300,8 @@ document.addEventListener('DOMContentLoaded', function() {
             window.vehicleTypesChart.update();
             hideSkeleton('vehicleTypes');
         }
-    }).catch(() => {
+    }).catch((error) => {
+        console.error('Failed to load overview metrics:', error);
         showError('reportStatus', 'Failed to load report status.');
         showError('vehicleTypes', 'Failed to load vehicle types.');
     });
@@ -1259,7 +1314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.violationsPerDayChart.data.datasets[0].data = values.length ? values : [0];
         window.violationsPerDayChart.update();
         hideSkeleton('violations');
-    }).catch(() => {
+    }).catch((error) => {
+        console.error('Failed to load violations per day:', error);
         showError('violations', 'Failed to load violations per day.');
     });
 
@@ -1278,7 +1334,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const mvCount = data?.most_visited_location?.visit_count || 0;
         const countEl = document.querySelector('[data-stat="patrol_most_visited_count"]');
         if (countEl) countEl.textContent = mvCount.toLocaleString() + ' visits';
-    }).catch(() => {});
+    }).catch((error) => {
+        console.error('Failed to load patrol stats:', error);
+    });
 });
 
 // Function to update dashboard statistics
@@ -1295,31 +1353,6 @@ function updateDashboardStats() {
     const totalElement = document.querySelector('[data-stat="total_reports"]');
     if (totalElement) {
         totalElement.textContent = totalReports.toLocaleString();
-    }
-}
-
-// Function to update recent activity
-function updateRecentActivity(report) {
-    const activityContainer = document.querySelector('.space-y-4');
-    if (activityContainer && report) {
-        const activityItem = document.createElement('div');
-        activityItem.className = 'flex items-center space-x-4';
-        activityItem.innerHTML = `
-            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <div class="flex-1">
-                <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">New violation report submitted: ${report.violation_type ? report.violation_type.name : 'Unknown'}</p>
-                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Just now</p>
-            </div>
-        `;
-        
-        // Insert at the top
-        activityContainer.insertBefore(activityItem, activityContainer.firstChild);
-        
-        // Remove excess items (keep only 10)
-        const items = activityContainer.querySelectorAll('.flex.items-center.space-x-4');
-        if (items.length > 10) {
-            items[items.length - 1].remove();
-        }
     }
 }
 

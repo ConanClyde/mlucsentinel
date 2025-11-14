@@ -121,7 +121,7 @@ class ProgramsRealtime {
                 this.addProgram(program);
                 this.showBrowserNotification(
                     'Program Created',
-                    `${editor} added ${program.name}`,
+                    `${editor} added ${program.name || 'a program'}`,
                     program.id,
                     'created'
                 );
@@ -130,7 +130,7 @@ class ProgramsRealtime {
                 this.updateProgram(program);
                 this.showBrowserNotification(
                     'Program Updated',
-                    `${editor} updated ${program.name}`,
+                    `${editor} updated ${program.name || 'a program'}`,
                     program.id,
                     'updated'
                 );
@@ -139,7 +139,7 @@ class ProgramsRealtime {
                 this.removeProgram(program);
                 this.showBrowserNotification(
                     'Program Removed',
-                    `${editor} removed ${program.name}`,
+                    `${editor} removed ${program.name || 'a program'}`,
                     null,
                     'deleted'
                 );
@@ -189,7 +189,7 @@ class ProgramsRealtime {
      * Update an existing program row
      */
     updateProgram(program) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${program.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${program.id}"], tr[data-program-id="${program.id}"]`);
         
         if (!existingRow) {
             console.log('Program not found in table, adding instead');
@@ -221,7 +221,7 @@ class ProgramsRealtime {
      * Remove a program row from the table
      */
     removeProgram(program) {
-        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${program.id}"]`);
+        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${program.id}"], tr[data-program-id="${program.id}"]`);
         
         if (!rowToRemove) {
             console.log('Program not found in table');
@@ -252,24 +252,34 @@ class ProgramsRealtime {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 dark:hover:bg-[#161615]';
         row.setAttribute('data-id', program.id);
+        row.setAttribute('data-program-id', program.id);
+        row.dataset.programCode = program.code || '';
+        row.dataset.programName = program.name || '';
+        row.dataset.programDescription = program.description || '';
+        row.dataset.programCollegeId = program.college_id ?? (program.college ? program.college.id : '');
+        row.dataset.programCollegeName = program.college ? program.college.name : '';
+        row.dataset.programCreatedAt = program.created_at || '';
 
-        const createdDate = new Date(program.created_at).toLocaleDateString();
+        const createdDate = program.created_at ? new Date(program.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
         const collegeName = program.college ? this.escapeHtml(program.college.name) : 'N/A';
+        const description = program.description ? this.escapeHtml(program.description) : '—';
 
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(program.name)}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(program.code || '')}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(program.name || '')}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${collegeName}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${description}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button onclick="editProgram(${program.id}, '${this.escapeHtml(program.name).replace(/'/g, "\\'")}', ${program.college_id})" class="btn-edit" title="Edit">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                    <button onclick="editProgram(${program.id})" class="btn-edit" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
                     <button onclick="deleteProgram(${program.id})" class="btn-delete" title="Delete">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>
@@ -285,7 +295,7 @@ class ProgramsRealtime {
     showEmptyState() {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 No programs found. Click Add button to create one.
             </td>
         `;
@@ -343,7 +353,7 @@ class ProgramsRealtime {
      */
     escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text ?? '';
         return div.innerHTML;
     }
 

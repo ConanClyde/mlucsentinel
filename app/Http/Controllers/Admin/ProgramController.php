@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Program;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProgramController extends Controller
 {
@@ -31,9 +32,14 @@ class ProgramController extends Controller
         $validated = $request->validate([
             'college_id' => ['required', 'exists:colleges,id'],
             'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:50', 'unique:programs,code'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $program = Program::create($validated);
+        $validated['code'] = strtoupper($validated['code']);
+        $validated['description'] = $validated['description'] ?? null;
+
+        $program = Program::create($validated)->load('college');
         $program->load('college');
 
         // Get editor name
@@ -57,7 +63,12 @@ class ProgramController extends Controller
         $validated = $request->validate([
             'college_id' => ['required', 'exists:colleges,id'],
             'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:50', Rule::unique('programs', 'code')->ignore($program->id)],
+            'description' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $validated['code'] = strtoupper($validated['code']);
+        $validated['description'] = $validated['description'] ?? null;
 
         $program->update($validated);
         $program->load('college');

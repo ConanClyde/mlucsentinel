@@ -6,14 +6,30 @@
         </div>
         <form id="addCollegeForm">
             <div class="modal-body">
-                <div class="form-group">
+                <div class="form-group mb-4">
                     <label class="form-label">College Name <span class="text-red-500">*</span></label>
                     <input type="text" id="modal-college-name" class="form-input" placeholder="Enter college name" required>
+                    <p id="modal-college-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">College Code <span class="text-red-500">*</span></label>
+                    <input type="text" id="modal-college-code" class="form-input uppercase" placeholder="e.g. CGS" maxlength="20" required>
+                    <p id="modal-college-code-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">College Type</label>
+                    <input type="text" id="modal-college-type" class="form-input" placeholder="e.g. college" value="college">
+                    <p id="modal-college-type-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="modal-college-description" class="form-input" rows="3" placeholder="Brief description about the college"></textarea>
+                    <p id="modal-college-description-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeAddCollegeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="addCollege()" class="btn btn-primary">Add College</button>
+                <button type="button" id="add-college-btn" onclick="addCollege()" class="btn btn-primary" disabled>Add College</button>
             </div>
         </form>
     </div>
@@ -28,14 +44,30 @@
         <form id="editCollegeForm">
             <div class="modal-body">
                 <input type="hidden" id="edit-college-id">
-                <div class="form-group">
+                <div class="form-group mb-4">
                     <label class="form-label">College Name <span class="text-red-500">*</span></label>
                     <input type="text" id="edit-college-name" class="form-input" placeholder="Enter college name" required>
+                    <p id="edit-college-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">College Code <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-college-code" class="form-input uppercase" placeholder="e.g. CGS" maxlength="20" required>
+                    <p id="edit-college-code-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">College Type</label>
+                    <input type="text" id="edit-college-type" class="form-input" placeholder="e.g. college">
+                    <p id="edit-college-type-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="edit-college-description" class="form-input" rows="3" placeholder="Brief description about the college"></textarea>
+                    <p id="edit-college-description-error" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeEditCollegeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="updateCollege()" class="btn btn-primary">Update College</button>
+                <button type="button" id="update-college-btn" onclick="updateCollege()" class="btn btn-primary" disabled>Update College</button>
             </div>
         </form>
     </div>

@@ -135,17 +135,7 @@
                         <td class="py-2 px-3">
                             <div class="flex items-center gap-2">
                                 @php
-                                    $colorMap = [
-                                        'blue' => '#007BFF',
-                                        'green' => '#28A745',
-                                        'yellow' => '#FFC107',
-                                        'pink' => '#E83E8C',
-                                        'orange' => '#FD7E14',
-                                        'maroon' => '#800000',
-                                        'white' => '#FFFFFF',
-                                        'black' => '#000000',
-                                    ];
-                                    $bgColor = $colorMap[$vehicle->color] ?? '#000000';
+                                    $bgColor = ($stickerPalette[$vehicle->color] ?? '#000000');
                                 @endphp
                                 <div class="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" style="background-color: {{ $bgColor }}"></div>
                                 <span class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">{{ $vehicle->number }}</span>
@@ -269,5 +259,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
 });
+
+// Export to CSV function
+function exportToCSV() {
+    if (!vehicles || vehicles.length === 0) {
+        alert('No vehicles to export');
+        return;
+    }
+
+    const headers = ['Owner Name', 'Owner Email', 'User Type', 'Vehicle Type', 'Plate Number', 'Sticker Number', 'Color', 'Status', 'Created Date'];
+    const rows = vehicles.map(vehicle => {
+        const ownerName = vehicle.user ? `${vehicle.user.first_name} ${vehicle.user.last_name}` : 'N/A';
+        const ownerEmail = vehicle.user?.email || 'N/A';
+        const userType = vehicle.user?.user_type || 'N/A';
+        const vehicleType = vehicle.type?.name || 'N/A';
+        const plateNo = vehicle.plate_no || 'N/A';
+        const sticker = vehicle.sticker ? `${vehicle.color.toUpperCase()}_${vehicle.number}` : 'N/A';
+        const color = vehicle.color || 'N/A';
+        const status = vehicle.is_active ? 'Active' : 'Inactive';
+        const createdDate = new Date(vehicle.created_at).toLocaleDateString('en-US', { 
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        return [ownerName, ownerEmail, userType, vehicleType, plateNo, sticker, color, status, createdDate].map(field => {
+            const escaped = String(field).replace(/"/g, '""');
+            return `"${escaped}"`;
+        }).join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `vehicles_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.exportToCSV = exportToCSV;
 </script>
 @endpush

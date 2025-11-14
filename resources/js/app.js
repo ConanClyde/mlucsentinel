@@ -34,6 +34,8 @@ import './settings/program.js';
 import './settings/vehicle-type.js';
 import './settings/fees.js';
 import './settings/security.js';
+import './settings/reporter-roles.js';
+import './settings/reporter-roles-realtime.js';
 // import './template/tables.js';
 // import './template/modals.js';
 // import './template/media.js';

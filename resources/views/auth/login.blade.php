@@ -155,9 +155,12 @@
                     </button>
                 </div>
 
-                <!-- Registration Guidance -->
+                <!-- Registration Link -->
                 <div class="text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                    Need an account? Please contact your campus administrator for assistance.
+                    Don't have an account? 
+                    <a href="{{ route('register') }}" class="text-[#1b1b18] dark:text-[#EDEDEC] font-medium hover:underline">
+                        Register here
+                    </a>
                 </div>
             </form>
 

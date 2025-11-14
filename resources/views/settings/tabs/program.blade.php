@@ -19,20 +19,35 @@
         <table class="w-full">
             <thead class="bg-gray-50 dark:bg-[#161615] border-y border-[#e3e3e0] dark:border-[#3E3E3A]">
                 <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Code</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Program Name</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">College</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Description</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Created At</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody id="program-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                 @forelse($programs as $program)
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-program-id="{{ $program->id }}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors"
+                    data-program-id="{{ $program->id }}"
+                    data-program-code="{{ $program->code }}"
+                    data-program-name="{{ $program->name }}"
+                    data-program-description="{{ $program->description }}"
+                    data-program-college-id="{{ $program->college_id }}"
+                    data-program-college-name="{{ $program->college->name ?? '' }}"
+                    data-program-created-at="{{ $program->created_at }}">
+                    <td class="px-4 py-3">
+                        <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $program->code }}</span>
+                    </td>
                     <td class="px-4 py-3">
                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $program->name }}</span>
                     </td>
                     <td class="px-4 py-3">
                         <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $program->college->name ?? 'No College' }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $program->description ?? '—' }}</span>
                     </td>
                     <td class="px-4 py-3">
                         <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">{{ $program->created_at->format('M d, Y') }}</span>
@@ -54,7 +69,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                    <td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                         No programs found.
                     </td>
                 </tr>

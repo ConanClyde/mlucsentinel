@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,16 +14,10 @@ return new class extends Migration
         Schema::create('stakeholder_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('evidence_required')->default(true); // Require guardian evidence by default
             $table->timestamps();
         });
-
-        // Insert default stakeholder types
-        $now = now();
-        DB::table('stakeholder_types')->insert([
-            ['name' => 'Guardian', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Service Provider', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Visitor', 'created_at' => $now, 'updated_at' => $now],
-        ]);
     }
 
     /**

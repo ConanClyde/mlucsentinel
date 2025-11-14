@@ -17,7 +17,10 @@ class CollegeFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => strtoupper(fake()->unique()->lexify('???')),
             'name' => fake()->unique()->company().' College',
+            'description' => fake()->sentence(),
+            'type' => fake()->randomElement(['college', 'institute', 'school']),
         ];
     }
 }

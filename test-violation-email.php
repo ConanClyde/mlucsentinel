@@ -9,7 +9,7 @@
 // Find a test report (or create one)
 $report = \App\Models\Report::with(['violationType', 'violatorVehicle.type', 'violatorVehicle.user'])->first();
 
-if (!$report) {
+if (! $report) {
     echo "No reports found. Please create a test report first.\n";
     exit;
 }

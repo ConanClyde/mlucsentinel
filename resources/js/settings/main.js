@@ -9,7 +9,12 @@ import { initializeProgram } from './program.js';
 import { initializeVehicleType } from './vehicle-type.js';
 import { initializeLocationType } from './location-type.js';
 import { initializeFees } from './fees.js';
+import { initializeAdminRoles } from './admin-roles.js';
+import { initializeStickerColors } from './sticker-colors.js';
+import { initializeStickerRules } from './sticker-rules.js';
+import { initializeStakeholders } from './stakeholders.js';
 import { initializeSecurity } from './security.js';
+import { initReporterRoles } from './reporter-roles.js';
 
 // Real-time instances - will be initialized per tab when data loads
 // No need for pre-initialization as each tab handles its own realtime setup
@@ -50,13 +55,23 @@ export function showSettingsTab(tabName) {
         initializeLocationType();
     } else if (tabName === 'fees') {
         initializeFees();
+    } else if (tabName === 'admin-roles') {
+        initializeAdminRoles();
+    } else if (tabName === 'sticker-colors') {
+        initializeStickerColors();
+    } else if (tabName === 'sticker-rules') {
+        initializeStickerRules();
+    } else if (tabName === 'stakeholders') {
+        initializeStakeholders();
+    } else if (tabName === 'reporters') {
+        initReporterRoles();
     }
 }
 
 // Restore active tab from URL hash on page load
 function restoreActiveTab() {
     const hash = window.location.hash.substring(1); // Remove the # character
-    const validTabs = ['appearance', 'notifications', 'college', 'program', 'vehicle-type', 'location-type', 'fees', 'security'];
+    const validTabs = ['appearance', 'notifications', 'college', 'program', 'vehicle-type', 'location-type', 'fees', 'admin-roles', 'sticker-colors', 'sticker-rules', 'stakeholders', 'reporters', 'security'];
     
     if (hash && validTabs.includes(hash)) {
         showSettingsTab(hash);

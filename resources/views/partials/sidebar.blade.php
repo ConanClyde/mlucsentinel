@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
+<aside class="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-[#1a1a1a] border-r border-[#e3e3e0] dark:border-[#3E3E3A] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
     <div class="flex flex-col h-full">
         <!-- Logo and Title -->
         <div class="flex items-center h-16 px-6 border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
@@ -18,56 +18,84 @@
 
                 @if(in_array(Auth::user()->user_type, [App\Enums\UserType::GlobalAdministrator, App\Enums\UserType::Administrator]))
                     @php
-                        $isMarketingAdmin = Auth::user()->isMarketingAdmin();
+                        $canViewDashboard = Auth::user()->hasPrivilege('view_dashboard');
+
+                        $canViewStudents = Auth::user()->hasPrivilege('view_students');
+                        $canViewStaff = Auth::user()->hasPrivilege('view_staff');
+                        $canViewSecurity = Auth::user()->hasPrivilege('view_security');
+                        $canViewStakeholders = Auth::user()->hasPrivilege('view_stakeholders');
+                        $canViewReporters = Auth::user()->hasPrivilege('view_reporters');
+                        $canViewAdministrators = Auth::user()->hasPrivilege('view_administrators');
+                        $hasAnyUsersView = $canViewStudents || $canViewStaff || $canViewSecurity || $canViewStakeholders || $canViewReporters || $canViewAdministrators;
+
+                        $canRegisterStudents = Auth::user()->hasPrivilege('register_students');
+                        $canRegisterStaff = Auth::user()->hasPrivilege('register_staff');
+                        $canRegisterSecurity = Auth::user()->hasPrivilege('register_security');
+                        $canRegisterStakeholders = Auth::user()->hasPrivilege('register_stakeholders');
+                        $canRegisterReporters = Auth::user()->hasPrivilege('register_reporters');
+                        $canRegisterAdministrators = Auth::user()->hasPrivilege('register_administrators');
+                        $hasAnyRegistration = $canRegisterStudents || $canRegisterStaff || $canRegisterSecurity || $canRegisterStakeholders || $canRegisterReporters || $canRegisterAdministrators;
+
+                        $canViewVehicles = Auth::user()->hasPrivilege('view_vehicles');
+                        $canViewCampusMap = Auth::user()->hasPrivilege('view_campus_map');
                     @endphp
-                    
                     <!-- Admin Navigation -->
                     <!-- Dashboard -->
-                    <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                        <x-heroicon-o-squares-2x2 class="w-5 h-5 mr-3" />
-                        Dashboard
-                    </a>
+                    @if($canViewDashboard)
+                        <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-squares-2x2 class="w-5 h-5 mr-3" />
+                            Dashboard
+                        </a>
+                    @endif
 
                     <!-- Users Submenu -->
-                    <div class="space-y-1">
-                        <button onclick="toggleSubmenu('users-submenu')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer">
-                            <div class="flex items-center">
-                                <x-heroicon-o-users class="w-5 h-5 mr-3" />
-                                Users
+                    @if($hasAnyUsersView)
+                        <div class="space-y-1">
+                            <button onclick="toggleSubmenu('users-submenu')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer">
+                                <div class="flex items-center">
+                                    <x-heroicon-o-users class="w-5 h-5 mr-3" />
+                                    Users
+                                </div>
+                                <x-heroicon-o-chevron-down class="w-4 h-4 transition-transform duration-200 {{ request()->routeIs('admin.users.*') ? 'rotate-180' : '' }}" id="users-chevron" />
+                            </button>
+                            
+                            <!-- Users Submenu -->
+                            <div id="users-submenu" class="ml-6 space-y-1 {{ request()->routeIs('admin.users.*') ? '' : 'hidden' }}">
+                                @if($canViewStudents)
+                                    <a href="{{ route('admin.users.students') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.students') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Students
+                                    </a>
+                                @endif
+                                @if($canViewStaff)
+                                    <a href="{{ route('admin.users.staff') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.staff') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Staff
+                                    </a>
+                                @endif
+                                @if($canViewSecurity)
+                                    <a href="{{ route('admin.users.security') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.security') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Security
+                                    </a>
+                                @endif
+                                @if($canViewReporters)
+                                    <a href="{{ route('admin.users.reporters') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.reporters') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Reporters
+                                    </a>
+                                @endif
+                                @if($canViewStakeholders)
+                                    <a href="{{ route('admin.users.stakeholders') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.stakeholders') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Stakeholders
+                                    </a>
+                                @endif
+                                @if($canViewAdministrators)
+                                    <a href="{{ route('admin.users.administrators') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.administrators') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                                        Administrators
+                                    </a>
+                                @endif
                             </div>
-                            <x-heroicon-o-chevron-down class="w-4 h-4 transition-transform duration-200 {{ request()->routeIs('admin.users.*') ? 'rotate-180' : '' }}" id="users-chevron" />
-                        </button>
-                        
-                        <!-- Users Submenu -->
-                        <div id="users-submenu" class="ml-6 space-y-1 {{ request()->routeIs('admin.users.*') ? '' : 'hidden' }}">
-                            <a href="{{ route('admin.users.students') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.students') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Students
-                            </a>
-                            <a href="{{ route('admin.users.staff') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.staff') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Staff
-                            </a>
-                            <a href="{{ route('admin.users.security') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.security') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Security
-                            </a>
-                            <a href="{{ route('admin.users.reporters') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.reporters') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Reporters
-                            </a>
-                            <a href="{{ route('admin.users.stakeholders') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.stakeholders') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Stakeholders
-                            </a>
-                            <a href="{{ route('admin.users.administrators') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.users.administrators') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                                Administrators
-                            </a>
                         </div>
-                    </div>
+                    @endif
 
-                    @php
-                        $hasRegistrationAccess = Auth::user()->isGlobalAdministrator() 
-                            || Auth::user()->isSecurityAdmin() 
-                            || Auth::user()->isSasOrDrrmAdmin();
-                    @endphp
-
-                    @if($hasRegistrationAccess)
+                    @if($hasAnyRegistration)
                         <!-- Registration Submenu -->
                         <div class="space-y-1">
                             <button onclick="toggleSubmenu('registration-submenu')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer">
@@ -80,26 +108,32 @@
                             
                             <!-- Registration Submenu -->
                             <div id="registration-submenu" class="ml-6 space-y-1 {{ request()->routeIs('admin.registration.*') ? '' : 'hidden' }}">
-                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSecurityAdmin())
+                                @if($canRegisterStudents)
                                     <a href="{{ route('admin.registration.student') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.student') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Student
                                     </a>
+                                @endif
+                                @if($canRegisterStaff)
                                     <a href="{{ route('admin.registration.staff') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.staff') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Staff
                                     </a>
+                                @endif
+                                @if($canRegisterSecurity)
                                     <a href="{{ route('admin.registration.security') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.security') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Security
                                     </a>
+                                @endif
+                                @if($canRegisterStakeholders)
                                     <a href="{{ route('admin.registration.stakeholder') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.stakeholder') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Stakeholder
                                     </a>
                                 @endif
-                                @if(Auth::user()->isGlobalAdministrator() || Auth::user()->isSasOrDrrmAdmin())
+                                @if($canRegisterReporters)
                                     <a href="{{ route('admin.registration.reporter') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.reporter') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Reporter
                                     </a>
                                 @endif
-                                @if(Auth::user()->isGlobalAdministrator())
+                                @if($canRegisterAdministrators)
                                     <a href="{{ route('admin.registration.administrator') }}" class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.registration.administrator') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                                         Administrator
                                     </a>
@@ -108,29 +142,29 @@
                         </div>
                     @endif
 
-                    <a href="{{ route('admin.vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                        <x-heroicon-o-truck class="w-5 h-5 mr-3" />
-                        Vehicles
-                    </a>
+                    <!-- Pending Registrations (Global Admin only) -->
+                    @if(Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator)
+                        <a href="{{ route('admin.pending-registrations') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.pending-registrations') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-clock class="w-5 h-5 mr-3" />
+                            Pending Registrations
+                        </a>
+                    @endif
 
-                    @php
-                        $canViewReports = false;
-                        if (Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator) {
-                            $canViewReports = true;
-                        } elseif (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator) {
-                            $adminRole = Auth::user()->administrator->adminRole->name ?? '';
-                            $canViewReports = in_array($adminRole, ['Chancellor', 'SAS (Student Affairs & Services)']);
-                        }
-                    @endphp
+                    @if($canViewVehicles)
+                        <a href="{{ route('admin.vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-truck class="w-5 h-5 mr-3" />
+                            Vehicles
+                        </a>
+                    @endif
 
-                    @if($canViewReports)
+                    @if(Auth::user()->hasPrivilege('manage_reports'))
                         <a href="{{ route('admin.reports') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.reports') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                             <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
                             Reports
                         </a>
                     @endif
 
-                    @if($isMarketingAdmin)
+                    @if(Auth::user()->hasPrivilege('view_stickers'))
                         <a href="{{ route('admin.stickers') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.stickers') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                             <x-heroicon-o-tag class="w-5 h-5 mr-3" />
                             Stickers
@@ -138,22 +172,14 @@
                     @endif
 
                     <!-- Map -->
-                    <a href="{{ route('admin.campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
-                        <x-heroicon-o-map class="w-5 h-5 mr-3" />
-                        Campus Map
-                    </a>
+                    @if($canViewCampusMap)
+                        <a href="{{ route('admin.campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                            <x-heroicon-o-map class="w-5 h-5 mr-3" />
+                            Campus Map
+                        </a>
+                    @endif
 
-                    @php
-                        $canViewPatrolMonitor = false;
-                        if (Auth::user()->user_type === App\Enums\UserType::GlobalAdministrator) {
-                            $canViewPatrolMonitor = true;
-                        } elseif (Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator) {
-                            $adminRole = Auth::user()->administrator->adminRole->name ?? '';
-                            $canViewPatrolMonitor = ($adminRole === 'Security');
-                        }
-                    @endphp
-
-                    @if($canViewPatrolMonitor)
+                    @if(Auth::user()->hasPrivilege('view_patrol_monitor') || Auth::user()->hasPrivilege('view_patrol_history'))
                         <!-- Patrol Monitoring -->
                         <a href="{{ route('admin.patrol-history') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.patrol-history') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                             <x-heroicon-o-shield-check class="w-5 h-5 mr-3" />
@@ -170,6 +196,12 @@
                     <a href="{{ route('reporter.my-reports') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.my-reports') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
                         My Reports
+                    </a>
+
+                    <!-- Campus Map -->
+                    <a href="{{ route('campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-map class="w-5 h-5 mr-3" />
+                        Campus Map
                     </a>
                 @elseif(Auth::user()->user_type === App\Enums\UserType::Security)
                     <!-- Security Navigation -->
@@ -197,9 +229,41 @@
                         My Reports
                     </a>
 
-                    <a href="{{ route('reporter.my-vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('reporter.my-vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                    <a href="{{ route('user.vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('user.vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
                         <x-heroicon-o-truck class="w-5 h-5 mr-3" />
                         My Vehicles
+                    </a>
+
+                    <!-- Campus Map -->
+                    <a href="{{ route('campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-map class="w-5 h-5 mr-3" />
+                        Campus Map
+                    </a>
+                @elseif(in_array(Auth::user()->user_type, [App\Enums\UserType::Student, App\Enums\UserType::Staff, App\Enums\UserType::Stakeholder]))
+                    <!-- User Navigation (Students, Staff, Stakeholders) -->
+                    
+                    <!-- My Vehicles -->
+                    <a href="{{ route('user.vehicles') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('user.vehicles') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-truck class="w-5 h-5 mr-3" />
+                        Vehicles
+                    </a>
+
+                    <!-- Report History -->
+                    <a href="{{ route('user.reports') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('user.reports') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-document-text class="w-5 h-5 mr-3" />
+                        Report History
+                    </a>
+
+                    <!-- Sticker Requests -->
+                    <a href="{{ route('user.requests') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('user.requests') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-plus-circle class="w-5 h-5 mr-3" />
+                        Request
+                    </a>
+
+                    <!-- Campus Map -->
+                    <a href="{{ route('campus-map') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('campus-map') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-[#706f6c] dark:text-[#A1A09A] hover:bg-gray-100 dark:hover:bg-[#2a2a2a] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]' }}">
+                        <x-heroicon-o-map class="w-5 h-5 mr-3" />
+                        Campus Map
                     </a>
                 @endif
             </div>
@@ -222,11 +286,17 @@
                         @elseif(Auth::user()->user_type === App\Enums\UserType::Administrator && Auth::user()->administrator)
                             {{ Auth::user()->administrator->adminRole->name ?? 'Administrator' }}
                         @elseif(Auth::user()->user_type === App\Enums\UserType::Reporter && Auth::user()->reporter)
-                            {{ Auth::user()->reporter->reporterType->name ?? 'Reporter' }}
+                            {{ Auth::user()->reporter->reporterRole->name ?? 'Reporter' }}
                         @elseif(Auth::user()->user_type === App\Enums\UserType::Security)
                             Security Personnel
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Student)
+                            Student
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Staff)
+                            Staff Member
+                        @elseif(Auth::user()->user_type === App\Enums\UserType::Stakeholder)
+                            Stakeholder
                         @else
-                            {{ Auth::user()->user_type->label() }}
+                            {{ is_string(Auth::user()->user_type) ? ucfirst(Auth::user()->user_type) : Auth::user()->user_type->label() }}
                         @endif
                     </p>
                 </div>

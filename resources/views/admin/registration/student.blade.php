@@ -5,16 +5,16 @@
 
 @section('content')
 <div class="min-h-screen py-4 md:py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6 md:mb-8 text-center">
             <h1 class="text-xl md:text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">Student Registration</h1>
-            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register new student users with vehicle information</p>
+            <p class="text-sm md:text-base text-[#706f6c] dark:text-[#A1A09A]">Register new student users with vehicle information and account credentials</p>
             </div>
 
         <!-- Progress Steps -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6 overflow-x-auto">
-            <div class="flex items-center justify-center min-w-max">
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-[#e3e3e0] dark:border-[#3E3E3A] p-4 md:p-6 mb-4 md:mb-6">
+            <div class="flex items-center justify-center overflow-x-auto">
                 <div class="flex items-center space-x-2 md:space-x-4">
                     <!-- Step 1 -->
                     <div class="flex items-center">
@@ -24,7 +24,7 @@
                         <span id="step-1-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline">Basic Information</span>
     </div>
 
-                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 2 -->
                     <div class="flex items-center">
@@ -34,15 +34,25 @@
                         <span id="step-2-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">License Information</span>
                     </div>
 
-                    <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                     
                     <!-- Step 3 -->
                     <div class="flex items-center">
                         <div id="step-3-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
                             3
-                    </div>
+                        </div>
                         <span id="step-3-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Vehicle Information</span>
-                </div>
+                    </div>
+
+                    <div class="w-6 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                    
+                    <!-- Step 4 -->
+                    <div class="flex items-center">
+                        <div id="step-4-indicator" class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium">
+                            4
+                        </div>
+                        <span id="step-4-label" class="ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">Account Information</span>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -194,7 +204,7 @@
                                 </select>
                             </div>
                                 <div class="form-group plate-number-group">
-                                    <label class="form-label">Plate Number <span class="text-red-500">*</span></label>
+                                    <label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>
                                 <input 
                                     name="vehicles[0][plate_no]" 
                                     type="text" 
@@ -212,6 +222,43 @@
                     Maximum of 3 vehicles allowed per student
                 </p>
             </div>
+
+                <!-- Step 4: Account Information -->
+                <div id="step-4" class="step-content p-4 md:p-6 hidden">
+                    <h3 class="text-base md:text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-4 md:mb-6">Account Information</h3>
+                    <p class="text-xs md:text-sm text-[#706f6c] dark:text-[#A1A09A] mb-4 md:mb-6">Create login credentials for the student</p>
+                    
+                    <div class="space-y-4 md:space-y-6">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" class="form-input pr-10" placeholder="Enter password (minimum 8 characters)" required>
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="togglePasswordVisibility('password')">
+                                    <x-heroicon-c-eye id="password-eye-icon" class="w-5 h-5" />
+                                    <x-heroicon-c-eye-slash id="password-eye-off-icon" class="w-5 h-5 hidden" />
+                                </button>
+                            </div>
+                            <div class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1">Minimum 8 characters</div>
+                            <div id="password_error" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+                        </div>
+                        
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                                Confirm Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="password_confirmation" name="password_confirmation" class="form-input pr-10" placeholder="Re-enter password" required>
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="togglePasswordVisibility('password_confirmation')">
+                                    <x-heroicon-c-eye id="password_confirmation-eye-icon" class="w-5 h-5" />
+                                    <x-heroicon-c-eye-slash id="password_confirmation-eye-off-icon" class="w-5 h-5 hidden" />
+                                </button>
+                            </div>
+                            <div id="password_confirmation_error" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Form Actions -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 md:pt-6 border-t border-[#e3e3e0] dark:border-[#3E3E3A] px-4 md:px-6 pb-4 md:pb-6">
@@ -235,6 +282,16 @@
                     <!-- Step 3 Buttons -->
                     <div id="step-3-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                         <button type="button" id="prev-step-2" class="btn btn-secondary w-full sm:w-auto">
+                            Previous
+                        </button>
+                        <button type="button" id="next-step-3" class="btn btn-primary w-full sm:w-auto" disabled>
+                            Next
+                        </button>
+                    </div>
+                    
+                    <!-- Step 4 Buttons -->
+                    <div id="step-4-buttons" class="hidden flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button type="button" id="prev-step-3" class="btn btn-secondary w-full sm:w-auto">
                             Previous
                         </button>
                         <button type="submit" id="submit-form" class="btn btn-primary w-full sm:w-auto" disabled>
@@ -359,8 +416,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Step navigation
     const nextButton = document.getElementById('next-step');
     const nextButton2 = document.getElementById('next-step-2');
+    const nextButton3 = document.getElementById('next-step-3');
     const prevButton = document.getElementById('prev-step');
     const prevButton2 = document.getElementById('prev-step-2');
+    const prevButton3 = document.getElementById('prev-step-3');
     
     if (nextButton) {
         nextButton.addEventListener('click', function() {
@@ -378,6 +437,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    if (nextButton3) {
+        nextButton3.addEventListener('click', function() {
+            if (validateCurrentStep()) {
+                showStep(4);
+            }
+        });
+    }
+    
     if (prevButton) {
         prevButton.addEventListener('click', function() {
             showStep(1);
@@ -387,6 +454,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prevButton2) {
         prevButton2.addEventListener('click', function() {
             showStep(2);
+        });
+    }
+    
+    if (prevButton3) {
+        prevButton3.addEventListener('click', function() {
+            showStep(3);
         });
     }
     
@@ -518,6 +591,22 @@ document.addEventListener('DOMContentLoaded', function() {
         licenseNoInput.addEventListener('input', function() {
             clearTimeout(licenseNoTimeout);
             licenseNoTimeout = setTimeout(validateLicenseNo, 1000);
+            updateButtonStates();
+        });
+    }
+    
+    // Step 4 validation
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmationInput = document.getElementById('password_confirmation');
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            updateButtonStates();
+        });
+    }
+    
+    if (passwordConfirmationInput) {
+        passwordConfirmationInput.addEventListener('input', function() {
             updateButtonStates();
         });
     }
@@ -822,10 +911,28 @@ function isStep3Valid() {
     return isValid && vehicles.length > 0;
 }
 
+function isStep4Valid() {
+    const password = document.getElementById('password').value.trim();
+    const passwordConfirmation = document.getElementById('password_confirmation').value.trim();
+    
+    // Password must be at least 8 characters
+    if (password.length < 8) {
+        return false;
+    }
+    
+    // Passwords must match
+    if (password !== passwordConfirmation) {
+        return false;
+    }
+    
+    return true;
+}
+
 // Function to update button states
 function updateButtonStates() {
     const nextButton = document.getElementById('next-step');
     const nextButton2 = document.getElementById('next-step-2');
+    const nextButton3 = document.getElementById('next-step-3');
     const submitButton = document.getElementById('submit-form');
     
     if (currentStep === 1) {
@@ -833,7 +940,9 @@ function updateButtonStates() {
     } else if (currentStep === 2) {
         nextButton2.disabled = !isStep2Valid();
     } else if (currentStep === 3) {
-        submitButton.disabled = !isStep3Valid();
+        nextButton3.disabled = !isStep3Valid();
+    } else if (currentStep === 4) {
+        submitButton.disabled = !isStep4Valid();
     }
 }
 
@@ -855,16 +964,16 @@ function showStep(step) {
     }
     
     // Update step indicators
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
         const indicator = document.getElementById(`step-${i}-indicator`);
         const label = document.getElementById(`step-${i}-label`);
         
         if (i <= currentStep) {
-            indicator.className = 'w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium';
-            label.className = 'ml-2 text-sm font-medium text-blue-600 dark:text-blue-400';
+            indicator.className = 'w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-medium';
+            label.className = 'ml-1 md:ml-2 text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 hidden sm:inline';
         } else {
-            indicator.className = 'w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium';
-            label.className = 'ml-2 text-sm font-medium text-gray-500 dark:text-gray-400';
+            indicator.className = 'w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs md:text-sm font-medium';
+            label.className = 'ml-1 md:ml-2 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hidden sm:inline';
         }
     }
     
@@ -872,19 +981,28 @@ function showStep(step) {
     const step1Buttons = document.getElementById('step-1-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const step3Buttons = document.getElementById('step-3-buttons');
+    const step4Buttons = document.getElementById('step-4-buttons');
     
     if (currentStep === 1) {
         step1Buttons.classList.remove('hidden');
         step2Buttons.classList.add('hidden');
         step3Buttons.classList.add('hidden');
+        step4Buttons.classList.add('hidden');
     } else if (currentStep === 2) {
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
         step3Buttons.classList.add('hidden');
+        step4Buttons.classList.add('hidden');
     } else if (currentStep === 3) {
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.add('hidden');
         step3Buttons.classList.remove('hidden');
+        step4Buttons.classList.add('hidden');
+    } else if (currentStep === 4) {
+        step1Buttons.classList.add('hidden');
+        step2Buttons.classList.add('hidden');
+        step3Buttons.classList.add('hidden');
+        step4Buttons.classList.remove('hidden');
     }
     
     // Update button states after step change
@@ -951,6 +1069,26 @@ function validateCurrentStep() {
         }
         
         return true;
+    } else if (currentStep === 4) {
+        const password = document.getElementById('password').value.trim();
+        const passwordConfirmation = document.getElementById('password_confirmation').value.trim();
+        
+        if (!password || !passwordConfirmation) {
+            showErrorModal('Please fill in all password fields');
+            return false;
+        }
+        
+        if (password.length < 8) {
+            showErrorModal('Password must be at least 8 characters');
+            return false;
+        }
+        
+        if (password !== passwordConfirmation) {
+            showErrorModal('Passwords do not match');
+            return false;
+        }
+        
+        return true;
     }
     return false;
 }
@@ -973,6 +1111,31 @@ function showErrorModal(message) {
 // Close error modal - using window function
 function closeErrorModal() {
     window.closeErrorModal();
+}
+
+// Toggle password visibility (called via onclick)
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    // Find the button that was clicked using the global event object
+    const button = event ? event.target.closest('button') : null;
+    if (!button) return;
+    
+    // Get all SVG elements (Blade components render as SVG)
+    const svgs = button.querySelectorAll('svg');
+    const eyeIcon = svgs[0]; // First SVG is the eye icon
+    const eyeOffIcon = svgs[1]; // Second SVG is the eye-slash icon
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('hidden');
+        if (eyeOffIcon) eyeOffIcon.classList.remove('hidden');
+    } else {
+        input.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('hidden');
+        if (eyeOffIcon) eyeOffIcon.classList.add('hidden');
+    }
 }
 
 // Reset form to initial state
@@ -1006,6 +1169,8 @@ function resetForm() {
     document.getElementById('email').value = '';
     document.getElementById('license_no').value = '';
     document.getElementById('license_image').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('password_confirmation').value = '';
     
     // Reset license image preview
     document.getElementById('licenseImagePreview').classList.add('hidden');
@@ -1047,7 +1212,7 @@ function resetForm() {
                 '</select>' +
             '</div>' +
             '<div class="form-group plate-number-group">' +
-                '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                 '<input name="vehicles[0][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                 '<div class="plate_no_0_error text-red-500 text-sm mt-1 hidden"></div>' +
             '</div>' +
@@ -1168,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '</select>' +
                 '</div>' +
                     '<div class="form-group plate-number-group">' +
-                        '<label class="form-label">Plate Number <span class="text-red-500">*</span></label>' +
+                        '<label class="form-label">Plate Number <span class="text-red-500 plate-required-asterisk">*</span></label>' +
                     '<input name="vehicles[' + (vehicleCount - 1) + '][plate_no]" type="text" required class="form-input" placeholder="ABC-1234">' +
                     '<div class="plate_no_' + (vehicleCount - 1) + '_error text-red-500 text-sm mt-1 hidden"></div>' +
                 '</div>' +
@@ -1298,6 +1463,7 @@ function handleVehicleTypeChange(e) {
     const vehicleItem = e.target.closest('.vehicle-item');
     const plateNumberGroup = vehicleItem.querySelector('.plate-number-group');
     const plateNumberInput = vehicleItem.querySelector('input[name*="[plate_no]"]');
+    const plateAsterisk = vehicleItem.querySelector('.plate-required-asterisk');
     
     if (!plateNumberGroup || !plateNumberInput) {
         return; // Safety check
@@ -1310,12 +1476,18 @@ function handleVehicleTypeChange(e) {
         plateNumberGroup.style.display = 'none';
         plateNumberInput.removeAttribute('required');
         plateNumberInput.value = ''; // Clear the value
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'none';
+        }
     } else {
         plateNumberGroup.style.display = 'block';
         plateNumberInput.setAttribute('required', 'required');
         // Ensure it's visible (remove any hidden classes)
         plateNumberGroup.classList.remove('hidden');
         plateNumberGroup.style.visibility = 'visible';
+        if (plateAsterisk) {
+            plateAsterisk.style.display = 'inline';
+        }
     }
     
     updateButtonStates();

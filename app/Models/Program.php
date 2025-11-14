@@ -13,7 +13,9 @@ class Program extends Model
 
     protected $fillable = [
         'college_id',
+        'code',
         'name',
+        'description',
     ];
 
     /**

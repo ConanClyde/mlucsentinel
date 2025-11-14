@@ -121,7 +121,7 @@ class CollegesRealtime {
                 this.addCollege(college);
                 this.showBrowserNotification(
                     'College Created',
-                    `${editor} added ${college.name}`,
+                    `${editor} added ${college.name || 'a college'}`,
                     college.id,
                     'created'
                 );
@@ -130,7 +130,7 @@ class CollegesRealtime {
                 this.updateCollege(college);
                 this.showBrowserNotification(
                     'College Updated',
-                    `${editor} updated ${college.name}`,
+                    `${editor} updated ${college.name || 'a college'}`,
                     college.id,
                     'updated'
                 );
@@ -139,7 +139,7 @@ class CollegesRealtime {
                 this.removeCollege(college);
                 this.showBrowserNotification(
                     'College Removed',
-                    `${editor} removed ${college.name}`,
+                    `${editor} removed ${college.name || 'a college'}`,
                     null,
                     'deleted'
                 );
@@ -154,7 +154,7 @@ class CollegesRealtime {
      */
     addCollege(college) {
         // Check if college already exists
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${college.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${college.id}"], tr[data-college-id="${college.id}"]`);
         
         if (existingRow) {
             this.updateCollege(college);
@@ -189,7 +189,7 @@ class CollegesRealtime {
      * Update an existing college row
      */
     updateCollege(college) {
-        const existingRow = this.tableBody.querySelector(`tr[data-id="${college.id}"]`);
+        const existingRow = this.tableBody.querySelector(`tr[data-id="${college.id}"], tr[data-college-id="${college.id}"]`);
         
         if (!existingRow) {
             console.log('College not found in table, adding instead');
@@ -221,7 +221,7 @@ class CollegesRealtime {
      * Remove a college row from the table
      */
     removeCollege(college) {
-        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${college.id}"]`);
+        const rowToRemove = this.tableBody.querySelector(`tr[data-id="${college.id}"], tr[data-college-id="${college.id}"]`);
         
         if (!rowToRemove) {
             console.log('College not found in table');
@@ -252,22 +252,33 @@ class CollegesRealtime {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 dark:hover:bg-[#161615]';
         row.setAttribute('data-id', college.id);
+        row.setAttribute('data-college-id', college.id);
+        row.dataset.collegeCode = college.code || '';
+        row.dataset.collegeName = college.name || '';
+        row.dataset.collegeType = college.type || 'college';
+        row.dataset.collegeDescription = college.description || '';
+        row.dataset.collegeCreatedAt = college.created_at || '';
 
-        const createdDate = new Date(college.created_at).toLocaleDateString();
+        const createdDate = college.created_at ? new Date(college.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        const description = college.description ? this.escapeHtml(college.description) : '—';
+        const typeLabel = this.formatType(college.type) || 'College';
 
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(college.name)}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(college.code || '')}</td>
+            <td class="px-4 py-3 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">${this.escapeHtml(college.name || '')}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${typeLabel}</td>
+            <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${description}</td>
             <td class="px-4 py-3 text-sm text-[#706f6c] dark:text-[#A1A09A]">${createdDate}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button onclick="editCollege(${college.id}, '${college.name.replace(/'/g, "\\'")}')" class="btn-edit" title="Edit">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.829-2.828z"></path>
+                    <button onclick="editCollege(${college.id})" class="btn-edit" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
                     <button onclick="deleteCollege(${college.id})" class="btn-delete" title="Delete">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>
@@ -283,7 +294,7 @@ class CollegesRealtime {
     showEmptyState() {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
-            <td colspan="3" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
+            <td colspan="6" class="px-4 py-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 No colleges found. Click Add button to create one.
             </td>
         `;
@@ -341,8 +352,17 @@ class CollegesRealtime {
      */
     escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text ?? '';
         return div.innerHTML;
+    }
+
+    formatType(type) {
+        if (!type) return '';
+
+        return type
+            .toString()
+            .toLowerCase()
+            .replace(/\b\w/g, char => char.toUpperCase());
     }
 
     /**

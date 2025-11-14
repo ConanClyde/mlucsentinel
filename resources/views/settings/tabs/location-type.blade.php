@@ -27,7 +27,11 @@
             </thead>
             <tbody id="location-type-table-body" class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                 @forelse($locationTypes as $locationType)
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" data-location-type-id="{{ $locationType->id }}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors" 
+                    data-location-type-id="{{ $locationType->id }}"
+                    data-location-type-name="{{ $locationType->name }}"
+                    data-location-type-color="{{ $locationType->default_color }}"
+                    data-location-type-description="{{ $locationType->description ?? '' }}">
                     <td class="px-4 py-3">
                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $locationType->name }}</span>
                     </td>
