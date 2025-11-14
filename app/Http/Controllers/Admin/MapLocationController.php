@@ -252,28 +252,42 @@ class MapLocationController extends Controller
             }
 
             $zip = new ZipArchive;
-            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-                foreach ($locations as $location) {
-                    if ($location->sticker_path) {
-                        // Convert /storage/ path to actual file path
-                        $stickerPath = str_replace('/storage/', '', $location->sticker_path);
-                        $fullPath = Storage::disk('public')->path($stickerPath);
-
-                        if (file_exists($fullPath)) {
-                            // Add file to zip with a descriptive name
-                            $fileName = $location->short_code.'_'.$location->name.'.svg';
-                            // Sanitize filename
-                            $fileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
-                            $zip->addFile($fullPath, $fileName);
-                        }
-                    }
-                }
-                $zip->close();
-            } else {
+            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to create zip file',
                 ], 500);
+            }
+
+            $filesAdded = 0;
+            foreach ($locations as $location) {
+                if ($location->sticker_path) {
+                    // Convert /storage/ path to actual file path
+                    $stickerPath = str_replace('/storage/', '', $location->sticker_path);
+                    $fullPath = Storage::disk('public')->path($stickerPath);
+
+                    if (file_exists($fullPath)) {
+                        // Add file to zip with a descriptive name
+                        $fileName = $location->short_code.'_'.$location->name.'.svg';
+                        // Sanitize filename
+                        $fileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
+                        $zip->addFile($fullPath, $fileName);
+                        $filesAdded++;
+                    }
+                }
+            }
+            $zip->close();
+
+            if ($filesAdded === 0) {
+                // Clean up empty zip file
+                if (file_exists($zipFilePath)) {
+                    unlink($zipFilePath);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No sticker files found to download',
+                ], 404);
             }
 
             // Download and then delete the temp file

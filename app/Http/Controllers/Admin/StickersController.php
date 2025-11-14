@@ -750,20 +750,33 @@ class StickersController extends Controller
 
         $zip = new ZipArchive;
 
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-            foreach ($vehicles as $vehicle) {
-                $stickerPath = public_path($vehicle->sticker);
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['error' => 'Failed to create ZIP file'], 500);
+        }
 
-                if (file_exists($stickerPath)) {
-                    $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
-                    $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
-                    $filename = "sticker_{$ownerName}_{$plateNo}.svg";
+        $filesAdded = 0;
+        foreach ($vehicles as $vehicle) {
+            $stickerPath = public_path($vehicle->sticker);
 
-                    $zip->addFile($stickerPath, $filename);
-                }
+            if (file_exists($stickerPath)) {
+                $ownerName = $vehicle->user ? $vehicle->user->first_name.'_'.$vehicle->user->last_name : 'Unknown';
+                $plateNo = $vehicle->plate_no ? str_replace('-', '_', $vehicle->plate_no) : $vehicle->color.'_'.$vehicle->number;
+                $filename = "sticker_{$ownerName}_{$plateNo}.svg";
+
+                $zip->addFile($stickerPath, $filename);
+                $filesAdded++;
+            }
+        }
+
+        $zip->close();
+
+        if ($filesAdded === 0) {
+            // Clean up empty zip file
+            if (file_exists($zipPath)) {
+                unlink($zipPath);
             }
 
-            $zip->close();
+            return response()->json(['error' => 'No sticker files found to download'], 404);
         }
 
         return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
